@@ -17,13 +17,17 @@ def resolve_db_path() -> Path:
     """
     Determine the SQLite database path with support for Render Persistent Disk:
     1. Check CRM_DB_PATH environment variable (custom override).
-    2. Check Render Persistent Disk standard mount points (/var/data, /data).
+    2. Check Render Persistent Disk standard mount points:
+       - /var/data (standard absolute path)
+       - var/data (relative path if user omitted leading slash)
+       - /data, data
     3. Fallback to local workspace root (crm_construction.db).
     
     If persistent disk directory exists and has no db file yet, but a local template
     db exists in the repository root, copy it to persistent storage automatically.
     """
-    local_db = Path(__file__).resolve().parent.parent / "crm_construction.db"
+    repo_root = Path(__file__).resolve().parent.parent
+    local_db = repo_root / "crm_construction.db"
 
     # 1. Environment variable override
     env_path = os.environ.get("CRM_DB_PATH")
@@ -38,17 +42,27 @@ def resolve_db_path() -> Path:
                 print(f"[Database] Notice: Could not copy initial db to {target}: {e}")
         return target
 
-    # 2. Render Persistent Disk: standard mount points on Linux container
-    for mount_dir in [Path("/var/data"), Path("/data")]:
-        if mount_dir.exists() and mount_dir.is_dir():
-            target = mount_dir / "crm_construction.db"
-            if not target.exists() and local_db.exists() and local_db.stat().st_size > 0:
-                try:
-                    shutil.copy2(local_db, target)
-                    print(f"[Database] Initialized Render persistent DB at {target} from template.")
-                except Exception as e:
-                    print(f"[Database] Notice: Could not copy initial db to persistent disk: {e}")
-            return target
+    # 2. Render Persistent Disk mount points (absolute & relative fallback)
+    candidate_mounts = [
+        Path("/var/data"),
+        repo_root / "var" / "data",
+        Path("var/data").resolve(),
+        Path("/data"),
+        repo_root / "data",
+    ]
+    for mount_dir in candidate_mounts:
+        try:
+            if mount_dir.exists() and mount_dir.is_dir():
+                target = mount_dir / "crm_construction.db"
+                if not target.exists() and local_db.exists() and local_db.stat().st_size > 0:
+                    try:
+                        shutil.copy2(local_db, target)
+                        print(f"[Database] Initialized Render persistent DB at {target} from template.")
+                    except Exception as e:
+                        print(f"[Database] Notice: Could not copy initial db to persistent disk: {e}")
+                return target
+        except Exception as e:
+            print(f"[Database] Notice checking mount {mount_dir}: {e}")
 
     # 3. Default local development path
     return local_db

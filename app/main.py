@@ -55,8 +55,15 @@ from app.database import DB_PATH
 
 @app.get("/api/health")
 def health_check():
+    repo_root = Path(__file__).resolve().parent.parent
+    check_paths = {
+        "/var/data": Path("/var/data").exists(),
+        "repo_root/var/data": (repo_root / "var" / "data").exists(),
+        "cwd/var/data": Path("var/data").resolve().exists(),
+        "/data": Path("/data").exists(),
+    }
     is_persistent = (
-        str(DB_PATH).startswith(("/var/data", "/data"))
+        str(DB_PATH).startswith(("/var/data", "/data", str(repo_root / "var" / "data"), str(Path("var/data").resolve())))
         or bool(os.environ.get("CRM_DB_PATH"))
     )
     return {
@@ -66,7 +73,8 @@ def health_check():
             "path": str(DB_PATH),
             "exists": DB_PATH.exists(),
             "is_persistent_disk": is_persistent,
-            "size_bytes": DB_PATH.stat().st_size if DB_PATH.exists() else 0
+            "size_bytes": DB_PATH.stat().st_size if DB_PATH.exists() else 0,
+            "detected_paths": check_paths
         },
         "sbus": [
             "SBU1 - Nền móng và Hầm",

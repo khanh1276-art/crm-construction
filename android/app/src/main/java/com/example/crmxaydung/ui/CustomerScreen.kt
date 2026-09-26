@@ -3,9 +3,11 @@ package com.example.crmxaydung.ui
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crmxaydung.data.ApiClient
@@ -31,10 +34,12 @@ fun CustomerScreen(user: UserSession) {
     val coroutineScope = rememberCoroutineScope()
     var customers by remember { mutableStateOf<List<CustomerItem>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
+    var selectedTierFilter by remember { mutableStateOf("ALL") }
     var isLoading by remember { mutableStateOf(true) }
     var showAddDialog by remember { mutableStateOf(false) }
     var selectedCustomer by remember { mutableStateOf<CustomerItem?>(null) }
     var careCustomer by remember { mutableStateOf<CustomerItem?>(null) }
+    var assessCustomer by remember { mutableStateOf<CustomerItem?>(null) }
 
     fun loadCustomers() {
         isLoading = true
@@ -49,16 +54,25 @@ fun CustomerScreen(user: UserSession) {
         loadCustomers()
     }
 
+    val tierFilters = listOf(
+        "ALL" to "Tất Cả",
+        "DIAMOND" to "💎 Kim Cương",
+        "GOLD" to "🥇 Vàng",
+        "SILVER" to "🥈 Bạc"
+    )
+
     val filteredList = customers.filter {
-        searchQuery.isBlank() ||
+        (selectedTierFilter == "ALL" || it.tier == selectedTierFilter) &&
+        (searchQuery.isBlank() ||
                 it.name.contains(searchQuery, ignoreCase = true) ||
                 it.code.contains(searchQuery, ignoreCase = true) ||
                 it.keyDecisionMaker.contains(searchQuery, ignoreCase = true) ||
                 it.phone.contains(searchQuery) ||
-                it.decisionMakerPhone.contains(searchQuery)
+                it.decisionMakerPhone.contains(searchQuery))
     }
 
-    val df = DecimalFormat("#,##0.0")
+    val df = DecimalFormat("#,##0.#")
+    val currencyDf = DecimalFormat("#,###")
 
     Scaffold(
         containerColor = Color(0xFF0F172A),
@@ -89,12 +103,39 @@ fun CustomerScreen(user: UserSession) {
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.LightGray,
-                    focusedBorderColor = Color(0xFF38BDF8),
+                    focusedBorderColor = Color(0xFFEA580C),
                     unfocusedBorderColor = Color(0xFF334155)
                 )
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Tier Filter Chips (CSCSKH/ĐT-01)
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(tierFilters) { (tierKey, label) ->
+                    FilterChip(
+                        selected = (selectedTierFilter == tierKey),
+                        onClick = { selectedTierFilter = tierKey },
+                        label = { Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = when (tierKey) {
+                                "DIAMOND" -> Color(0xFF0891B2)
+                                "GOLD" -> Color(0xFFD97706)
+                                "SILVER" -> Color(0xFF64748B)
+                                else -> Color(0xFFEA580C)
+                            },
+                            selectedLabelColor = Color.White,
+                            containerColor = Color(0xFF1E293B),
+                            labelColor = Color(0xFF94A3B8)
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -116,7 +157,7 @@ fun CustomerScreen(user: UserSession) {
 
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color(0xFF38BDF8))
+                    CircularProgressIndicator(color = Color(0xFFEA580C))
                 }
             } else if (filteredList.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -130,6 +171,7 @@ fun CustomerScreen(user: UserSession) {
                     items(filteredList) { cust ->
                         CustomerCard(
                             cust = cust,
+                            df = df,
                             onClick = { selectedCustomer = cust }
                         )
                     }
@@ -143,9 +185,29 @@ fun CustomerScreen(user: UserSession) {
         CustomerDetailDialog(
             cust = cust,
             df = df,
+            currencyDf = currencyDf,
             onDismiss = { selectedCustomer = null },
             onLogCare = {
-                careCustomer = cust
+                val target = selectedCustomer
+                selectedCustomer = null
+                careCustomer = target
+            },
+            onAssess = {
+                val target = selectedCustomer
+                selectedCustomer = null
+                assessCustomer = target
+            }
+        )
+    }
+
+    // Customer Assessment Dialog (FECON CSCSKH/ĐT-01)
+    assessCustomer?.let { cust ->
+        CustomerAssessDialog(
+            cust = cust,
+            onDismiss = { assessCustomer = null },
+            onAssessed = {
+                assessCustomer = null
+                loadCustomers()
             }
         )
     }
@@ -177,7 +239,24 @@ fun CustomerScreen(user: UserSession) {
 }
 
 @Composable
-fun CustomerCard(cust: CustomerItem, onClick: () -> Unit) {
+fun CustomerCard(cust: CustomerItem, df: DecimalFormat, onClick: () -> Unit) {
+    val tierColor = when (cust.tier) {
+        "DIAMOND" -> Color(0xFF0891B2)
+        "GOLD" -> Color(0xFFD97706)
+        "SILVER" -> Color(0xFF64748B)
+        else -> Color(0xFF0284C7)
+    }
+    val tierLabel = when (cust.tier) {
+        "DIAMOND" -> "💎 KIM CƯƠNG"
+        "GOLD" -> "🥇 VÀNG"
+        "SILVER" -> "🥈 BẠC"
+        else -> cust.tier
+    }
+
+    val spentMil = cust.spentCareBudget / 1_000_000.0
+    val budgetMil = cust.annualCareBudget / 1_000_000.0
+    val progress = if (cust.annualCareBudget > 0) (cust.spentCareBudget / cust.annualCareBudget).coerceIn(0.0, 1.0).toFloat() else 0f
+
     Card(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
         shape = RoundedCornerShape(12.dp),
@@ -186,6 +265,7 @@ fun CustomerCard(cust: CustomerItem, onClick: () -> Unit) {
             .clickable { onClick() }
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
+            // Header Row: Customer Name & Tier Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -199,25 +279,107 @@ fun CustomerCard(cust: CustomerItem, onClick: () -> Unit) {
                     modifier = Modifier.weight(1f)
                 )
                 Surface(
-                    color = if (cust.tier == "STRATEGIC_VIP") Color(0xFF7C3AED) else Color(0xFF0284C7),
+                    color = tierColor,
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = tierLabel,
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Score & Rule Tags
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Surface(
+                    color = Color(0xFF0F172A),
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
-                        text = if (cust.tier == "STRATEGIC_VIP") "VIP ⭐" else "Đối tác",
-                        color = Color.White,
-                        fontSize = 10.sp,
+                        text = "Điểm: ${df.format(cust.totalScore)} / 100đ",
+                        color = Color(0xFF38BDF8),
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
+
+                if (cust.vetoApplied) {
+                    Surface(
+                        color = Color(0xFF7F1D1D),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = "⚠️ Phủ quyết TC3",
+                            color = Color(0xFFFCA5A5),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+
+                if (cust.isSpecialElevated) {
+                    Surface(
+                        color = Color(0xFF581C87),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = "⭐ Đặc cách TGĐ",
+                            color = Color(0xFFE9D5FF),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
             }
+
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = "Đại diện: ${cust.keyDecisionMaker} (${cust.decisionMakerRole})",
                 color = Color(0xFFCBD5E1),
                 fontSize = 13.sp
             )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Annual Care Budget Progress
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Ngân sách CSKH: ${df.format(spentMil)}M / ${df.format(budgetMil)}M VNĐ/năm",
+                    color = Color(0xFF94A3B8),
+                    fontSize = 11.sp
+                )
+                Text(
+                    text = "${(progress * 100).toInt()}%",
+                    color = if (progress >= 1f) Color(0xFFEF4444) else Color(0xFF38BDF8),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
             Spacer(modifier = Modifier.height(4.dp))
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp),
+                color = if (progress >= 1f) Color(0xFFEF4444) else Color(0xFF0284C7),
+                trackColor = Color(0xFF334155)
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -225,8 +387,6 @@ fun CustomerCard(cust: CustomerItem, onClick: () -> Unit) {
                 Text("Mã: ${cust.code} | Khối: ${cust.sbu}", color = Color(0xFF64748B), fontSize = 11.sp)
                 Text(cust.phone.ifEmpty { cust.decisionMakerPhone }, color = Color(0xFF38BDF8), fontSize = 11.sp)
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("👉 Chạm để theo dõi chi tiết hồ sơ cá nhân", color = Color(0xFF64748B), fontSize = 10.sp)
         }
     }
 }
@@ -235,18 +395,55 @@ fun CustomerCard(cust: CustomerItem, onClick: () -> Unit) {
 fun CustomerDetailDialog(
     cust: CustomerItem,
     df: DecimalFormat,
+    currencyDf: DecimalFormat,
     onDismiss: () -> Unit,
-    onLogCare: () -> Unit
+    onLogCare: () -> Unit,
+    onAssess: () -> Unit
 ) {
     val context = LocalContext.current
     val contactPhone = cust.decisionMakerPhone.ifEmpty { cust.phone }
+
+    val tierColor = when (cust.tier) {
+        "DIAMOND" -> Color(0xFF0891B2)
+        "GOLD" -> Color(0xFFD97706)
+        "SILVER" -> Color(0xFF64748B)
+        else -> Color(0xFF0284C7)
+    }
+    val tierLabel = when (cust.tier) {
+        "DIAMOND" -> "💎 KIM CƯƠNG"
+        "GOLD" -> "🥇 VÀNG"
+        "SILVER" -> "🥈 BẠC"
+        else -> cust.tier
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Column {
-                Text(cust.name, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
-                Text("Mã KH: ${cust.code} | Khối: ${cust.sbu} | Cấp: ${cust.tier}", color = Color(0xFF38BDF8), fontSize = 12.sp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = cust.name,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Surface(color = tierColor, shape = RoundedCornerShape(4.dp)) {
+                        Text(
+                            text = tierLabel,
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text("Mã KH: ${cust.code} | Khối: ${cust.sbu}", color = Color(0xFF94A3B8), fontSize = 12.sp)
             }
         },
         text = {
@@ -256,6 +453,62 @@ fun CustomerDetailDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                // Section: CSKH FECON Policy (CSCSKH/ĐT-01) Card
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.border(1.dp, tierColor.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("🏆 Chính Sách CSKH FECON", fontWeight = FontWeight.Bold, color = Color(0xFFE2E8F0), fontSize = 13.sp)
+                            Text("Tổng điểm: ${df.format(cust.totalScore)} / 100đ", fontWeight = FontWeight.Bold, color = Color(0xFF38BDF8), fontSize = 12.sp)
+                        }
+
+                        if (cust.vetoApplied) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Surface(color = Color(0xFF7F1D1D), shape = RoundedCornerShape(6.dp)) {
+                                Text(
+                                    text = "⚠️ Áp dụng quy tắc phủ quyết: Năng lực tài chính & dòng tiền = 0 điểm. Giới hạn tối đa Hạng Vàng.",
+                                    color = Color(0xFFFCA5A5),
+                                    fontSize = 11.sp,
+                                    modifier = Modifier.padding(6.dp)
+                                )
+                            }
+                        }
+
+                        if (cust.isSpecialElevated) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Surface(color = Color(0xFF581C87), shape = RoundedCornerShape(6.dp)) {
+                                Text(
+                                    text = "⭐ Phê duyệt đặc cách: Chủ tịch HĐQT / TGĐ phê duyệt nâng Hạng Kim Cương.",
+                                    color = Color(0xFFE9D5FF),
+                                    fontSize = 11.sp,
+                                    modifier = Modifier.padding(6.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("• Ngân sách năm (Phụ lục 03): ${currencyDf.format(cust.annualCareBudget)} VNĐ", color = Color(0xFF38BDF8), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        Text("• Đã sử dụng: ${currencyDf.format(cust.spentCareBudget)} VNĐ", color = Color(0xFFCBD5E1), fontSize = 12.sp)
+                        Text("• Lãnh đạo phụ trách: ${cust.inChargeExecutive}", color = Color(0xFFCBD5E1), fontSize = 12.sp)
+                        Text("• Tần suất chăm sóc: ${cust.careFrequency}", color = Color(0xFFCBD5E1), fontSize = 12.sp)
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Bảng điểm 5 tiêu chí:", fontWeight = FontWeight.Bold, color = Color(0xFF94A3B8), fontSize = 11.sp)
+                        Text("1. Quy mô Đối tác/DA: ${df.format(cust.scoreScaleProject)} / 15đ", color = Color(0xFFCBD5E1), fontSize = 11.sp)
+                        Text("2. Loại hình & Phù hợp: ${df.format(cust.scoreFeconFit)} / 25đ", color = Color(0xFFCBD5E1), fontSize = 11.sp)
+                        Text("3. Năng lực TC & Dòng tiền: ${df.format(cust.scoreFinancialCapacity)} / 25đ (Tiêu chí phủ quyết)", color = if (cust.scoreFinancialCapacity == 0.0) Color(0xFFF87171) else Color(0xFFCBD5E1), fontSize = 11.sp)
+                        Text("4. Lịch sử HT & Thanh toán: ${df.format(cust.scoreCooperationHistory)} / 20đ", color = Color(0xFFCBD5E1), fontSize = 11.sp)
+                        Text("5. Năng lực quản lý: ${df.format(cust.scoreManagementCapacity)} / 15đ", color = Color(0xFFCBD5E1), fontSize = 11.sp)
+                    }
+                }
+
                 // Section: Personal Decision Maker Card
                 Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)), shape = RoundedCornerShape(10.dp)) {
                     Column(modifier = Modifier.padding(12.dp)) {
@@ -326,13 +579,21 @@ fun CustomerDetailDialog(
                     }
                 }
 
-                // Action to log VIP care
+                // Actions: Assess Policy & Log Care
                 Button(
-                    onClick = onLogCare,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C3AED)),
+                    onClick = onAssess,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0891B2)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("🤝 Ghi Nhận Chăm Sóc VIP")
+                    Text("🏆 Chấm Điểm & Phân Hạng FECON", fontWeight = FontWeight.Bold)
+                }
+
+                Button(
+                    onClick = onLogCare,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA580C)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("🤝 Ghi Nhận Lịch Chăm Sóc Khách Hàng", fontWeight = FontWeight.Bold)
                 }
             }
         },
@@ -344,6 +605,316 @@ fun CustomerDetailDialog(
 }
 
 @Composable
+fun CustomerAssessDialog(
+    cust: CustomerItem,
+    onDismiss: () -> Unit,
+    onAssessed: () -> Unit
+) {
+    val coroutineScope = rememberCoroutineScope()
+    var scoreScale by remember { mutableStateOf(cust.scoreScaleProject) }
+    var scoreFit by remember { mutableStateOf(cust.scoreFeconFit) }
+    var scoreFinance by remember { mutableStateOf(cust.scoreFinancialCapacity) }
+    var scoreHistory by remember { mutableStateOf(cust.scoreCooperationHistory) }
+    var scoreMgmt by remember { mutableStateOf(cust.scoreManagementCapacity) }
+    var isSpecialElevated by remember { mutableStateOf(cust.isSpecialElevated) }
+    var notes by remember { mutableStateOf(cust.strategicNotes) }
+    var isSaving by remember { mutableStateOf(false) }
+    var errText by remember { mutableStateOf<String?>(null) }
+
+    // Live Evaluation based on FECON-CSCSKH/ĐT-01
+    val totalScore = scoreScale + scoreFit + scoreFinance + scoreHistory + scoreMgmt
+    val isVeto = (scoreFinance == 0.0)
+    val calculatedTier = if (isSpecialElevated) {
+        "DIAMOND"
+    } else if (totalScore >= 80.0) {
+        if (isVeto) "GOLD" else "DIAMOND"
+    } else if (totalScore >= 50.0) {
+        "GOLD"
+    } else {
+        "SILVER"
+    }
+
+    val df = DecimalFormat("#,##0.#")
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text("Chấm Điểm & Phân Hạng FECON", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
+                Text("Đối tác: ${cust.name} (${cust.code})", color = Color(0xFF38BDF8), fontSize = 12.sp)
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Live Assessment Summary Box
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.border(
+                        1.dp,
+                        when (calculatedTier) {
+                            "DIAMOND" -> Color(0xFF0891B2)
+                            "GOLD" -> Color(0xFFD97706)
+                            else -> Color(0xFF64748B)
+                        },
+                        RoundedCornerShape(10.dp)
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Tổng điểm: ${df.format(totalScore)} / 100đ", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 14.sp)
+                            Surface(
+                                color = when (calculatedTier) {
+                                    "DIAMOND" -> Color(0xFF0891B2)
+                                    "GOLD" -> Color(0xFFD97706)
+                                    else -> Color(0xFF64748B)
+                                },
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = when (calculatedTier) {
+                                        "DIAMOND" -> "💎 KIM CƯƠNG"
+                                        "GOLD" -> "🥇 VÀNG"
+                                        else -> "🥈 BẠC"
+                                    },
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = when (calculatedTier) {
+                                "DIAMOND" -> "• Ngân sách: 80 Triệu VNĐ/năm | Chủ tịch HĐQT / TGĐ phụ trách"
+                                "GOLD" -> "• Ngân sách: 20 Triệu VNĐ/năm | TGĐ / SBU Leader phụ trách"
+                                else -> "• Ngân sách: 5 Triệu VNĐ/năm | SBU Leader / GĐKD phụ trách"
+                            },
+                            color = Color(0xFF94A3B8),
+                            fontSize = 11.sp
+                        )
+
+                        if (isVeto && !isSpecialElevated) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Surface(color = Color(0xFF7F1D1D), shape = RoundedCornerShape(4.dp)) {
+                                Text(
+                                    text = "⚠️ QUY TẮC PHỦ QUYẾT: Tiêu chí 3 (Tài chính & dòng tiền) = 0 điểm. Khách hàng bị hạ tối đa Hạng Vàng dù tổng điểm đạt ${df.format(totalScore)}đ!",
+                                    color = Color(0xFFFCA5A5),
+                                    fontSize = 10.sp,
+                                    modifier = Modifier.padding(6.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // TC 1: Quy mô Đối tác / Dự án (Max 15)
+                CriteriaSection(
+                    title = "1. Quy mô Đối tác / Dự án (Tối đa 15đ)",
+                    options = listOf(
+                        15.0 to "Tốt (15đ) - DA cấp đặc biệt / CĐT hàng đầu",
+                        7.5 to "TB (7.5đ) - DA cấp I/II, quy mô khá",
+                        0.0 to "Tiềm năng (0đ) - Quy mô vừa & nhỏ"
+                    ),
+                    selectedScore = scoreScale,
+                    onSelect = { scoreScale = it }
+                )
+
+                // TC 2: Loại hình & Phù hợp FECON (Max 25)
+                CriteriaSection(
+                    title = "2. Loại hình ĐT & Phù hợp FECON (Tối đa 25đ)",
+                    options = listOf(
+                        25.0 to "Tốt (25đ) - Hạ tầng/Nền móng/Ngầm/NL trọng tâm",
+                        12.5 to "TB (12.5đ) - Xây dựng hỗn hợp/Dân dụng",
+                        0.0 to "Chưa phù hợp (0đ) - Ngoài thế mạnh FECON"
+                    ),
+                    selectedScore = scoreFit,
+                    onSelect = { scoreFit = it }
+                )
+
+                // TC 3: Năng lực TC & Dòng tiền (Max 25) - VETO RULE!
+                CriteriaSection(
+                    title = "3. Năng lực TC & Dòng tiền (Tối đa 25đ) ⚠️ TIÊU CHÍ PHỦ QUYẾT",
+                    options = listOf(
+                        25.0 to "Tốt (25đ) - Vốn rõ ràng, bảo lãnh mạnh, thanh toán chuẩn",
+                        12.5 to "TB (12.5đ) - Phụ thuộc tín dụng, giải ngân định kỳ",
+                        0.0 to "Rủi ro (0đ) - Nợ đọng, dòng tiền yếu [PHỦ QUYẾT TỐI ĐA VÀNG]"
+                    ),
+                    selectedScore = scoreFinance,
+                    onSelect = { scoreFinance = it },
+                    isVetoNotice = true
+                )
+
+                // TC 4: Lịch sử hợp tác & Thanh toán (Max 20)
+                CriteriaSection(
+                    title = "4. Lịch sử hợp tác & Thanh toán (Tối đa 20đ)",
+                    options = listOf(
+                        20.0 to "Tốt (20đ) - Đã hợp tác nhiều gói thầu, uy tín cao",
+                        10.0 to "TB (10đ) - Từng chậm tiến độ TT nhưng đã khắc phục",
+                        0.0 to "Mới (0đ) - Chưa từng hợp tác với FECON"
+                    ),
+                    selectedScore = scoreHistory,
+                    onSelect = { scoreHistory = it }
+                )
+
+                // TC 5: Năng lực quản lý & Chuyên nghiệp (Max 15)
+                CriteriaSection(
+                    title = "5. Năng lực QLDA & Tính chuyên nghiệp (Tối đa 15đ)",
+                    options = listOf(
+                        15.0 to "Tốt (15đ) - Ban QLDA chuyên nghiệp, nghiệm thu nhanh",
+                        7.5 to "TB (7.5đ) - Thủ tục hành chính chậm, hay đổi NS",
+                        0.0 to "Kém (0đ) - Phức tạp, khó phối hợp công trường"
+                    ),
+                    selectedScore = scoreMgmt,
+                    onSelect = { scoreMgmt = it }
+                )
+
+                // Special Elevation Checkbox
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isSpecialElevated = !isSpecialElevated }
+                ) {
+                    Checkbox(
+                        checked = isSpecialElevated,
+                        onCheckedChange = { isSpecialElevated = it },
+                        colors = CheckboxDefaults.colors(checkedColor = Color(0xFF7C3AED))
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "⭐ Phê duyệt đặc cách của CT HĐQT / TGĐ (Nâng Hạng Kim Cương)",
+                        color = if (isSpecialElevated) Color(0xFFC084FC) else Color(0xFF94A3B8),
+                        fontSize = 12.sp,
+                        fontWeight = if (isSpecialElevated) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+
+                // Strategic Notes
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("Ghi chú đánh giá / Lý do phân hạng") },
+                    placeholder = { Text("VD: Đối tác chiến lược tiềm năng cao cho dự án điện gió...", color = Color.Gray) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = Color(0xFF0891B2)
+                    )
+                )
+
+                errText?.let {
+                    Text(it, color = Color(0xFFF87171), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    isSaving = true
+                    errText = null
+                    coroutineScope.launch {
+                        val res = ApiClient.assessCustomer(
+                            customerId = cust.id,
+                            scoreScale = scoreScale,
+                            scoreFit = scoreFit,
+                            scoreFinance = scoreFinance,
+                            scoreHistory = scoreHistory,
+                            scoreMgmt = scoreMgmt,
+                            isSpecialElevated = isSpecialElevated,
+                            notes = notes.trim()
+                        )
+                        isSaving = false
+                        if (res.isSuccess) {
+                            onAssessed()
+                        } else {
+                            errText = res.exceptionOrNull()?.message ?: "Lỗi khi lưu đánh giá"
+                        }
+                    }
+                },
+                enabled = !isSaving,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0891B2))
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
+                } else {
+                    Text("Lưu Đánh Giá", fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Hủy", color = Color.LightGray) }
+        },
+        containerColor = Color(0xFF1E293B)
+    )
+}
+
+@Composable
+fun CriteriaSection(
+    title: String,
+    options: List<Pair<Double, String>>,
+    selectedScore: Double,
+    onSelect: (Double) -> Unit,
+    isVetoNotice: Boolean = false
+) {
+    Column {
+        Text(
+            text = title,
+            color = if (isVetoNotice) Color(0xFFFBBF24) else Color(0xFFE2E8F0),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            options.forEach { (score, label) ->
+                val isSelected = (selectedScore == score)
+                Surface(
+                    color = if (isSelected) Color(0xFF0284C7) else Color(0xFF0F172A),
+                    shape = RoundedCornerShape(6.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onSelect(score) }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = isSelected,
+                            onClick = { onSelect(score) },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = Color.White,
+                                unselectedColor = Color.Gray
+                            ),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = label,
+                            color = if (isSelected) Color.White else Color(0xFFCBD5E1),
+                            fontSize = 11.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun LogCareDialog(
     customer: CustomerItem,
     currentUser: UserSession,
@@ -352,29 +923,63 @@ fun LogCareDialog(
 ) {
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
+    var costText by remember { mutableStateOf("") }
     var activityType by remember { mutableStateOf("EXECUTIVE_MEETING") }
     var isSaving by remember { mutableStateOf(false) }
+    var errText by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     val types = listOf(
-        "EXECUTIVE_MEETING" to "Họp Cấp Cao",
-        "DINNER_NETWORKING" to "Tiệc Ngoại Giao",
-        "GIFT_DELIVERY" to "Tặng Quà",
-        "CALL_DISCUSS" to "Điện Đàm"
+        "EXECUTIVE_MEETING" to "💼 Họp Cấp Cao",
+        "DINNER_NETWORKING" to "🍷 Tiệc Giao Lưu",
+        "GIFT_DELIVERY" to "🎁 Quà Tri Ân",
+        "CALL_DISCUSS" to "📞 Điện Đàm",
+        "EVENT_INVITATION" to "🏛️ Mời Sự Kiện"
     )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Ghi Nhật Ký Chăm Sóc VIP", color = Color.White, fontWeight = FontWeight.Bold) },
+        title = { Text("Ghi Lịch Chăm Sóc Khách Hàng", color = Color.White, fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Khách hàng: ${customer.name}", color = Color(0xFF38BDF8), fontSize = 13.sp)
-                Text("Đại diện: ${customer.keyDecisionMaker}", color = Color.White, fontSize = 12.sp)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
+                Text("Khách hàng: ${customer.name}", color = Color(0xFF38BDF8), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text("Đại diện: ${customer.keyDecisionMaker} (${customer.decisionMakerRole})", color = Color.White, fontSize = 12.sp)
+
+                // Type Chips
+                Text("Hình thức chăm sóc:", color = Color(0xFF94A3B8), fontSize = 11.sp)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(types) { (key, label) ->
+                        FilterChip(
+                            selected = (activityType == key),
+                            onClick = { activityType = key },
+                            label = { Text(label, fontSize = 10.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFFEA580C),
+                                selectedLabelColor = Color.White,
+                                containerColor = Color(0xFF0F172A),
+                                labelColor = Color(0xFF94A3B8)
+                            )
+                        )
+                    }
+                }
 
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Tiêu đề sự kiện chăm sóc") },
+                    label = { Text("Tiêu đề sự kiện chăm sóc (*)") },
+                    placeholder = { Text("VD: Bữa tối thân mật cùng Chủ tịch...", color = Color.Gray) },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                )
+
+                OutlinedTextField(
+                    value = costText,
+                    onValueChange = { costText = it },
+                    label = { Text("Chi phí thực hiện (VNĐ)") },
+                    placeholder = { Text("VD: 5000000 (Khấu trừ vào ngân sách năm)", color = Color.Gray) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
                 )
@@ -382,9 +987,14 @@ fun LogCareDialog(
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    label = { Text("Nội dung chi tiết trao đổi") },
+                    label = { Text("Nội dung chi tiết trao đổi & Cam kết") },
+                    minLines = 3,
                     colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
                 )
+
+                errText?.let {
+                    Text(it, color = Color(0xFFF87171), fontSize = 12.sp)
+                }
             }
         },
         confirmButton = {
@@ -392,6 +1002,8 @@ fun LogCareDialog(
                 onClick = {
                     if (title.isNotBlank()) {
                         isSaving = true
+                        errText = null
+                        val parsedCost = costText.replace(",", "").replace(".", "").trim().toDoubleOrNull() ?: 0.0
                         scope.launch {
                             val res = ApiClient.logCareActivity(
                                 customerId = customer.id,
@@ -400,20 +1012,24 @@ fun LogCareDialog(
                                 title = title.trim(),
                                 content = content.trim(),
                                 occurredAt = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date()),
-                                leaderInCharge = currentUser.fullName
+                                leaderInCharge = currentUser.fullName,
+                                outcomeStatus = "SUCCESS",
+                                cost = parsedCost
                             )
                             isSaving = false
                             if (res.isSuccess) {
                                 onLogged()
+                            } else {
+                                errText = res.exceptionOrNull()?.message ?: "Lỗi ghi nhật ký"
                             }
                         }
                     }
                 },
                 enabled = !isSaving && title.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA580C))
             ) {
                 if (isSaving) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
-                else Text("Lưu Nhật Ký")
+                else Text("Lưu Lịch Chăm Sóc", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -523,7 +1139,7 @@ fun AddCustomerDialog(
                             val res = ApiClient.createCustomer(
                                 name = name.trim(),
                                 sbu = sbu,
-                                tier = "STRATEGIC_VIP",
+                                tier = "GOLD",
                                 keyDecisionMaker = keyPerson.trim(),
                                 role = role.trim(),
                                 phone = phone.trim(),
@@ -544,10 +1160,10 @@ fun AddCustomerDialog(
                     }
                 },
                 enabled = !isSaving && name.isNotBlank() && keyPerson.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA580C))
             ) {
                 if (isSaving) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
-                else Text("Lưu Khách Hàng")
+                else Text("Lưu Khách Hàng", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

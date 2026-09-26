@@ -165,13 +165,39 @@ def get_executive_metrics(sbu: Optional[str] = Query(None)):
         act_params.append(sbu)
     act_query += " ORDER BY a.occurred_at DESC, a.id DESC LIMIT 5"
     cursor.execute(act_query, act_params)
-    recent_activities = [dict(r) for r in cursor.fetchall()]
+    # 8. Customer Tiers Summary & Care Budget
+    tier_query = "SELECT tier, COUNT(*), COALESCE(SUM(annual_care_budget), 0), COALESCE(SUM(spent_care_budget), 0) FROM customers" + ("" if is_all else " WHERE sbu = ?") + " GROUP BY tier"
+    cursor.execute(tier_query, [] if is_all else [sbu])
+    diamond_count = 0
+    gold_count = 0
+    silver_count = 0
+    total_care_budget = 0.0
+    total_care_spent = 0.0
+
+    for r in cursor.fetchall():
+        t = r[0]
+        cnt = r[1]
+        budget = r[2]
+        spent = r[3]
+        total_care_budget += budget
+        total_care_spent += spent
+        if t in ('DIAMOND', 'STRATEGIC_VIP'):
+            diamond_count += cnt
+        elif t in ('GOLD', 'CLOSE_PARTNER'):
+            gold_count += cnt
+        elif t in ('SILVER', 'PROSPECT'):
+            silver_count += cnt
 
     conn.close()
 
     return {
         "overview": {
             "total_customers": total_customers,
+            "diamond_count": diamond_count,
+            "gold_count": gold_count,
+            "silver_count": silver_count,
+            "total_care_budget": total_care_budget,
+            "total_care_spent": total_care_spent,
             "total_projects": total_projects,
             "total_contract_value": total_contract_value,
             "total_paid_amount": total_paid_amount,

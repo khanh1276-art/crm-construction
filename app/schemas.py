@@ -48,7 +48,7 @@ class CustomerCreate(BaseModel):
     code: Optional[str] = None
     name: str
     sbu: str  # SBU1 to SBU5
-    tier: str = "STRATEGIC_VIP"  # STRATEGIC_VIP, CLOSE_PARTNER, PROSPECT
+    tier: str = "GOLD"  # DIAMOND (Kim Cương), GOLD (Vàng), SILVER (Bạc)
     segment: str = "B2B"  # B2B, B2G, FDI
     tax_code: Optional[str] = None
     phone: Optional[str] = None
@@ -63,9 +63,31 @@ class CustomerCreate(BaseModel):
     relationship_status: str = "EXCELLENT"
     strategic_notes: Optional[str] = None
     reused_from_id: Optional[int] = None # If reused from existing customer
+    # FECON 5 Criteria Assessment & Budget Limits
+    score_scale_project: Optional[float] = 15.0
+    score_fecon_fit: Optional[float] = 25.0
+    score_financial_capacity: Optional[float] = 25.0
+    score_cooperation_history: Optional[float] = 20.0
+    score_management_capacity: Optional[float] = 15.0
+    total_score: Optional[float] = 100.0
+    is_special_elevated: Optional[int] = 0
+    veto_applied: Optional[int] = 0
+    annual_care_budget: Optional[float] = 80000000.0
+    spent_care_budget: Optional[float] = 0.0
+    in_charge_executive: Optional[str] = 'Chủ tịch / TGĐ trực tiếp phụ trách'
+    care_frequency: Optional[str] = '1 tháng / lần'
 
 class CustomerUpdate(CustomerCreate):
     pass
+
+class CustomerAssessRequest(BaseModel):
+    score_scale_project: float # Max 15
+    score_fecon_fit: float # Max 25
+    score_financial_capacity: float # Max 25 (TIÊU CHÍ PHỦ QUYẾT: nếu 0 -> tối đa Hạng Vàng)
+    score_cooperation_history: float # Max 20
+    score_management_capacity: float # Max 15
+    is_special_elevated: bool = False # CT HĐQT / TGĐ đặc cách lên Kim Cương
+    strategic_notes: Optional[str] = None
 
 # --- Pipeline Bid Schemas ---
 class BidCreate(BaseModel):
@@ -132,6 +154,7 @@ class CareActivityCreate(BaseModel):
     occurred_at: str
     leader_in_charge: str
     outcome_status: str = "SUCCESS"
+    cost: Optional[float] = 0.0 # Chi phí tiếp khách / quà tặng phát sinh thực tế
 
 # --- Executive Message ---
 class SendExecutiveMessageRequest(BaseModel):

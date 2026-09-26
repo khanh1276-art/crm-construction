@@ -473,12 +473,16 @@
             <option value="SBU5">SBU 5 - Cảng biển và biến đổi khí hậu</option>
           </select>
 
-          <select id="cust-filter-tier" onchange="loadCustomers()" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none font-semibold text-slate-700">
-            <option value="">Tất cả hạng quan hệ</option>
-            <option value="STRATEGIC_VIP">⭐ Đối tác Chiến lược VIP</option>
-            <option value="CLOSE_PARTNER">Khách hàng thân thiết</option>
-            <option value="PROSPECT">Đối tác tiềm năng</option>
+          <select id="cust-filter-tier" onchange="loadCustomers()" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none font-bold text-slate-700">
+            <option value="">Tất cả hạng CSKH</option>
+            <option value="DIAMOND">💎 Hạng Kim Cương (≥ 80đ / 80M/năm)</option>
+            <option value="GOLD">🥇 Hạng Vàng (50-79.9đ / 20M/năm)</option>
+            <option value="SILVER">🥈 Hạng Bạc (&lt; 50đ / 5M/năm)</option>
           </select>
+
+          <button onclick="openPolicyModal()" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg font-black transition flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-file-contract text-amber-600"></i> Chính Sách CSKH FECON (CSCSKH/ĐT-01)
+          </button>
 
           <div id="cust-permission-hint" class="ml-auto text-slate-400 text-[11px] italic">
             <!-- Contextual note about user privileges -->
@@ -493,10 +497,10 @@
                 <tr>
                   <th class="p-3.5">Mã & Đối Tác / Chủ Đầu Tư</th>
                   <th class="p-3.5">Khối SBU</th>
-                  <th class="p-3.5">Lãnh Đạo Then Chốt (Key Person)</th>
-                  <th class="p-3.5">Dự Án / Giá Trị Hợp Đồng</th>
-                  <th class="p-3.5">Sinh Nhật / Ngày Thành Lập</th>
-                  <th class="p-3.5">Mức Thân Thiết</th>
+                  <th class="p-3.5">Lãnh Đạo Then Chốt</th>
+                  <th class="p-3.5">Phân Hạng & Điểm FECON</th>
+                  <th class="p-3.5">Ngân Sách & Chăm Sóc CSKH</th>
+                  <th class="p-3.5">Dự Án / Giá Trị HĐ</th>
                   <th class="p-3.5 text-right">Quyền & Thao Tác</th>
                 </tr>
               </thead>
@@ -853,11 +857,11 @@
             <input type="text" id="cust-tax" oninput="triggerDuplicateScan()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono font-bold" placeholder="VD: 0312567890">
           </div>
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Hạng quan hệ</label>
+            <label class="block font-bold text-slate-700 mb-1">Hạng CSKH FECON</label>
             <select id="cust-tier" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold">
-              <option value="STRATEGIC_VIP">⭐ Đối tác Chiến lược VIP</option>
-              <option value="CLOSE_PARTNER">Khách hàng thân thiết</option>
-              <option value="PROSPECT">Đối tác tiềm năng</option>
+              <option value="DIAMOND">💎 Hạng Kim Cương (≥ 80đ / 80M/năm)</option>
+              <option value="GOLD">🥇 Hạng Vàng (50-79.9đ / 20M/năm)</option>
+              <option value="SILVER">🥈 Hạng Bạc (&lt; 50đ / 5M/năm)</option>
             </select>
           </div>
           <div>
@@ -913,6 +917,343 @@
           <button type="submit" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl font-bold">Lưu Thông Tin</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: FECON Customer Care & Partner Policy Reference -->
+  <div id="modal-fecon-policy" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <span class="text-xs font-black text-amber-600 uppercase tracking-widest">Mã Tài Liệu: FECON-CSCSKH/ĐT-01</span>
+          <h3 class="font-black text-slate-900 text-lg">Chính Sách Chăm Sóc Khách Hàng & Đối Tác Chiến Lược FECON</h3>
+        </div>
+        <button onclick="closeModal('modal-fecon-policy')" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+      </div>
+
+      <!-- Policy Tiers Overview -->
+      <div class="space-y-3">
+        <h4 class="font-black text-slate-900 text-sm uppercase flex items-center gap-2">
+          <i class="fa-solid fa-crown text-amber-500"></i> Phân Loại 3 Hạng Khách Hàng & Hạn Mức Ngân Sách CSKH Thường Niên (Phụ Lục 03)
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          <!-- Diamond Tier -->
+          <div class="p-4 rounded-2xl border-2 border-cyan-400 bg-gradient-to-b from-cyan-50/70 to-white shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="px-2.5 py-1 bg-cyan-600 text-white font-black text-xs rounded-lg uppercase tracking-wider">💎 Hạng Kim Cương</span>
+                <span class="font-black text-cyan-800 text-xs">≥ 80 Điểm</span>
+              </div>
+              <div class="mt-3 text-2xl font-black text-cyan-900">80.000.000 <span class="text-xs font-bold text-slate-500">VNĐ/năm</span></div>
+              <div class="text-[11px] font-bold text-slate-600 mt-2 space-y-1">
+                <div><i class="fa-solid fa-user-tie text-cyan-600 mr-1"></i> Phụ trách: <b>Chủ tịch HĐQT / TGĐ</b></div>
+                <div><i class="fa-solid fa-clock text-cyan-600 mr-1"></i> Tần suất tiếp: <b>1 tháng / lần</b></div>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-2 bg-white/80 p-2 rounded-lg border border-cyan-100">
+                <b>Định mức chi:</b> Quà Tết cao cấp 10M, Quà sinh nhật Lãnh đạo CĐT 5M, Hoa ngày truyền thống 2M, Tiệc networking chiến lược 50-60M/năm.
+              </p>
+            </div>
+            <div class="text-[10px] text-cyan-700 font-semibold mt-2 italic">Dành cho Đối tác chiến lược vĩ mô, chuỗi đại dự án.</div>
+          </div>
+
+          <!-- Gold Tier -->
+          <div class="p-4 rounded-2xl border-2 border-amber-400 bg-gradient-to-b from-amber-50/70 to-white shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="px-2.5 py-1 bg-amber-500 text-slate-950 font-black text-xs rounded-lg uppercase tracking-wider">🥇 Hạng Vàng</span>
+                <span class="font-black text-amber-800 text-xs">50 - 79.9 Điểm</span>
+              </div>
+              <div class="mt-3 text-2xl font-black text-amber-900">20.000.000 <span class="text-xs font-bold text-slate-500">VNĐ/năm</span></div>
+              <div class="text-[11px] font-bold text-slate-600 mt-2 space-y-1">
+                <div><i class="fa-solid fa-user-tie text-amber-600 mr-1"></i> Phụ trách: <b>TGĐ / SBU Leader</b></div>
+                <div><i class="fa-solid fa-clock text-amber-600 mr-1"></i> Tần suất tiếp: <b>3 tháng / lần</b></div>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-2 bg-white/80 p-2 rounded-lg border border-amber-100">
+                <b>Định mức chi:</b> Quà Tết 5M, Quà sinh nhật 2M, Hoa chúc mừng 1M, Tiệc giao lưu dự án 12M/năm.
+              </p>
+            </div>
+            <div class="text-[10px] text-amber-700 font-semibold mt-2 italic">Dành cho Khách hàng quan trọng, có dự án tiềm năng đều đặn.</div>
+          </div>
+
+          <!-- Silver Tier -->
+          <div class="p-4 rounded-2xl border-2 border-slate-300 bg-gradient-to-b from-slate-50 to-white shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="px-2.5 py-1 bg-slate-600 text-white font-black text-xs rounded-lg uppercase tracking-wider">🥈 Hạng Bạc</span>
+                <span class="font-black text-slate-700 text-xs">&lt; 50 Điểm</span>
+              </div>
+              <div class="mt-3 text-2xl font-black text-slate-800">5.000.000 <span class="text-xs font-bold text-slate-500">VNĐ/năm</span></div>
+              <div class="text-[11px] font-bold text-slate-600 mt-2 space-y-1">
+                <div><i class="fa-solid fa-user-tie text-slate-600 mr-1"></i> Phụ trách: <b>SBU Leader / GĐKD</b></div>
+                <div><i class="fa-solid fa-clock text-slate-600 mr-1"></i> Tần suất tiếp: <b>Theo sự vụ thực tế</b></div>
+              </div>
+              <p class="text-[11px] text-slate-600 mt-2 bg-white/80 p-2 rounded-lg border border-slate-100">
+                <b>Định mức chi:</b> Quà Tết tiêu chuẩn 2M, Hoa chúc mừng 1M, Chi phí tiếp khách theo vụ việc 2M/năm.
+              </p>
+            </div>
+            <div class="text-[10px] text-slate-500 font-semibold mt-2 italic">Đối tác mới tiếp cận, dự án sự vụ hoặc qua CTV.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Critical Rules Alert Box -->
+      <div class="p-4 rounded-xl border border-rose-300 bg-rose-50/80 space-y-2 text-xs">
+        <div class="font-black text-rose-900 flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-rose-600 text-sm"></i>
+          <span>QUY TẮC ĐẶC THÙ TRONG PHÂN HẠNG KHÁCH HÀNG FECON:</span>
+        </div>
+        <ul class="list-disc list-inside text-rose-800 space-y-1 pl-1">
+          <li><b>⚠️ Tiêu Chí Phủ Quyết (Veto Rule):</b> Tại Tiêu chí 3 (Năng lực tài chính & dòng tiền), nếu đối tác ở mức <b>0 điểm (Tiềm năng / Rủi ro)</b>, đối tác <b>BỊ GIỚI HẠN TỐI ĐA Ở HẠNG VÀNG</b> kể cả tổng điểm các tiêu chí còn lại $\ge 80$ điểm. Quy tắc này bắt buộc nhằm kiểm soát rủi ro thu hồi công nợ!</li>
+          <li><b>👑 Quyền Đặc Cách Lãnh Đạo:</b> <b>Chủ tịch HĐQT hoặc Tổng Giám Đốc</b> có thẩm quyền phê duyệt đặc cách nâng Hạng Kim Cương cho đối tác chiến lược vĩ mô bất kể điểm số đánh giá.</li>
+        </ul>
+      </div>
+
+      <!-- 5 Assessment Criteria Breakdown -->
+      <div class="space-y-3">
+        <h4 class="font-black text-slate-900 text-sm uppercase flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-blue-600"></i> Bảng 5 Tiêu Chí Đánh Giá Phân Hạng (Thang Điểm 100 - Phụ Lục 01)
+        </h4>
+        <div class="overflow-x-auto border border-slate-200 rounded-xl">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+              <tr>
+                <th class="p-3">Tiêu Chí Đánh Giá</th>
+                <th class="p-3">Trọng Số</th>
+                <th class="p-3">Tốt (Điểm Tối Đa)</th>
+                <th class="p-3">Trung Bình</th>
+                <th class="p-3">Tiềm Năng (0đ)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr>
+                <td class="p-3 font-bold text-slate-900">1. Quy mô Đối tác / Dự án</td>
+                <td class="p-3 font-bold text-blue-600">15đ</td>
+                <td class="p-3 text-slate-700"><b>15đ:</b> Doanh thu > 5.000 Tỷ hoặc Dự án > 1.000 Tỷ</td>
+                <td class="p-3 text-slate-700"><b>7.5đ:</b> Doanh thu 1.000-5.000 Tỷ hoặc Dự án 200-1.000 Tỷ</td>
+                <td class="p-3 text-slate-500"><b>0đ:</b> Quy mô & Dự án &lt; 200 Tỷ</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-slate-900">2. Loại hình đầu tư / Phù hợp FECON</td>
+                <td class="p-3 font-bold text-blue-600">25đ</td>
+                <td class="p-3 text-slate-700"><b>25đ:</b> Lĩnh vực lõi (Nền móng ngầm, Metro, Cảng biển, Năng lượng)</td>
+                <td class="p-3 text-slate-700"><b>12.5đ:</b> Xây dựng dân dụng, công nghiệp thông thường</td>
+                <td class="p-3 text-slate-500"><b>0đ:</b> Không thuộc định hướng công nghệ FECON</td>
+              </tr>
+              <tr class="bg-rose-50/50">
+                <td class="p-3 font-bold text-rose-900">3. Năng lực tài chính & Dòng tiền <span class="bg-rose-200 text-rose-800 text-[10px] px-1.5 py-0.5 rounded font-black">PHỦ QUYẾT</span></td>
+                <td class="p-3 font-bold text-rose-700">25đ</td>
+                <td class="p-3 text-slate-700"><b>25đ:</b> Tài chính rất mạnh, dòng tiền FDI / ODA / Ngân sách / Vốn tự có</td>
+                <td class="p-3 text-slate-700"><b>12.5đ:</b> Tài chính ổn định, phụ thuộc vốn vay hoặc dòng tiền bán hàng</td>
+                <td class="p-3 text-rose-700 font-bold"><b>0đ:</b> Dòng tiền yếu, rủi ro nợ đọng <span class="underline">(Kích hoạt Veto)</span></td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-slate-900">4. Lịch sử hợp tác & Thanh toán</td>
+                <td class="p-3 font-bold text-blue-600">20đ</td>
+                <td class="p-3 text-slate-700"><b>20đ:</b> Đã hợp tác thành công, thanh toán đúng hạn, hỗ trợ tốt</td>
+                <td class="p-3 text-slate-700"><b>10đ:</b> Đã hợp tác nhưng chậm thanh toán hoặc đối tác mới uy tín</td>
+                <td class="p-3 text-slate-500"><b>0đ:</b> Chưa kiểm chứng hoặc từng nợ quá hạn kéo dài</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-slate-900">5. Năng lực quản lý & Chuyên nghiệp</td>
+                <td class="p-3 font-bold text-blue-600">15đ</td>
+                <td class="p-3 text-slate-700"><b>15đ:</b> Tiêu chuẩn HSE cao, bộ máy chuyên nghiệp, quyết định nhanh</td>
+                <td class="p-3 text-slate-700"><b>7.5đ:</b> Bộ máy vừa phải, quy trình duyệt nhiều cấp</td>
+                <td class="p-3 text-slate-500"><b>0đ:</b> Bộ máy cồng kềnh, khó tiếp cận người quyết định</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end pt-3 border-t border-slate-100">
+        <button onclick="closeModal('modal-fecon-policy')" class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs">Đóng Văn Bản</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Customer Assessment & Tiering Interactive Calculator (5 Tiêu Chí FECON) -->
+  <div id="modal-customer-assessment" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <span class="text-[11px] font-bold text-amber-600 uppercase">Đánh Giá & Phân Hạng Đối Tác Theo Chính Sách FECON</span>
+          <h3 id="assess-modal-customer-name" class="font-black text-slate-900 text-base">Tập đoàn Masterise Homes</h3>
+        </div>
+        <button onclick="closeModal('modal-customer-assessment')" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+      </div>
+
+      <!-- Live Calculation Result Card -->
+      <div id="assess-live-result-box" class="p-4 rounded-2xl border-2 border-cyan-400 bg-gradient-to-r from-cyan-50/80 via-white to-amber-50/80 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="assess-predicted-badge" class="px-3 py-1 bg-cyan-600 text-white font-black text-xs rounded-xl shadow-sm uppercase">💎 Hạng Kim Cương</span>
+            <span id="assess-veto-badge" class="hidden px-2 py-0.5 bg-rose-600 text-white text-[10px] font-black rounded-lg">⚠️ ÁP DỤNG PHỦ QUYẾT</span>
+            <span id="assess-special-badge" class="hidden px-2 py-0.5 bg-purple-600 text-white text-[10px] font-black rounded-lg">👑 ĐẶC CÁCH LÃNH ĐẠO</span>
+          </div>
+          <div class="mt-2 text-xs font-bold text-slate-700">
+            Tổng điểm: <span id="assess-total-score" class="text-lg font-black text-blue-600">100.0</span> / 100 điểm
+          </div>
+          <div id="assess-incharge-text" class="text-[11px] text-slate-500 mt-0.5">
+            Cấp phụ trách: <b>Chủ tịch HĐQT / TGĐ trực tiếp phụ trách</b>
+          </div>
+        </div>
+        <div class="text-left sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
+          <div class="text-[10px] text-slate-400 font-bold uppercase">Hạn Mức Ngân Sách CSKH Thường Niên</div>
+          <div id="assess-budget-text" class="text-xl font-black text-emerald-600">80.000.000 VNĐ</div>
+          <div id="assess-frequency-text" class="text-[11px] text-slate-600 font-semibold">Tần suất: 1 tháng / lần</div>
+        </div>
+      </div>
+
+      <!-- Red Veto Warning Banner (Shown when TC3 = 0) -->
+      <div id="assess-veto-banner" class="hidden p-3 bg-rose-50 border border-rose-300 rounded-xl text-xs text-rose-800 space-y-1">
+        <div class="font-black text-rose-900 flex items-center gap-1.5">
+          <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+          <span>Cảnh Báo Kích Hoạt Tiêu Chí Phủ Quyết (Veto Rule):</span>
+        </div>
+        <p class="text-[11px]">Năng lực tài chính & dòng tiền đang ở mức <b>0 điểm (Tiềm năng / Rủi ro)</b>. Theo quy định FECON, đối tác này bị giới hạn tối đa ở <b>Hạng Vàng</b> kể cả tổng điểm các tiêu chí khác $\ge 80$ điểm, nhằm bảo vệ an toàn công nợ!</p>
+      </div>
+
+      <!-- 5 Interactive Criteria Scorers -->
+      <div class="space-y-3.5 text-xs">
+        <input type="hidden" id="assess-customer-id">
+
+        <!-- Tiêu chí 1 -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+          <div class="flex justify-between items-center font-bold text-slate-800">
+            <span>1. Quy mô Đối tác & Dự án (Tối đa 15đ)</span>
+            <span id="label-score-c1" class="text-blue-600 font-black">15.0đ</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button type="button" onclick="setCriteriaScore(1, 15.0)" id="btn-c1-15" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Tốt (15đ)</div>
+              <div class="text-[10px] text-slate-500">Vốn/Doanh thu > 5.000T hoặc Dự án > 1.000T</div>
+            </button>
+            <button type="button" onclick="setCriteriaScore(1, 7.5)" id="btn-c1-75" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Trung bình (7.5đ)</div>
+              <div class="text-[10px] text-slate-500">Doanh thu 1.000-5.000T hoặc Dự án 200-1.000T</div>
+            </button>
+            <button type="button" onclick="setCriteriaScore(1, 0.0)" id="btn-c1-0" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Tiềm năng (0đ)</div>
+              <div class="text-[10px] text-slate-500">Quy mô nhỏ hoặc Dự án &lt; 200T</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tiêu chí 2 -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+          <div class="flex justify-between items-center font-bold text-slate-800">
+            <span>2. Loại hình đầu tư & Mức độ phù hợp FECON (Tối đa 25đ)</span>
+            <span id="label-score-c2" class="text-blue-600 font-black">25.0đ</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button type="button" onclick="setCriteriaScore(2, 25.0)" id="btn-c2-25" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Tốt (25đ)</div>
+              <div class="text-[10px] text-slate-500">Thế mạnh lõi (Móng ngầm, Metro, Cảng, Năng lượng)</div>
+            </button>
+            <button type="button" onclick="setCriteriaScore(2, 12.5)" id="btn-c2-125" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Trung bình (12.5đ)</div>
+              <div class="text-[10px] text-slate-500">Xây dựng dân dụng, công nghiệp thông thường</div>
+            </button>
+            <button type="button" onclick="setCriteriaScore(2, 0.0)" id="btn-c2-0" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Chưa phù hợp (0đ)</div>
+              <div class="text-[10px] text-slate-500">Không thuộc định hướng kỹ thuật của FECON</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tiêu chí 3 (TIÊU CHÍ PHỦ QUYẾT) -->
+        <div class="p-3 bg-rose-50/70 rounded-xl border border-rose-200 space-y-1.5">
+          <div class="flex justify-between items-center font-bold text-rose-950">
+            <span class="flex items-center gap-1.5">
+              <span>3. Năng lực tài chính & Dòng tiền</span>
+              <span class="bg-rose-200 text-rose-900 text-[9px] px-1.5 py-0.5 rounded font-black uppercase">Phủ Quyết (Veto)</span>
+            </span>
+            <span id="label-score-c3" class="text-rose-600 font-black">25.0đ</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button type="button" onclick="setCriteriaScore(3, 25.0)" id="btn-c3-25" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Tốt (25đ)</div>
+              <div class="text-[10px] text-slate-500">FDI, ODA, Ngân sách NN, Vốn tự có minh bạch</div>
+            </button>
+            <button type="button" onclick="setCriteriaScore(3, 12.5)" id="btn-c3-125" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Trung bình (12.5đ)</div>
+              <div class="text-[10px] text-slate-500">Phụ thuộc vốn vay thương mại / tiến độ bán hàng</div>
+            </button>
+            <button type="button" onclick="setCriteriaScore(3, 0.0)" id="btn-c3-0" class="p-2 border border-rose-300 rounded-lg text-left transition font-semibold bg-rose-100/50">
+              <div class="font-black text-rose-800">Tiềm năng / Rủi ro (0đ) ⚠️</div>
+              <div class="text-[10px] text-rose-700">Dòng tiền yếu, nợ đọng (Giới hạn tối đa Hạng Vàng)</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tiêu chí 4 -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+          <div class="flex justify-between items-center font-bold text-slate-800">
+            <span>4. Lịch sử hợp tác & Uy tín thanh toán (Tối đa 20đ)</span>
+            <span id="label-score-c4" class="text-blue-600 font-black">20.0đ</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button type="button" onclick="setCriteriaScore(4, 20.0)" id="btn-c4-20" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Tốt (20đ)</div>
+              <div class="text-[10px] text-slate-500">Đã hợp tác thành công, thanh toán chuẩn hạn</div>
+            </button>
+            <button type="button" onclick="setCriteriaScore(4, 10.0)" id="btn-c4-10" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Trung bình (10đ)</div>
+              <div class="text-[10px] text-slate-500">Đã hợp tác nhưng chậm TT hoặc đối tác mới uy tín</div>
+            </button>
+            <button type="button" onclick="setCriteriaScore(4, 0.0)" id="btn-c4-0" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Tiềm năng (0đ)</div>
+              <div class="text-[10px] text-slate-500">Chưa kiểm chứng hoặc có tranh chấp, nợ quá hạn</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tiêu chí 5 -->
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+          <div class="flex justify-between items-center font-bold text-slate-800">
+            <span>5. Năng lực quản lý & Tính chuyên nghiệp (Tối đa 15đ)</span>
+            <span id="label-score-c5" class="text-blue-600 font-black">15.0đ</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button type="button" onclick="setCriteriaScore(5, 15.0)" id="btn-c5-15" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Tốt (15đ)</div>
+              <div class="text-[10px] text-slate-500">Tiêu chuẩn HSE cao, chuyên nghiệp, quyết định nhanh</div>
+            </button>
+            <button type="button" onclick="setCriteriaScore(5, 7.5)" id="btn-c5-75" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Trung bình (7.5đ)</div>
+              <div class="text-[10px] text-slate-500">Quy trình duyệt nhiều cấp, cần nhiều thời gian</div>
+            </button>
+            <button type="button" onclick="setCriteriaScore(5, 0.0)" id="btn-c5-0" class="p-2 border rounded-lg text-left transition font-semibold">
+              <div class="font-black text-slate-900">Tiềm năng (0đ)</div>
+              <div class="text-[10px] text-slate-500">Bộ máy cồng kềnh, khó tiếp cận lãnh đạo then chốt</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Special Elevation Checkbox (Admin / Leadership) -->
+        <div class="p-3.5 bg-purple-50 border border-purple-200 rounded-xl flex items-center justify-between">
+          <div>
+            <label for="assess-special-elevated" class="font-black text-purple-900 flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-crown text-purple-600"></i> Phê Duyệt Đặc Cách Hạng Kim Cương
+            </label>
+            <p class="text-[10px] text-purple-700 mt-0.5">Quyền hạn của Chủ tịch HĐQT / Tổng Giám Đốc cho các đối tác chiến lược vĩ mô.</p>
+          </div>
+          <input type="checkbox" id="assess-special-elevated" onchange="recalculateLiveAssessment()" class="w-5 h-5 rounded text-purple-600 focus:ring-purple-400">
+        </div>
+
+        <!-- Strategic Notes -->
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Ghi chú kết quả thẩm định & phân hạng</label>
+          <textarea id="assess-notes" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" placeholder="Nhận xét của Hội đồng thẩm định / GĐKD phụ trách..."></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+        <button type="button" onclick="closeModal('modal-customer-assessment')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Hủy</button>
+        <button type="button" onclick="saveCustomerAssessment()" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl font-black shadow-md flex items-center gap-1.5">
+          <i class="fa-solid fa-floppy-disk"></i> Lưu Kết Quả Phân Hạng FECON
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1247,9 +1588,15 @@
           <input type="text" id="care-title" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="VD: Bữa tối thân mật với Phó TGĐ Masterise Homes...">
         </div>
 
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Lãnh đạo tham dự phía ta *</label>
-          <input type="text" id="care-leader" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="VD: Chủ Tịch HĐQT & GĐKD SBU1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Lãnh đạo tham dự phía ta *</label>
+            <input type="text" id="care-leader" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="VD: Chủ Tịch HĐQT & GĐKD SBU1">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Chi phí phát sinh (VNĐ)</label>
+            <input type="number" id="care-cost" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono font-bold" placeholder="VD: 5000000" min="0">
+          </div>
         </div>
 
         <div>

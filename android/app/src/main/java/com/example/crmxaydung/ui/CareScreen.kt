@@ -23,6 +23,7 @@ import com.example.crmxaydung.data.CareActivityItem
 import com.example.crmxaydung.data.CustomerItem
 import com.example.crmxaydung.data.UserSession
 import kotlinx.coroutines.launch
+import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -249,6 +250,16 @@ fun CareActivityCard(act: CareActivityItem, onClick: () -> Unit) {
                 )
             }
 
+            if (act.cost > 0) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Chi phí: ${DecimalFormat("#,###").format(act.cost)} VNĐ (Trừ vào NS năm)",
+                    color = Color(0xFFFDBA74),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -304,6 +315,13 @@ fun CareDetailDialog(act: CareActivityItem, onDismiss: () -> Unit) {
                     Text(act.leaderInCharge, color = Color(0xFFFDBA74), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
 
+                if (act.cost > 0) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Chi phí thực hiện:", color = Color(0xFF94A3B8), fontSize = 12.sp)
+                        Text("${DecimalFormat("#,###").format(act.cost)} VNĐ", color = Color(0xFFFDBA74), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(6.dp))
                 Text("Nội dung & Cam kết đạt được:", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
                 Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)), shape = RoundedCornerShape(8.dp)) {
@@ -357,6 +375,7 @@ fun AddCarePlanDialog(
     var occurredAt by remember { mutableStateOf(today) }
     var title by remember { mutableStateOf("") }
     var leaderInCharge by remember { mutableStateOf("${currentUser.title} - ${currentUser.fullName}") }
+    var costText by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
     var isSaving by remember { mutableStateOf(false) }
     var errText by remember { mutableStateOf<String?>(null) }
@@ -494,6 +513,21 @@ fun AddCarePlanDialog(
                     )
                 )
 
+                // Cost (VNĐ)
+                OutlinedTextField(
+                    value = costText,
+                    onValueChange = { costText = it },
+                    label = { Text("Chi phí thực hiện (VNĐ)") },
+                    placeholder = { Text("VD: 5000000 (Trừ vào ngân sách năm)", color = Color.Gray) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = Color(0xFFEA580C)
+                    )
+                )
+
                 // Content
                 OutlinedTextField(
                     value = content,
@@ -527,6 +561,7 @@ fun AddCarePlanDialog(
                     }
                     isSaving = true
                     errText = null
+                    val parsedCost = costText.replace(",", "").replace(".", "").trim().toDoubleOrNull() ?: 0.0
                     coroutineScope.launch {
                         val res = ApiClient.logCareActivity(
                             customerId = selectedCustomer!!.id,
@@ -536,7 +571,8 @@ fun AddCarePlanDialog(
                             content = content.trim(),
                             occurredAt = occurredAt.trim(),
                             leaderInCharge = leaderInCharge.trim(),
-                            outcomeStatus = "SUCCESS"
+                            outcomeStatus = "SUCCESS",
+                            cost = parsedCost
                         )
                         isSaving = false
                         if (res.isSuccess) {

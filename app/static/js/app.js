@@ -748,6 +748,25 @@ function reuseMatchedCustomer() {
   showToast(`Đã đồng bộ thông tin đối tác ${lastMatchedCustomer.name}! Nhấn "Lưu" để liên kết vào SBU của bạn.`);
 }
 
+function getTierBadge(tier, totalScore, vetoApplied, isSpecial) {
+  let badge = '';
+  if (tier === 'DIAMOND' || tier === 'STRATEGIC_VIP') {
+    badge = `<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-cyan-100 text-cyan-800 border border-cyan-300 shadow-sm">💎 Kim Cương</span>`;
+  } else if (tier === 'GOLD' || tier === 'CLOSE_PARTNER') {
+    badge = `<span class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 shadow-sm">🥇 Vàng</span>`;
+  } else {
+    badge = `<span class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300 shadow-sm">🥈 Bạc</span>`;
+  }
+
+  let extras = '';
+  if (vetoApplied) {
+    extras += `<span class="text-[9px] text-rose-600 font-bold block mt-0.5" title="Bị giới hạn Hạng Vàng do Tiêu chí 3 Năng lực tài chính = 0đ">⚠️ Phủ Quyết</span>`;
+  } else if (isSpecial) {
+    extras += `<span class="text-[9px] text-purple-600 font-bold block mt-0.5" title="Đặc cách bởi CT HĐQT/TGĐ">👑 Đặc Cách</span>`;
+  }
+  return `<div>${badge}${extras}</div>`;
+}
+
 async function loadCustomers() {
   const search = document.getElementById('cust-search')?.value || "";
   const sbuFilter = document.getElementById('cust-filter-sbu')?.value || currentSBU;
@@ -767,11 +786,11 @@ async function loadCustomers() {
     const hint = document.getElementById('cust-permission-hint');
     if (hint) {
       if (currentUser.role === 'ADMIN') {
-        hint.innerHTML = '<span class="text-amber-600 font-bold">👑 Ban Lãnh Đạo: Toàn quyền Tạo, Sửa, Xóa cả 5 SBU</span>';
+        hint.innerHTML = '<span class="text-amber-600 font-bold">👑 Ban Lãnh Đạo: Toàn quyền Tạo, Sửa, Đánh giá, Xóa cả 5 SBU</span>';
       } else if (currentUser.role === 'COLLABORATOR') {
-        hint.innerHTML = `<span class="text-emerald-600 font-bold">🤝 Cộng Tác Viên (${currentUser.sbu === 'ALL' ? 'Toàn quốc' : currentUser.sbu}): Được phép Giới thiệu & Thêm mới đối tác (Không sửa hợp đồng/xóa)</span>`;
+        hint.innerHTML = `<span class="text-emerald-600 font-bold">🤝 Cộng Tác Viên (${currentUser.sbu === 'ALL' ? 'Toàn quốc' : currentUser.sbu}): Được phép Giới thiệu & Thêm mới đối tác</span>`;
       } else {
-        hint.innerHTML = `<span class="text-blue-600 font-bold">💼 Giám Đốc KD ${currentUser.sbu}: Chỉ được Tạo & Sửa khách hàng thuộc ${currentUser.sbu} (Không được xóa)</span>`;
+        hint.innerHTML = `<span class="text-blue-600 font-bold">💼 Giám Đốc KD ${currentUser.sbu}: Quản lý, Tạo, Sửa & Chấm điểm khách hàng thuộc ${currentUser.sbu}</span>`;
       }
     }
 
@@ -787,6 +806,10 @@ async function loadCustomers() {
       const canEdit = currentUser.role === 'ADMIN' || (currentUser.role === 'SBU_DIRECTOR' && currentUser.sbu === c.sbu);
       const canDelete = currentUser.role === 'ADMIN';
 
+      const annualBudget = c.annual_care_budget || 0;
+      const spentBudget = c.spent_care_budget || 0;
+      const budgetPct = annualBudget > 0 ? Math.min(100, Math.round((spentBudget / annualBudget) * 100)) : 0;
+
       return `
         <tr class="hover:bg-slate-50 transition cursor-pointer" onclick="viewCustomer360(${c.id})">
           <td class="p-3.5">
@@ -801,23 +824,37 @@ async function loadCustomers() {
             <div class="text-[11px] text-slate-500">${c.decision_maker_role || ''} • <span class="text-blue-600 font-semibold">${c.decision_maker_phone || c.phone || ''}</span></div>
           </td>
           <td class="p-3.5">
-            <div class="font-black text-slate-900">${formatVND(c.total_contract_value)}</div>
-            <div class="text-[11px] text-slate-500">${c.project_count || 0} dự án đang theo dõi</div>
-          </td>
-          <td class="p-3.5 text-[11px] text-slate-600">
-            <div><i class="fa-solid fa-cake-candles text-amber-500 mr-1"></i> Sinh nhật: ${c.decision_maker_birthday || 'N/A'}</div>
-            <div><i class="fa-solid fa-building text-blue-500 mr-1"></i> Thành lập: ${c.founding_anniversary || 'N/A'}</div>
+            ${getTierBadge(c.tier, c.total_score, c.veto_applied, c.is_special_elevated)}
+            <div class="text-[11px] font-black text-slate-700 mt-1">
+              <span class="text-blue-600">${c.total_score !== null && c.total_score !== undefined ? c.total_score : 100}</span><span class="text-slate-400 font-normal">/100đ</span>
+            </div>
           </td>
           <td class="p-3.5">
-            <div class="text-amber-500 text-xs">${'★'.repeat(c.relationship_score || 5)}</div>
-            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">${c.tier === 'STRATEGIC_VIP' ? 'VIP Chiến Lược' : c.tier}</span>
+            <div class="font-black text-slate-900 text-xs">${formatVND(annualBudget)}</div>
+            <div class="text-[10px] text-slate-500 flex items-center justify-between gap-2 mt-0.5">
+              <span>Đã chi: <b class="text-slate-800">${formatVND(spentBudget)}</b></span>
+              <span class="font-bold ${budgetPct > 80 ? 'text-rose-600' : 'text-emerald-600'}">${budgetPct}%</span>
+            </div>
+            <div class="w-24 bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden">
+              <div class="h-1.5 rounded-full ${budgetPct > 80 ? 'bg-rose-500' : 'bg-emerald-500'}" style="width: ${budgetPct}%"></div>
+            </div>
+            <div class="text-[10px] text-slate-400 mt-1 truncate max-w-[130px]" title="${c.in_charge_executive || ''}">
+              <i class="fa-solid fa-user-tie text-[9px] mr-0.5"></i> ${c.in_charge_executive || 'Chưa phân công'}
+            </div>
+          </td>
+          <td class="p-3.5">
+            <div class="font-black text-slate-900">${formatVND(c.total_contract_value)}</div>
+            <div class="text-[11px] text-slate-500">${c.project_count || 0} dự án đang theo dõi</div>
           </td>
           <td class="p-3.5 text-right space-x-1" onclick="event.stopPropagation()">
             <button onclick="viewCustomer360(${c.id})" class="p-1.5 text-slate-500 hover:text-blue-600 transition" title="Xem Hồ Sơ 360°">
               <i class="fa-solid fa-eye"></i>
             </button>
             ${canEdit ? `
-              <button onclick="openEditCustomerModal(${c.id})" class="p-1.5 text-slate-500 hover:text-amber-600 transition" title="Chỉnh sửa thông tin">
+              <button onclick="openAssessmentModal(${c.id})" class="p-1.5 text-slate-500 hover:text-amber-600 transition" title="Chấm Điểm & Phân Hạng FECON (5 Tiêu Chí)">
+                <i class="fa-solid fa-award text-amber-500"></i>
+              </button>
+              <button onclick="openEditCustomerModal(${c.id})" class="p-1.5 text-slate-500 hover:text-blue-600 transition" title="Chỉnh sửa thông tin">
                 <i class="fa-solid fa-pen-to-square"></i>
               </button>
             ` : (!isCTV ? `
@@ -846,13 +883,18 @@ async function viewCustomer360(id) {
     document.getElementById('view-cust-code').innerText = c.code;
     document.getElementById('view-cust-name').innerText = c.name;
 
+    const annualBudget = c.annual_care_budget || 0;
+    const spentBudget = c.spent_care_budget || 0;
+    const budgetPct = annualBudget > 0 ? Math.min(100, Math.round((spentBudget / annualBudget) * 100)) : 0;
+
     const content = document.getElementById('customer-detail-content');
     content.innerHTML = `
+      <!-- Top Overview Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-          <div class="text-slate-400 font-bold uppercase text-[10px]">Phân loại SBU</div>
-          <div class="mt-1">${getSBUBadge(c.sbu)}</div>
-          <div class="text-xs text-slate-700 font-bold mt-2">Hạng: ${c.tier} • ${c.segment}</div>
+          <div class="text-slate-400 font-bold uppercase text-[10px]">Phân loại SBU & Hạng FECON</div>
+          <div class="mt-1 flex items-center gap-1.5">${getSBUBadge(c.sbu)} ${getTierBadge(c.tier, c.total_score, c.veto_applied, c.is_special_elevated)}</div>
+          <div class="text-xs text-slate-700 font-bold mt-2">Phân khúc: ${c.segment} • Điểm: <span class="text-blue-600 font-black">${c.total_score || 0}/100đ</span></div>
         </div>
         <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
           <div class="text-slate-400 font-bold uppercase text-[10px]">Lãnh đạo then chốt</div>
@@ -864,6 +906,69 @@ async function viewCustomer360(id) {
           <div class="text-slate-400 font-bold uppercase text-[10px]">Sự kiện ngoại giao</div>
           <div class="text-xs text-slate-800 mt-1"><i class="fa-solid fa-cake-candles text-amber-500 mr-1"></i> Sinh nhật: ${c.decision_maker_birthday || 'Chưa cập nhật'}</div>
           <div class="text-xs text-slate-800 mt-1"><i class="fa-solid fa-building text-blue-500 mr-1"></i> Thành lập: ${c.founding_anniversary || 'Chưa cập nhật'}</div>
+        </div>
+      </div>
+
+      <!-- FECON Policy Tiering & Budget Tracking Card -->
+      <div class="p-4 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50/60 to-white space-y-3">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-amber-100 pb-2.5">
+          <div>
+            <div class="text-[10px] font-black text-amber-800 uppercase tracking-wider">Hồ Sơ Đánh Giá Phân Hạng FECON (FECON-CSCSKH/ĐT-01)</div>
+            <div class="font-black text-slate-900 text-sm flex items-center gap-2 mt-0.5">
+              <span>Hạng: <b>${c.tier === 'DIAMOND' ? '💎 Kim Cương' : (c.tier === 'GOLD' ? '🥇 Vàng' : '🥈 Bạc')}</b></span>
+              <span class="text-slate-400">•</span>
+              <span>Tổng Điểm: <b class="text-blue-600">${c.total_score || 0}/100</b></span>
+              ${c.veto_applied ? '<span class="px-2 py-0.5 bg-rose-600 text-white rounded text-[10px] font-black">ÁP DỤNG PHỦ QUYẾT</span>' : ''}
+              ${c.is_special_elevated ? '<span class="px-2 py-0.5 bg-purple-600 text-white rounded text-[10px] font-black">ĐẶC CÁCH LÃNH ĐẠO</span>' : ''}
+            </div>
+          </div>
+          <button onclick="openAssessmentModal(${c.id})" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl font-black text-xs shadow-sm flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-award"></i> Đánh Giá Lại (5 Tiêu Chí)
+          </button>
+        </div>
+
+        <!-- 5 Criteria Breakdown -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+          <div class="p-2 bg-white rounded-xl border border-slate-200">
+            <div class="text-[10px] text-slate-500 font-bold">1. Quy mô (15)</div>
+            <div class="font-black text-slate-900 text-sm mt-0.5">${c.score_scale_project || 0}đ</div>
+          </div>
+          <div class="p-2 bg-white rounded-xl border border-slate-200">
+            <div class="text-[10px] text-slate-500 font-bold">2. Phù hợp (25)</div>
+            <div class="font-black text-slate-900 text-sm mt-0.5">${c.score_fecon_fit || 0}đ</div>
+          </div>
+          <div class="p-2 bg-white rounded-xl border ${c.score_financial_capacity === 0 ? 'border-rose-300 bg-rose-50' : 'border-slate-200'}">
+            <div class="text-[10px] ${c.score_financial_capacity === 0 ? 'text-rose-700 font-black' : 'text-slate-500 font-bold'}">3. Tài chính (25)</div>
+            <div class="font-black ${c.score_financial_capacity === 0 ? 'text-rose-600' : 'text-slate-900'} text-sm mt-0.5">${c.score_financial_capacity || 0}đ</div>
+          </div>
+          <div class="p-2 bg-white rounded-xl border border-slate-200">
+            <div class="text-[10px] text-slate-500 font-bold">4. Lịch sử (20)</div>
+            <div class="font-black text-slate-900 text-sm mt-0.5">${c.score_cooperation_history || 0}đ</div>
+          </div>
+          <div class="p-2 bg-white rounded-xl border border-slate-200">
+            <div class="text-[10px] text-slate-500 font-bold">5. Quản lý (15)</div>
+            <div class="font-black text-slate-900 text-sm mt-0.5">${c.score_management_capacity || 0}đ</div>
+          </div>
+        </div>
+
+        <!-- Budget & Care Guidelines -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-3 rounded-xl border border-amber-200 text-xs">
+          <div>
+            <div class="text-slate-400 font-bold text-[10px] uppercase">Ngân Sách CSKH Thường Niên</div>
+            <div class="text-base font-black text-emerald-700 mt-0.5">${formatVND(annualBudget)}</div>
+            <div class="text-[10px] text-slate-500 mt-1">Đã chi: <b>${formatVND(spentBudget)}</b> (${budgetPct}%)</div>
+            <div class="w-full bg-slate-100 rounded-full h-1.5 mt-1 overflow-hidden">
+              <div class="h-1.5 rounded-full ${budgetPct > 80 ? 'bg-rose-500' : 'bg-emerald-500'}" style="width: ${budgetPct}%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="text-slate-400 font-bold text-[10px] uppercase">Cấp Phụ Trách Theo Chính Sách</div>
+            <div class="font-bold text-slate-900 mt-1">${c.in_charge_executive || 'Chưa phân công'}</div>
+          </div>
+          <div>
+            <div class="text-slate-400 font-bold text-[10px] uppercase">Tần Suất Tiếp Khách Định Kỳ</div>
+            <div class="font-bold text-slate-900 mt-1">${c.care_frequency || 'Theo sự vụ'}</div>
+          </div>
         </div>
       </div>
 
@@ -909,7 +1014,10 @@ async function viewCustomer360(id) {
                 <span class="text-slate-400 font-mono text-[10px]">${a.occurred_at}</span>
               </div>
               <p class="text-slate-600 mt-1">${a.content || ''}</p>
-              <div class="text-[10px] text-blue-600 mt-1 font-semibold">Lãnh đạo tham gia: ${a.leader_in_charge}</div>
+              <div class="flex justify-between items-center text-[10px] mt-1.5 pt-1.5 border-t border-slate-100">
+                <span class="text-blue-600 font-semibold">Lãnh đạo: ${a.leader_in_charge}</span>
+                <span class="text-emerald-700 font-bold">${a.cost ? 'Chi phí: ' + formatVND(a.cost) : ''}</span>
+              </div>
             </div>
           `).join('') : '<div class="text-slate-400 text-xs">Chưa có hoạt động tiếp khách ghi nhận.</div>'}
         </div>
@@ -920,6 +1028,199 @@ async function viewCustomer360(id) {
 
   } catch (err) {
     console.error("Error viewing customer:", err);
+    showToast("Không thể tải thông tin đối tác", "error");
+  }
+}
+
+// ==========================================
+// FECON POLICY & CUSTOMER ASSESSMENT LOGIC
+// ==========================================
+let currentAssessment = {
+  customerId: null,
+  scores: { 1: 15.0, 2: 25.0, 3: 25.0, 4: 20.0, 5: 15.0 },
+  isSpecialElevated: false,
+  notes: ''
+};
+
+function openPolicyModal() {
+  openModal('modal-fecon-policy');
+}
+
+function openAssessmentModal(id) {
+  const cust = allCustomers.find(c => c.id === id);
+  if (!cust) return;
+
+  currentAssessment.customerId = id;
+  currentAssessment.scores[1] = cust.score_scale_project !== null && cust.score_scale_project !== undefined ? cust.score_scale_project : 15.0;
+  currentAssessment.scores[2] = cust.score_fecon_fit !== null && cust.score_fecon_fit !== undefined ? cust.score_fecon_fit : 25.0;
+  currentAssessment.scores[3] = cust.score_financial_capacity !== null && cust.score_financial_capacity !== undefined ? cust.score_financial_capacity : 25.0;
+  currentAssessment.scores[4] = cust.score_cooperation_history !== null && cust.score_cooperation_history !== undefined ? cust.score_cooperation_history : 20.0;
+  currentAssessment.scores[5] = cust.score_management_capacity !== null && cust.score_management_capacity !== undefined ? cust.score_management_capacity : 15.0;
+  currentAssessment.isSpecialElevated = Boolean(cust.is_special_elevated);
+  currentAssessment.notes = cust.strategic_notes || '';
+
+  document.getElementById('assess-customer-id').value = id;
+  document.getElementById('assess-modal-customer-name').innerText = `${cust.name} (${cust.code} • ${cust.sbu})`;
+  document.getElementById('assess-notes').value = currentAssessment.notes;
+  document.getElementById('assess-special-elevated').checked = currentAssessment.isSpecialElevated;
+
+  // Update button highlights
+  updateCriteriaButtons(1, currentAssessment.scores[1]);
+  updateCriteriaButtons(2, currentAssessment.scores[2]);
+  updateCriteriaButtons(3, currentAssessment.scores[3]);
+  updateCriteriaButtons(4, currentAssessment.scores[4]);
+  updateCriteriaButtons(5, currentAssessment.scores[5]);
+
+  recalculateLiveAssessment();
+  openModal('modal-customer-assessment');
+}
+
+function updateCriteriaButtons(critNum, score) {
+  const suffix = score === 15.0 ? '15' : (score === 7.5 ? '75' : (score === 25.0 ? '25' : (score === 12.5 ? '125' : (score === 20.0 ? '20' : (score === 10.0 ? '10' : '0')))));
+  
+  // Reset all buttons for this criteria
+  const allBtns = document.querySelectorAll(`[id^="btn-c${critNum}-"]`);
+  allBtns.forEach(btn => {
+    btn.className = 'p-2 border rounded-lg text-left transition font-semibold bg-white border-slate-200 text-slate-700 hover:border-slate-300';
+  });
+
+  const activeBtn = document.getElementById(`btn-c${critNum}-${suffix}`);
+  if (activeBtn) {
+    if (critNum === 3 && score === 0.0) {
+      activeBtn.className = 'p-2 border-2 border-rose-500 bg-rose-100 rounded-lg text-left transition font-black text-rose-900 shadow-sm';
+    } else {
+      activeBtn.className = 'p-2 border-2 border-amber-500 bg-amber-50 rounded-lg text-left transition font-black text-amber-950 shadow-sm';
+    }
+  }
+
+  const label = document.getElementById(`label-score-c${critNum}`);
+  if (label) label.innerText = `${score}đ`;
+}
+
+function setCriteriaScore(critNum, score) {
+  currentAssessment.scores[critNum] = score;
+  updateCriteriaButtons(critNum, score);
+  recalculateLiveAssessment();
+}
+
+function recalculateLiveAssessment() {
+  const s1 = currentAssessment.scores[1] || 0;
+  const s2 = currentAssessment.scores[2] || 0;
+  const s3 = currentAssessment.scores[3] || 0;
+  const s4 = currentAssessment.scores[4] || 0;
+  const s5 = currentAssessment.scores[5] || 0;
+  const total = Math.round((s1 + s2 + s3 + s4 + s5) * 10) / 10;
+
+  const isSpecial = document.getElementById('assess-special-elevated')?.checked || false;
+  currentAssessment.isSpecialElevated = isSpecial;
+
+  document.getElementById('assess-total-score').innerText = total.toFixed(1);
+
+  const predictedBadge = document.getElementById('assess-predicted-badge');
+  const vetoBadge = document.getElementById('assess-veto-badge');
+  const specialBadge = document.getElementById('assess-special-badge');
+  const vetoBanner = document.getElementById('assess-veto-banner');
+  const budgetText = document.getElementById('assess-budget-text');
+  const inchargeText = document.getElementById('assess-incharge-text');
+  const frequencyText = document.getElementById('assess-frequency-text');
+
+  let tier = 'SILVER';
+  let tierName = '🥈 Hạng Bạc';
+  let budgetStr = '5.000.000 VNĐ';
+  let inchargeStr = 'Cấp phụ trách: <b>SBU Leader / GĐKD phụ trách</b>';
+  let freqStr = 'Tần suất: Theo sự vụ thực tế';
+
+  if (isSpecial) {
+    tier = 'DIAMOND';
+    tierName = '💎 Hạng Kim Cương';
+    budgetStr = '80.000.000 VNĐ';
+    inchargeStr = 'Cấp phụ trách: <b>Chủ tịch HĐQT / TGĐ trực tiếp phụ trách (Đặc cách)</b>';
+    freqStr = 'Tần suất: 1 tháng / lần';
+    if (vetoBadge) vetoBadge.classList.add('hidden');
+    if (specialBadge) specialBadge.classList.remove('hidden');
+    if (vetoBanner) vetoBanner.classList.add('hidden');
+  } else if (s3 <= 0.0) {
+    // Veto triggered!
+    if (vetoBanner) vetoBanner.classList.remove('hidden');
+    if (specialBadge) specialBadge.classList.add('hidden');
+    if (total >= 50.0) {
+      tier = 'GOLD';
+      tierName = '🥇 Hạng Vàng';
+      budgetStr = '20.000.000 VNĐ';
+      inchargeStr = 'Cấp phụ trách: <b>TGĐ / SBU Leader phụ trách</b>';
+      freqStr = 'Tần suất: 3 tháng / lần';
+      if (total >= 80.0) {
+        if (vetoBadge) vetoBadge.classList.remove('hidden');
+      } else {
+        if (vetoBadge) vetoBadge.classList.add('hidden');
+      }
+    } else {
+      if (vetoBadge) vetoBadge.classList.add('hidden');
+    }
+  } else {
+    if (vetoBanner) vetoBanner.classList.add('hidden');
+    if (vetoBadge) vetoBadge.classList.add('hidden');
+    if (specialBadge) specialBadge.classList.add('hidden');
+
+    if (total >= 80.0) {
+      tier = 'DIAMOND';
+      tierName = '💎 Hạng Kim Cương';
+      budgetStr = '80.000.000 VNĐ';
+      inchargeStr = 'Cấp phụ trách: <b>Chủ tịch HĐQT / TGĐ trực tiếp phụ trách</b>';
+      freqStr = 'Tần suất: 1 tháng / lần';
+    } else if (total >= 50.0) {
+      tier = 'GOLD';
+      tierName = '🥇 Hạng Vàng';
+      budgetStr = '20.000.000 VNĐ';
+      inchargeStr = 'Cấp phụ trách: <b>TGĐ / SBU Leader phụ trách</b>';
+      freqStr = 'Tần suất: 3 tháng / lần';
+    }
+  }
+
+  if (predictedBadge) {
+    predictedBadge.innerText = tierName;
+    if (tier === 'DIAMOND') predictedBadge.className = 'px-3 py-1 bg-cyan-600 text-white font-black text-xs rounded-xl shadow-sm uppercase';
+    else if (tier === 'GOLD') predictedBadge.className = 'px-3 py-1 bg-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-sm uppercase';
+    else predictedBadge.className = 'px-3 py-1 bg-slate-600 text-white font-black text-xs rounded-xl shadow-sm uppercase';
+  }
+
+  if (budgetText) budgetText.innerText = budgetStr;
+  if (inchargeText) inchargeText.innerHTML = inchargeStr;
+  if (frequencyText) frequencyText.innerText = freqStr;
+}
+
+async function saveCustomerAssessment() {
+  if (!currentAssessment.customerId) return;
+
+  const payload = {
+    score_scale_project: currentAssessment.scores[1],
+    score_fecon_fit: currentAssessment.scores[2],
+    score_financial_capacity: currentAssessment.scores[3],
+    score_cooperation_history: currentAssessment.scores[4],
+    score_management_capacity: currentAssessment.scores[5],
+    is_special_elevated: document.getElementById('assess-special-elevated')?.checked || false,
+    strategic_notes: document.getElementById('assess-notes')?.value || ""
+  };
+
+  try {
+    const res = await authFetch(`/api/customers/${currentAssessment.customerId}/assess`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      showToast(data.message || "Đã lưu kết quả phân hạng khách hàng!");
+      closeModal('modal-customer-assessment');
+      loadCustomers();
+      loadDashboard();
+    } else {
+      const err = await res.json();
+      showToast(err.detail || "Lỗi lưu đánh giá", "error");
+    }
+  } catch (err) {
+    showToast("Lỗi kết nối khi lưu đánh giá", "error");
   }
 }
 
@@ -958,7 +1259,7 @@ function openEditCustomerModal(id) {
   document.getElementById('cust-id').value = c.id;
   document.getElementById('cust-name').value = c.name;
   document.getElementById('cust-tax').value = c.tax_code || '';
-  document.getElementById('cust-tier').value = c.tier;
+  document.getElementById('cust-tier').value = (c.tier === 'STRATEGIC_VIP' ? 'DIAMOND' : (c.tier === 'CLOSE_PARTNER' ? 'GOLD' : (c.tier === 'PROSPECT' ? 'SILVER' : c.tier)));
   document.getElementById('cust-segment').value = c.segment;
   document.getElementById('cust-headquarters').value = c.headquarters || '';
   document.getElementById('cust-decision-maker').value = c.key_decision_maker;
@@ -1615,6 +1916,7 @@ async function handleCareSubmit(e) {
     title: document.getElementById('care-title').value,
     leader_in_charge: document.getElementById('care-leader').value,
     content: document.getElementById('care-content').value,
+    cost: parseFloat(document.getElementById('care-cost')?.value || 0),
     outcome_status: 'SUCCESS'
   };
 
@@ -1628,6 +1930,7 @@ async function handleCareSubmit(e) {
       showToast("Đã lưu lịch chăm sóc khách hàng thành công!");
       closeModal('modal-care');
       loadCareActivities();
+      loadCustomers();
       loadDashboard();
     }
   } catch (err) {

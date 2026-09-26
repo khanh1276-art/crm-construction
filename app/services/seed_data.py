@@ -53,72 +53,112 @@ def seed_database():
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     """, users_data)
 
-    # 2. STRATEGIC CUSTOMERS (Theo 5 SBU)
+    # 2. STRATEGIC CUSTOMERS (Theo Chính sách CSKH FECON: DIAMOND, GOLD, SILVER)
     customers_data = [
         # SBU 1 - Nền móng và Hầm
         (
-            "KH-SBU1-01", "Tập đoàn Bất động sản Masterise Homes", "SBU1", "STRATEGIC_VIP", "B2B",
+            "KH-SBU1-01", "Tập đoàn Bất động sản Masterise Homes", "SBU1", "DIAMOND", "B2B",
             "0312567890", "0283915915", "contact@masterisehomes.com", "Tòa nhà The Landmark 81, Bình Thạnh, TP.HCM",
             "Ông Phan Trọng Đạt", "Phó Tổng Giám Đốc Khối Phát Triển Dự Án", "0908112233", "1978-10-18", "2014-11-20",
-            5, "EXCELLENT", "Đối tác chiến lược mảng tường vây Barrette và cọc khoan nhồi móng sâu đại dự án trung tâm."
+            5, "EXCELLENT", "Đối tác chiến lược toàn diện mảng tường vây Barrette và cọc khoan nhồi móng sâu đại dự án trung tâm.",
+            15.0, 25.0, 25.0, 20.0, 15.0, 100.0, 0, 0, 80000000.0, 15000000.0,
+            "Chủ tịch / TGĐ trực tiếp phụ trách", "1 tháng / lần"
         ),
         (
-            "KH-SBU1-02", "Công ty TNHH Keppel Land Việt Nam", "SBU1", "CLOSE_PARTNER", "FDI",
+            "KH-SBU1-02", "Công ty TNHH Keppel Land Việt Nam", "SBU1", "GOLD", "FDI",
             "0301478523", "0283821800", "vietnam@keppel.com", "Saigon Centre Tower 2, Q.1, TP.HCM",
             "Ông Joseph Tan / Nguyễn Văn Đức", "Giám Đốc Quản Lý Xây Dựng", "0903445566", "1980-05-12", "1992-06-15",
-            5, "EXCELLENT", "Yêu cầu kỹ thuật ngầm tiêu chuẩn Singapore, độ an toàn tuyệt đối."
+            5, "EXCELLENT", "Yêu cầu kỹ thuật ngầm tiêu chuẩn Singapore, độ an toàn tuyệt đối. Đạt chuẩn Hạng Vàng.",
+            15.0, 12.5, 25.0, 10.0, 7.5, 70.0, 0, 0, 20000000.0, 4500000.0,
+            "TGĐ / SBU Leader phụ trách", "3 tháng / lần"
         ),
+        (
+            "KH-SBU1-03", "Công ty Cổ phần Đầu tư Xây dựng Nam Hải", "SBU1", "SILVER", "B2B",
+            "0317889911", "0283711223", "info@namhai-cons.vn", "Khu đô thị Sala, TP. Thủ Đức, TP.HCM",
+            "Ông Trần Nam Hải", "Chủ Tịch HĐQT", "0918776655", "1982-03-15", "2018-09-10",
+            4, "STABLE", "Đối tác tiềm năng các gói thầu xử lý nền đất yếu và cọc xi măng đất đường nội bộ.",
+            7.5, 12.5, 12.5, 0.0, 7.5, 40.0, 0, 0, 5000000.0, 800000.0,
+            "SBU Leader / GĐKD phụ trách", "Theo sự vụ thực tế"
+        ),
+
         # SBU 2 - Năng lượng và công nghiệp
         (
-            "KH-SBU2-01", "Tổng Công ty Cổ phần Dịch vụ Kỹ thuật Dầu khí Việt Nam (PTSC)", "SBU2", "STRATEGIC_VIP", "B2B",
+            "KH-SBU2-01", "Tổng Công ty Cổ phần Dịch vụ Kỹ thuật Dầu khí Việt Nam (PTSC)", "SBU2", "DIAMOND", "B2B",
             "0100150577", "0283910282", "ptsc@ptsc.com.vn", "Lầu 5, Tòa nhà PetroVietnam, 1-5 Lê Duẩn, Q.1, TP.HCM",
             "Ông Lê Mạnh Cường", "Tổng Giám Đốc", "0918889900", "1976-09-02", "1993-02-18",
-            5, "EXCELLENT", "Đầu mối quan hệ chiến lược cho các gói thầu xây lắp chân đế điện gió ngoài khơi và kho cảng LNG."
+            5, "EXCELLENT", "Đầu mối quan hệ chiến lược cho các gói thầu xây lắp chân đế điện gió ngoài khơi và kho cảng LNG.",
+            15.0, 25.0, 25.0, 20.0, 15.0, 100.0, 0, 0, 80000000.0, 12000000.0,
+            "Chủ tịch / TGĐ trực tiếp phụ trách", "1 tháng / lần"
         ),
         (
-            "KH-SBU2-02", "Tập đoàn Bán dẫn Amkor Technology Việt Nam", "SBU2", "STRATEGIC_VIP", "FDI",
+            "KH-SBU2-02", "Tập đoàn Bán dẫn Amkor Technology Việt Nam", "SBU2", "DIAMOND", "FDI",
             "2301198888", "0222388999", "amkor_vn@amkor.com", "KCN Yên Phong II-C, Yên Phong, Bắc Ninh",
             "Ông Kim Sung-Hoon / Trần Đức Tuấn", "Phó TGĐ Điều Hành Xây Lắp", "0982334455", "1979-11-05", "2021-10-10",
-            5, "EXCELLENT", "Khách hàng FDI trọng điểm. Yêu cầu sàn phòng sạch không rung chấn Micro-vibration."
+            5, "EXCELLENT", "Khách hàng FDI trọng điểm. Yêu cầu sàn phòng sạch không rung chấn Micro-vibration.",
+            15.0, 25.0, 25.0, 10.0, 15.0, 90.0, 0, 0, 80000000.0, 8000000.0,
+            "Chủ tịch / TGĐ trực tiếp phụ trách", "1 tháng / lần"
         ),
+
         # SBU 3 - Metro và ngầm đô thị
         (
-            "KH-SBU3-01", "Ban Quản lý Đường sắt Đô thị TP.HCM (MAUR)", "SBU3", "STRATEGIC_VIP", "B2G",
+            "KH-SBU3-01", "Ban Quản lý Đường sắt Đô thị TP.HCM (MAUR)", "SBU3", "DIAMOND", "B2G",
             "0313112233", "0283822456", "maur@tphcm.gov.vn", "29 Lê Quý Đôn, P. Võ Thị Sáu, Q.3, TP.HCM",
             "Ông Bùi Anh Tuấn", "Trưởng Ban Quản Lý Dự Án Metro 2", "0913998811", "1974-12-25", "2007-09-13",
-            5, "EXCELLENT", "Ban QLDA Nhà nước trọng điểm. Cơ hội lớn cho gói thầu TBM khoan hầm và ga ngầm Bến Thành."
+            5, "EXCELLENT", "Ban QLDA Nhà nước trọng điểm. Cơ hội lớn cho gói thầu TBM khoan hầm và ga ngầm Bến Thành.",
+            15.0, 25.0, 25.0, 20.0, 10.0, 95.0, 0, 0, 80000000.0, 18000000.0,
+            "Chủ tịch / TGĐ trực tiếp phụ trách", "1 tháng / lần"
         ),
         (
-            "KH-SBU3-02", "Ban Quản lý Đường sắt Đô thị Hà Nội (MRB)", "SBU3", "CLOSE_PARTNER", "B2G",
+            "KH-SBU3-02", "Ban Quản lý Đường sắt Đô thị Hà Nội (MRB)", "SBU3", "GOLD", "B2G",
             "0104112244", "0243773898", "mrb.hanoi@hanoi.gov.vn", "Tòa nhà Cung Trí Thức, Cầu Giấy, Hà Nội",
             "Ông Nguyễn Cao Minh", "Phó Trưởng Ban Thường Trực", "0912776655", "1975-08-19", "2008-07-28",
-            4, "STABLE", "Đang theo sát hồ sơ thiết kế kỹ thuật đoạn ngầm tuyến Metro số 3 và tuyến số 5."
+            4, "STABLE", "Đang theo sát hồ sơ thiết kế kỹ thuật đoạn ngầm tuyến Metro số 3 và tuyến số 5.",
+            7.5, 25.0, 12.5, 10.0, 7.5, 62.5, 0, 0, 20000000.0, 3000000.0,
+            "TGĐ / SBU Leader phụ trách", "3 tháng / lần"
         ),
+
         # SBU 4 - Hạ tầng tập trung và đường sắt cao tốc
         (
-            "KH-SBU4-01", "Tổng Công ty Cảng Hàng không Việt Nam (ACV)", "SBU4", "STRATEGIC_VIP", "B2G",
+            "KH-SBU4-01", "Tổng Công ty Cảng Hàng không Việt Nam (ACV)", "SBU4", "DIAMOND", "B2G",
             "0311638525", "0283844335", "info@vietnamairport.vn", "58 Trường Sơn, P.2, Tân Bình, TP.HCM",
             "Ông Lại Xuân Thanh", "Chủ Tịch Hội Đồng Quản Trị", "0903778899", "1963-04-10", "2012-02-08",
-            5, "EXCELLENT", "Chủ đầu tư Siêu dự án Cảng HKQT Long Thành và Nhà ga T3 Tân Sơn Nhất."
+            5, "EXCELLENT", "Chủ đầu tư Siêu dự án Cảng HKQT Long Thành và Nhà ga T3 Tân Sơn Nhất.",
+            15.0, 25.0, 25.0, 20.0, 15.0, 100.0, 0, 0, 80000000.0, 22000000.0,
+            "Chủ tịch / TGĐ trực tiếp phụ trách", "1 tháng / lần"
         ),
         (
-            "KH-SBU4-02", "Ban Quản lý Dự án Đường sắt (Bộ Giao thông Vận tải)", "SBU4", "STRATEGIC_VIP", "B2G",
+            "KH-SBU4-02", "Ban Quản lý Dự án Đường sắt (Bộ Giao thông Vận tải)", "SBU4", "DIAMOND", "B2G",
             "0100109988", "0243942388", "pmu-railway@mt.gov.vn", "Số 118 Lê Duẩn, Hoàn Kiếm, Hà Nội",
             "Ông Vũ Hồng Phương", "Giám Đốc Ban Quản Lý", "0913554433", "1971-06-28", "1998-05-15",
-            5, "EXCELLENT", "Cơ quan đầu mối chuẩn bị đầu tư Đại dự án Đường sắt tốc độ cao Bắc - Nam 70 tỷ USD."
+            5, "EXCELLENT", "Cơ quan đầu mối chuẩn bị đầu tư Đại dự án Đường sắt tốc độ cao Bắc - Nam 70 tỷ USD.",
+            15.0, 25.0, 25.0, 10.0, 7.5, 82.5, 0, 0, 80000000.0, 5000000.0,
+            "Chủ tịch / TGĐ trực tiếp phụ trách", "1 tháng / lần"
         ),
+
         # SBU 5 - Cảng biển và biến đổi khí hậu
         (
-            "KH-SBU5-01", "Tổng Công ty Tân Cảng Sài Gòn (Saigon Newport Corporation)", "SBU5", "STRATEGIC_VIP", "B2B",
+            "KH-SBU5-01", "Tổng Công ty Tân Cảng Sài Gòn (Saigon Newport Corporation)", "SBU5", "DIAMOND", "B2B",
             "0300445566", "0283742223", "marketing@saigonnewport.com.vn", "722 Điện Biên Phủ, P.22, Bình Thạnh, TP.HCM",
             "Đại tá Ngô Minh Thuấn", "Tổng Giám Đốc", "0903991122", "1970-10-15", "1989-03-15",
-            5, "EXCELLENT", "Tổng công ty khai thác cảng biển số 1 VN, đang triển khai chuỗi cảng nước sâu Cái Mép và Cần Giờ."
+            5, "EXCELLENT", "Tổng công ty khai thác cảng biển số 1 VN, đang triển khai chuỗi cảng nước sâu Cái Mép và Cần Giờ.",
+            15.0, 25.0, 25.0, 20.0, 15.0, 100.0, 0, 0, 80000000.0, 16000000.0,
+            "Chủ tịch / TGĐ trực tiếp phụ trách", "1 tháng / lần"
         ),
         (
-            "KH-SBU5-02", "Ban QLDA Đầu tư Xây dựng Hạ tầng Đô thị TP.HCM", "SBU5", "CLOSE_PARTNER", "B2G",
+            "KH-SBU5-02", "Ban QLDA Đầu tư Xây dựng Hạ tầng Đô thị TP.HCM", "SBU5", "GOLD", "B2G",
             "0315223344", "0283930123", "bql.hatang@tphcm.gov.vn", "Số 3 Bà Huyện Thanh Quan, Q.3, TP.HCM",
             "Ông Bùi Ngọc Đức", "Phó Giám Đốc Điều Hành", "0918667788", "1977-03-22", "2019-02-15",
-            4, "STABLE", "Chủ đầu tư các dự án cải tạo kênh rạch, đê kè chống sạt lở và thích ứng biến đổi khí hậu."
+            4, "STABLE", "Chủ đầu tư các dự án cải tạo kênh rạch, đê kè chống sạt lở và thích ứng biến đổi khí hậu.",
+            7.5, 25.0, 12.5, 10.0, 7.5, 62.5, 0, 0, 20000000.0, 2000000.0,
+            "TGĐ / SBU Leader phụ trách", "3 tháng / lần"
+        ),
+        (
+            "KH-SBU5-03", "Công ty Cổ phần Đầu tư Phát triển Biển Tây", "SBU5", "GOLD", "B2B",
+            "0319988776", "0297388990", "contact@bientay-invest.vn", "Khu lấn biển Trần Phú, TP. Rạch Giá, Kiên Giang",
+            "Ông Vương Đình Toàn", "Tổng Giám Đốc", "0909554433", "1984-06-18", "2020-05-12",
+            3, "NEEDS_ATTENTION", "Chủ đầu tư dự án khu nghỉ dưỡng lấn biển. Áp dụng quy tắc phủ quyết do dòng tiền rủi ro.",
+            15.0, 25.0, 0.0, 10.0, 7.5, 57.5, 0, 1, 20000000.0, 1500000.0,
+            "TGĐ / SBU Leader phụ trách", "3 tháng / lần"
         )
     ]
 
@@ -127,8 +167,12 @@ def seed_database():
         code, name, sbu, tier, segment, tax_code, phone, email, headquarters,
         key_decision_maker, decision_maker_role, decision_maker_phone,
         decision_maker_birthday, founding_anniversary, relationship_score,
-        relationship_status, strategic_notes
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        relationship_status, strategic_notes,
+        score_scale_project, score_fecon_fit, score_financial_capacity,
+        score_cooperation_history, score_management_capacity, total_score,
+        is_special_elevated, veto_applied, annual_care_budget, spent_care_budget,
+        in_charge_executive, care_frequency
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     """, customers_data)
 
     # 3. PIPELINE BIDS & OPPORTUNITIES (Theo 5 SBU)
@@ -237,33 +281,33 @@ def seed_database():
         (
             1, "SBU1", "DINNER_NETWORKING", "Bữa tối thân mật giữa Chủ tịch HĐQT và Ban Lãnh Đạo Masterise Homes",
             "Chủ tịch HĐQT và GĐKD SBU1 tiếp đón Phó TGĐ Masterise. Hai bên thống nhất nguyên tắc hợp tác dài hạn cho chuỗi 3 dự án căn hộ cao cấp ven sông chuẩn bị khởi công năm 2027.",
-            (today - timedelta(days=5)).strftime(d_fmt), "Chủ Tịch HĐQT & KS. Đỗ Hoàng Long", "SUCCESS"
+            (today - timedelta(days=5)).strftime(d_fmt), "Chủ Tịch HĐQT & KS. Đỗ Hoàng Long", "SUCCESS", 15000000.0
         ),
         (
-            3, "SBU2", "EXECUTIVE_MEETING", "Họp chiến lược hợp tác phát triển điện gió ngoài khơi với TGĐ PTSC",
+            4, "SBU2", "EXECUTIVE_MEETING", "Họp chiến lược hợp tác phát triển điện gió ngoài khơi với TGĐ PTSC",
             "Đoàn lãnh đạo công ty làm việc tại trụ sở PTSC. Thảo luận về việc chuẩn bị năng lực bãi chế tạo và phương án thi công móng trụ điện gió xuất khẩu sang Singapore.",
-            (today - timedelta(days=8)).strftime(d_fmt), "Tổng Giám Đốc & ThS. Nguyễn Quốc Thái", "SUCCESS"
+            (today - timedelta(days=8)).strftime(d_fmt), "Tổng Giám Đốc & ThS. Nguyễn Quốc Thái", "SUCCESS", 12000000.0
         ),
         (
-            5, "SBU3", "EXECUTIVE_MEETING", "Làm việc định kỳ với Lãnh đạo Ban Quản lý Đường sắt Đô thị TP.HCM",
+            6, "SBU3", "EXECUTIVE_MEETING", "Làm việc định kỳ với Lãnh đạo Ban Quản lý Đường sắt Đô thị TP.HCM",
             "Báo cáo giải pháp xử lý địa chất ngầm phức tạp ga Bến Thành. Ban QLDA đánh giá rất cao tinh thần trách nhiệm và cam kết kỹ thuật của nhà thầu.",
-            (today - timedelta(days=12)).strftime(d_fmt), "Chủ Tịch HĐQT & KS. Vũ Trọng Khôi", "SUCCESS"
+            (today - timedelta(days=12)).strftime(d_fmt), "Chủ Tịch HĐQT & KS. Vũ Trọng Khôi", "SUCCESS", 5000000.0
         ),
         (
-            7, "SBU4", "GIFT_DELIVERY", "Thăm và chúc mừng Chủ tịch HĐQT Tổng Công ty Cảng Hàng Không ACV",
+            8, "SBU4", "GIFT_DELIVERY", "Thăm và chúc mừng Chủ tịch HĐQT Tổng Công ty Cảng Hàng Không ACV",
             "Ban Lãnh Đạo gửi quà tri ân nhân dịp đạt mốc vượt tiến độ 60 ngày tại đại dự án Cảng HKQT Long Thành.",
-            (today - timedelta(days=18)).strftime(d_fmt), "Chủ Tịch HĐQT & ThS. Lê Thành Trung", "SUCCESS"
+            (today - timedelta(days=18)).strftime(d_fmt), "Chủ Tịch HĐQT & ThS. Lê Thành Trung", "SUCCESS", 10000000.0
         ),
         (
-            9, "SBU5", "EVENT_INVITATION", "Tham dự Lễ Kỷ niệm 35 Năm Ngày Truyền thống Tân Cảng Sài Gòn",
+            10, "SBU5", "EVENT_INVITATION", "Tham dự Lễ Kỷ niệm 35 Năm Ngày Truyền thống Tân Cảng Sài Gòn",
             "Đoàn đại biểu công ty do TGĐ dẫn đầu tham dự lễ kỷ niệm và chúc mừng Đại tá Ngô Minh Thuấn - Tổng Giám Đốc Tân Cảng.",
-            (today - timedelta(days=22)).strftime(d_fmt), "Tổng Giám Đốc & KS. Trần Đình Bách", "SUCCESS"
+            (today - timedelta(days=22)).strftime(d_fmt), "Tổng Giám Đốc & KS. Trần Đình Bách", "SUCCESS", 6000000.0
         )
     ]
 
     cursor.executemany("""
-    INSERT INTO customer_care_activities (customer_id, sbu, activity_type, title, content, occurred_at, leader_in_charge, outcome_status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+    INSERT INTO customer_care_activities (customer_id, sbu, activity_type, title, content, occurred_at, leader_in_charge, outcome_status, cost)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
     """, activities_data)
 
     # 7. AUTOMATED EXECUTIVE MESSAGES

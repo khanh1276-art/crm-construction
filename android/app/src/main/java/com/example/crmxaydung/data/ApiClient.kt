@@ -147,7 +147,7 @@ object ApiClient {
                             code = obj.optString("code", ""),
                             name = obj.getString("name"),
                             sbu = obj.optString("sbu", ""),
-                            tier = obj.optString("tier", "STRATEGIC_VIP"),
+                            tier = obj.optString("tier", "GOLD"),
                             segment = obj.optString("segment", "B2B"),
                             taxCode = obj.optString("tax_code", ""),
                             phone = obj.optString("phone", ""),
@@ -162,7 +162,19 @@ object ApiClient {
                             relationshipStatus = obj.optString("relationship_status", "EXCELLENT"),
                             strategicNotes = obj.optString("strategic_notes", ""),
                             projectCount = obj.optInt("project_count", 0),
-                            totalContractValue = obj.optDouble("total_contract_value", 0.0)
+                            totalContractValue = obj.optDouble("total_contract_value", 0.0),
+                            scoreScaleProject = obj.optDouble("score_scale_project", 15.0),
+                            scoreFeconFit = obj.optDouble("score_fecon_fit", 25.0),
+                            scoreFinancialCapacity = obj.optDouble("score_financial_capacity", 25.0),
+                            scoreCooperationHistory = obj.optDouble("score_cooperation_history", 20.0),
+                            scoreManagementCapacity = obj.optDouble("score_management_capacity", 15.0),
+                            totalScore = obj.optDouble("total_score", 100.0),
+                            isSpecialElevated = obj.optInt("is_special_elevated", 0) == 1,
+                            vetoApplied = obj.optInt("veto_applied", 0) == 1,
+                            annualCareBudget = obj.optDouble("annual_care_budget", 80000000.0),
+                            spentCareBudget = obj.optDouble("spent_care_budget", 0.0),
+                            inChargeExecutive = obj.optString("in_charge_executive", "Chủ tịch / TGĐ trực tiếp phụ trách"),
+                            careFrequency = obj.optString("care_frequency", "1 tháng / lần")
                         )
                     )
                 }
@@ -386,7 +398,8 @@ object ApiClient {
                             content = obj.optString("content", ""),
                             occurredAt = obj.optString("occurred_at", ""),
                             leaderInCharge = obj.optString("leader_in_charge", ""),
-                            outcomeStatus = obj.optString("outcome_status", "SUCCESS")
+                            outcomeStatus = obj.optString("outcome_status", "SUCCESS"),
+                            cost = obj.optDouble("cost", 0.0)
                         )
                     )
                 }
@@ -407,7 +420,8 @@ object ApiClient {
         content: String,
         occurredAt: String,
         leaderInCharge: String,
-        outcomeStatus: String = "SUCCESS"
+        outcomeStatus: String = "SUCCESS",
+        cost: Double = 0.0
     ): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
             val json = JSONObject().apply {
@@ -417,8 +431,10 @@ object ApiClient {
                 put("title", title)
                 put("content", content)
                 put("occurred_at", occurredAt)
+                put("leaderInCharge", leaderInCharge)
                 put("leader_in_charge", leaderInCharge)
                 put("outcome_status", outcomeStatus)
+                put("cost", cost)
             }
             val conn = openConnection("/api/care-activities", "POST").apply {
                 setRequestProperty("Content-Type", "application/json; utf-8")
@@ -430,6 +446,43 @@ object ApiClient {
             } else {
                 val err = BufferedReader(InputStreamReader(conn.errorStream ?: conn.inputStream)).readText()
                 Result.failure(Exception("Lỗi ghi nhật ký: $err"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun assessCustomer(
+        customerId: Int,
+        scoreScale: Double,
+        scoreFit: Double,
+        scoreFinance: Double,
+        scoreHistory: Double,
+        scoreMgmt: Double,
+        isSpecialElevated: Boolean = false,
+        notes: String = ""
+    ): Result<JSONObject> = withContext(Dispatchers.IO) {
+        try {
+            val json = JSONObject().apply {
+                put("score_scale_project", scoreScale)
+                put("score_fecon_fit", scoreFit)
+                put("score_financial_capacity", scoreFinance)
+                put("score_cooperation_history", scoreHistory)
+                put("score_management_capacity", scoreMgmt)
+                put("is_special_elevated", isSpecialElevated)
+                put("strategic_notes", notes)
+            }
+            val conn = openConnection("/api/customers/$customerId/assess", "POST").apply {
+                setRequestProperty("Content-Type", "application/json; utf-8")
+                doOutput = true
+            }
+            OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
+            if (conn.responseCode in 200..299) {
+                val res = BufferedReader(InputStreamReader(conn.inputStream)).readText()
+                Result.success(JSONObject(res))
+            } else {
+                val err = BufferedReader(InputStreamReader(conn.errorStream ?: conn.inputStream)).readText()
+                Result.failure(Exception("Lỗi đánh giá khách hàng: $err"))
             }
         } catch (e: Exception) {
             Result.failure(e)

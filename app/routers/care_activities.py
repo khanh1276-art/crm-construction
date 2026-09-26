@@ -48,15 +48,26 @@ def create_care_activity(data: CareActivityCreate):
     cursor = conn.cursor()
 
     try:
+        activity_cost = float(data.cost or 0.0)
         cursor.execute("""
         INSERT INTO customer_care_activities (
-            customer_id, sbu, activity_type, title, content, occurred_at, leader_in_charge, outcome_status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            customer_id, sbu, activity_type, title, content, occurred_at, leader_in_charge, outcome_status, cost
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             data.customer_id, data.sbu, data.activity_type, data.title,
-            data.content, data.occurred_at, data.leader_in_charge, data.outcome_status
+            data.content, data.occurred_at, data.leader_in_charge, data.outcome_status,
+            activity_cost
         ))
         new_id = cursor.lastrowid
+
+        # Automatically update spent_care_budget for customer if cost > 0
+        if activity_cost > 0:
+            cursor.execute("""
+            UPDATE customers
+            SET spent_care_budget = COALESCE(spent_care_budget, 0) + ?
+            WHERE id = ?
+            """, (activity_cost, data.customer_id))
+
         conn.commit()
         conn.close()
         return {"id": new_id, "message": "Ghi nhận hoạt động chăm sóc & ngoại giao thành công"}

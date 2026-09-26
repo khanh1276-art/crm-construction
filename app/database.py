@@ -45,14 +45,14 @@ def init_db():
     if "password" not in user_cols:
         cursor.execute("ALTER TABLE users ADD COLUMN password TEXT DEFAULT '123456';")
 
-    # 2. Customers & Strategic Stakeholders (Chủ đầu tư, Ban QLDA, Tập đoàn)
+    # 2. Customers & Strategic Stakeholders (FECON Policy: DIAMOND, GOLD, SILVER)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS customers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         code TEXT UNIQUE NOT NULL,
         name TEXT NOT NULL,
         sbu TEXT NOT NULL, -- SBU1, SBU2, SBU3, SBU4, SBU5
-        tier TEXT NOT NULL DEFAULT 'STRATEGIC_VIP', -- STRATEGIC_VIP, CLOSE_PARTNER, PROSPECT
+        tier TEXT NOT NULL DEFAULT 'GOLD', -- DIAMOND (Kim Cương), GOLD (Vàng), SILVER (Bạc)
         segment TEXT NOT NULL DEFAULT 'B2B', -- B2B, B2G, FDI
         tax_code TEXT,
         phone TEXT,
@@ -66,6 +66,20 @@ def init_db():
         relationship_score INTEGER DEFAULT 5, -- 1-5 sao
         relationship_status TEXT DEFAULT 'EXCELLENT', -- EXCELLENT, STABLE, NEEDS_ATTENTION
         strategic_notes TEXT,
+        -- FECON Policy Assessment Criteria (5 Tiêu chí - Thang điểm 100)
+        score_scale_project REAL DEFAULT 15.0,       -- Tiêu chí 1: Quy mô Khách hàng/Dự án (Max 15đ)
+        score_fecon_fit REAL DEFAULT 25.0,           -- Tiêu chí 2: Mức độ phù hợp FECON (Max 25đ)
+        score_financial_capacity REAL DEFAULT 25.0,  -- Tiêu chí 3: Năng lực tài chính & dòng tiền (Max 25đ - TIÊU CHÍ PHỦ QUYẾT)
+        score_cooperation_history REAL DEFAULT 20.0, -- Tiêu chí 4: Lịch sử hợp tác & thanh toán (Max 20đ)
+        score_management_capacity REAL DEFAULT 15.0, -- Tiêu chí 5: Năng lực quản lý & chuyên nghiệp (Max 15đ)
+        total_score REAL DEFAULT 100.0,              -- Tổng điểm đánh giá (0 - 100)
+        is_special_elevated INTEGER DEFAULT 0,       -- 1: CT HĐQT/TGĐ phê duyệt đặc cách Hạng Kim Cương
+        veto_applied INTEGER DEFAULT 0,              -- 1: Bị phủ quyết hạ tối đa Hạng Vàng do TC3 rủi ro
+        -- Chính sách Chăm sóc & Ngân sách thường niên (Phụ lục 03 FECON)
+        annual_care_budget REAL DEFAULT 80000000.0,  -- Hạn mức: KC: 80M, Vàng: 20M, Bạc: 5M
+        spent_care_budget REAL DEFAULT 0.0,          -- Ngân sách CSKH đã chi tiêu trong năm
+        in_charge_executive TEXT DEFAULT 'Chủ tịch / TGĐ trực tiếp phụ trách', -- Phân công phụ trách
+        care_frequency TEXT DEFAULT '1 tháng / lần', -- Tần suất chăm sóc định kỳ
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
@@ -170,6 +184,39 @@ def init_db():
         FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
     );
     """)
+
+    # --- MIGRATIONS FOR FECON POLICY & 3-TIER CSKH ---
+    # Migration for customers table
+    cursor.execute("PRAGMA table_info(customers);")
+    cust_cols = [col[1] for col in cursor.fetchall()]
+    new_cust_cols = {
+        "score_scale_project": "REAL DEFAULT 15.0",
+        "score_fecon_fit": "REAL DEFAULT 25.0",
+        "score_financial_capacity": "REAL DEFAULT 25.0",
+        "score_cooperation_history": "REAL DEFAULT 20.0",
+        "score_management_capacity": "REAL DEFAULT 15.0",
+        "total_score": "REAL DEFAULT 100.0",
+        "is_special_elevated": "INTEGER DEFAULT 0",
+        "veto_applied": "INTEGER DEFAULT 0",
+        "annual_care_budget": "REAL DEFAULT 80000000.0",
+        "spent_care_budget": "REAL DEFAULT 0.0",
+        "in_charge_executive": "TEXT DEFAULT 'Chủ tịch / TGĐ trực tiếp phụ trách'",
+        "care_frequency": "TEXT DEFAULT '1 tháng / lần'"
+    }
+    for col_name, col_type in new_cust_cols.items():
+        if col_name not in cust_cols:
+            cursor.execute(f"ALTER TABLE customers ADD COLUMN {col_name} {col_type};")
+
+    # Migrate legacy tiers to FECON official 3 tiers: DIAMOND, GOLD, SILVER
+    cursor.execute("UPDATE customers SET tier = 'DIAMOND' WHERE tier = 'STRATEGIC_VIP';")
+    cursor.execute("UPDATE customers SET tier = 'GOLD' WHERE tier = 'CLOSE_PARTNER';")
+    cursor.execute("UPDATE customers SET tier = 'SILVER' WHERE tier = 'PROSPECT';")
+
+    # Migration for customer_care_activities table
+    cursor.execute("PRAGMA table_info(customer_care_activities);")
+    care_cols = [col[1] for col in cursor.fetchall()]
+    if "cost" not in care_cols:
+        cursor.execute("ALTER TABLE customer_care_activities ADD COLUMN cost REAL DEFAULT 0.0;")
 
     conn.commit()
     

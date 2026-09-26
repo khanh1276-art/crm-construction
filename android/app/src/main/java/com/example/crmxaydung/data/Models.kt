@@ -28,7 +28,7 @@ data class CustomerItem(
     val code: String,
     val name: String,
     val sbu: String,
-    val tier: String,
+    val tier: String, // DIAMOND, GOLD, SILVER
     val segment: String = "B2B",
     val taxCode: String = "",
     val phone: String = "",
@@ -43,7 +43,20 @@ data class CustomerItem(
     val relationshipStatus: String = "EXCELLENT",
     val strategicNotes: String = "",
     val projectCount: Int = 0,
-    val totalContractValue: Double = 0.0
+    val totalContractValue: Double = 0.0,
+    // FECON Policy 5 Criteria Scores & Budget Limits
+    val scoreScaleProject: Double = 15.0,
+    val scoreFeconFit: Double = 25.0,
+    val scoreFinancialCapacity: Double = 25.0,
+    val scoreCooperationHistory: Double = 20.0,
+    val scoreManagementCapacity: Double = 15.0,
+    val totalScore: Double = 100.0,
+    val isSpecialElevated: Boolean = false,
+    val vetoApplied: Boolean = false,
+    val annualCareBudget: Double = 80000000.0,
+    val spentCareBudget: Double = 0.0,
+    val inChargeExecutive: String = "Chủ tịch / TGĐ trực tiếp phụ trách",
+    val careFrequency: String = "1 tháng / lần"
 )
 
 data class MilestoneItem(
@@ -90,7 +103,8 @@ data class CareActivityItem(
     val content: String = "",
     val occurredAt: String,
     val leaderInCharge: String,
-    val outcomeStatus: String
+    val outcomeStatus: String,
+    val cost: Double = 0.0
 )
 
 data class UserItem(

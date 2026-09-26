@@ -12,155 +12,166 @@
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
 
-  <!-- ==================== MANDATORY LOGIN SCREEN ==================== -->
-  <div id="login-screen" class="fixed inset-0 z-50 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-    <div class="w-full max-w-lg my-auto space-y-6">
-      
-      <!-- Brand & Header -->
-      <div class="text-center space-y-2">
-        <div class="inline-flex items-center justify-center p-2.5 bg-white rounded-2xl shadow-xl shadow-amber-500/10 mb-1 border border-slate-700">
-          <img src="/static/img/fecon_crm_logo.png" alt="FECON CRM" class="h-12 object-contain">
-        </div>
-        <div class="flex items-center justify-center gap-2">
-          <span class="text-2xl font-black text-white tracking-tight">FECON CRM</span>
-          <span class="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded tracking-wider uppercase">Executive</span>
-        </div>
-        <p class="text-xs text-slate-400">Hệ Thống Quản Trị & Chăm Sóc Khách Hàng Chiến Lược 5 Khối SBU</p>
-      </div>
+  <!-- ==================== MANDATORY LOGIN SCREEN (MATCHES MOCKUP) ==================== -->
+  <div id="login-screen" class="fixed inset-0 z-50 bg-[#0A3583] flex flex-col lg:flex-row overflow-y-auto">
+    
+    <!-- Left Hero Construction Graphic (Exact visual from mockup) -->
+    <div class="hidden lg:block lg:w-1/2 min-h-screen relative bg-[#0A3583] overflow-hidden">
+      <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('/static/img/login_hero_building.png');"></div>
+      <div class="absolute inset-y-0 right-0 w-24 bg-gradient-to-r from-transparent to-[#0A3583]"></div>
+    </div>
 
-      <!-- Main Login Card -->
-      <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-800/20 space-y-5">
+    <!-- Mobile Top Hero Graphic (Compact for small screens) -->
+    <div class="block lg:hidden w-full h-44 relative bg-[#0A3583] flex-shrink-0">
+      <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('/static/img/login_hero_building.png');"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-transparent to-[#0A3583]"></div>
+    </div>
+
+    <!-- Right Column: Deep Blue BG with Centered White Card -->
+    <div class="w-full lg:w-1/2 min-h-screen flex flex-col justify-center items-center p-4 sm:p-8 lg:p-12 relative bg-[#0A3583]">
+      
+      <!-- White Login Card -->
+      <div class="bg-white w-full max-w-[420px] rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 space-y-5 my-auto">
         
-        <div class="text-center pb-3 border-b border-slate-100">
-          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-xs font-bold mb-2">
-            <i class="fa-solid fa-shield-halved text-amber-600"></i> Xác Thực Tài Khoản Đăng Nhập
-          </div>
-          <h2 class="text-base font-black text-slate-900">Vui lòng đăng nhập để truy cập hệ thống</h2>
-          <p class="text-[11px] text-slate-500 mt-0.5">Phân quyền theo: Ban Lãnh Đạo • GĐKD 5 SBU • Cộng Tác Viên</p>
+        <!-- FECON CRM Logo at Top -->
+        <div class="text-center pt-2 pb-1">
+          <img src="/static/img/fecon_crm_logo.png" alt="FECON CRM" class="h-16 mx-auto object-contain">
         </div>
 
         <!-- Login Form -->
-        <form id="form-login-screen" onsubmit="handleScreenLogin(event)" class="space-y-4 text-xs">
-          <div>
-            <label class="block font-bold text-slate-700 mb-1.5">Tên Đăng Nhập (Username) *</label>
-            <div class="relative">
-              <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
-                <i class="fa-solid fa-user"></i>
-              </span>
-              <input type="text" id="screen-login-username" required autocomplete="username" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:outline-none transition" placeholder="VD: admin, gdkd_sbu1, ctv_hanoi...">
-            </div>
+        <form id="form-login-screen" onsubmit="handleScreenLogin(event)" class="space-y-4">
+          <!-- Username/Email Field -->
+          <div class="space-y-1.5 text-left">
+            <label class="block text-xs font-semibold text-slate-700">Username/Email</label>
+            <input 
+              type="text" 
+              id="screen-login-username" 
+              required 
+              autocomplete="username" 
+              class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"
+              placeholder="Username/Email"
+              value="admin"
+            >
           </div>
 
-          <div>
-            <label class="block font-bold text-slate-700 mb-1.5">Mật Khẩu Đăng Nhập (Password) *</label>
+          <!-- Password Field with Eye Toggle -->
+          <div class="space-y-1.5 text-left">
+            <label class="block text-xs font-semibold text-slate-700">Password</label>
             <div class="relative">
-              <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
-                <i class="fa-solid fa-lock"></i>
-              </span>
-              <input type="password" id="screen-login-password" required autocomplete="current-password" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-11 py-2.5 text-slate-900 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:outline-none transition" placeholder="Nhập mật khẩu (mặc định: 123456)..." value="123456">
-              <button type="button" onclick="togglePasswordVisibility('screen-login-password')" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600">
-                <i id="eye-icon-screen-login-password" class="fa-solid fa-eye"></i>
+              <input 
+                type="password" 
+                id="screen-login-password" 
+                required 
+                autocomplete="current-password" 
+                class="w-full px-3.5 py-2.5 pr-10 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"
+                placeholder="Password" 
+                value="123456"
+              >
+              <button 
+                type="button" 
+                onclick="togglePasswordVisibility('screen-login-password')" 
+                class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none"
+              >
+                <i id="eye-icon-screen-login-password" class="fa-solid fa-eye text-sm"></i>
               </button>
             </div>
           </div>
 
-          <button type="submit" id="btn-submit-login" class="w-full py-3 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-slate-950 font-black rounded-xl text-xs transition shadow-lg shadow-amber-400/20 flex items-center justify-center gap-2 cursor-pointer">
-            <i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập Vào Hệ Thống
+          <!-- Remember Me & Forgot Password -->
+          <div class="flex items-center justify-between text-xs pt-1">
+            <label class="flex items-center gap-2 cursor-pointer select-none text-slate-600">
+              <input type="checkbox" id="remember-me" checked class="w-4 h-4 rounded border-slate-300 text-[#EA5713] focus:ring-[#EA5713]">
+              <span>Remember Me</span>
+            </label>
+            <a href="javascript:void(0)" onclick="alert('Vui lòng liên hệ Quản trị viên (Admin) hoặc sử dụng mật khẩu mặc định: 123456')" class="text-blue-700 hover:text-blue-800 hover:underline font-medium">
+              Forgot Password
+            </a>
+          </div>
+
+          <!-- Submit Button (#EA5713 Orange matching mockup) -->
+          <button 
+            type="submit" 
+            id="btn-submit-login" 
+            class="w-full py-2.5 px-4 bg-[#EA5713] hover:bg-[#D44709] active:scale-[0.99] text-white font-bold rounded-lg text-sm transition duration-150 shadow-md flex items-center justify-center gap-2 cursor-pointer"
+          >
+            Đăng nhập
           </button>
         </form>
 
-        <!-- Collapsible Reference Section of Authorized Accounts -->
-        <div class="pt-3 border-t border-slate-100">
-          <button type="button" onclick="toggleAccountsHelper()" class="w-full flex items-center justify-between text-xs font-bold text-slate-600 hover:text-slate-900 transition py-1">
-            <span class="flex items-center gap-1.5">
-              <i class="fa-solid fa-circle-question text-amber-500"></i> Danh mục tài khoản hệ thống (Demo)
-            </span>
-            <i id="helper-chevron" class="fa-solid fa-chevron-down text-slate-400 transition transform"></i>
-          </button>
-
-          <div id="accounts-helper-box" class="hidden mt-3 p-3 bg-slate-50 rounded-2xl border border-slate-200 text-[11px] space-y-2.5">
-            <div class="text-slate-500 italic text-[10px]">
-              * Mật khẩu mặc định hệ thống cấp cho tất cả tài khoản: <span class="font-mono font-bold text-amber-600">123456</span>
-            </div>
-            
-            <div class="space-y-1">
-              <div class="font-bold text-slate-800 text-[10px] uppercase">👑 Khối Ban Lãnh Đạo (Admin):</div>
-              <div onclick="fillLoginCredentials('admin')" class="flex items-center justify-between bg-white p-2 rounded-lg border border-slate-200 cursor-pointer hover:border-amber-400 transition" title="Bấm để điền tên đăng nhập">
-                <span class="font-mono font-bold text-amber-800">admin</span>
-                <span class="text-slate-600 text-[10px]">Chủ Tịch & TGĐ (Toàn quyền 5 SBU)</span>
+        <!-- Divider & APK Download Section -->
+        <div class="pt-3 border-t border-slate-100 space-y-2.5">
+          <div class="flex items-center justify-between bg-slate-50 hover:bg-slate-100 p-2.5 rounded-xl border border-slate-200 transition">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm shadow">
+                <i class="fa-brands fa-android"></i>
+              </div>
+              <div class="text-left">
+                <div class="text-xs font-bold text-slate-800">Cài đặt App Android</div>
+                <div class="text-[10px] text-slate-500">File cài đặt APK trực tiếp</div>
               </div>
             </div>
-
-            <div class="space-y-1">
-              <div class="font-bold text-slate-800 text-[10px] uppercase">💼 Khối Giám Đốc Kinh Doanh (5 SBU):</div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[10px]">
-                <div onclick="fillLoginCredentials('gdkd_sbu1')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400 transition">
-                  <span class="font-mono font-bold text-blue-700">gdkd_sbu1</span>
-                  <span class="text-slate-500">SBU 1 (Nền móng & Hầm)</span>
-                </div>
-                <div onclick="fillLoginCredentials('gdkd_sbu2')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400 transition">
-                  <span class="font-mono font-bold text-blue-700">gdkd_sbu2</span>
-                  <span class="text-slate-500">SBU 2 (Năng lượng & CN)</span>
-                </div>
-                <div onclick="fillLoginCredentials('gdkd_sbu3')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400 transition">
-                  <span class="font-mono font-bold text-blue-700">gdkd_sbu3</span>
-                  <span class="text-slate-500">SBU 3 (Metro & Ngầm)</span>
-                </div>
-                <div onclick="fillLoginCredentials('gdkd_sbu4')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400 transition">
-                  <span class="font-mono font-bold text-blue-700">gdkd_sbu4</span>
-                  <span class="text-slate-500">SBU 4 (Hạ tầng & ĐS)</span>
-                </div>
-                <div onclick="fillLoginCredentials('gdkd_sbu5')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between sm:col-span-2 cursor-pointer hover:border-blue-400 transition">
-                  <span class="font-mono font-bold text-blue-700">gdkd_sbu5</span>
-                  <span class="text-slate-500">SBU 5 (Cảng biển & BĐKH)</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="space-y-1">
-              <div class="font-bold text-slate-800 text-[10px] uppercase">🤝 Khối Cộng Tác Viên (CTV):</div>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-[10px]">
-                <div onclick="fillLoginCredentials('ctv_hanoi')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-emerald-400 transition">
-                  <span class="font-mono font-bold text-emerald-700">ctv_hanoi</span>
-                  <span class="text-slate-500">Miền Bắc</span>
-                </div>
-                <div onclick="fillLoginCredentials('ctv_saigon')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-emerald-400 transition">
-                  <span class="font-mono font-bold text-emerald-700">ctv_saigon</span>
-                  <span class="text-slate-500">SBU 2</span>
-                </div>
-                <div onclick="fillLoginCredentials('ctv_mientay')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-emerald-400 transition">
-                  <span class="font-mono font-bold text-emerald-700">ctv_mientay</span>
-                  <span class="text-slate-500">SBU 5</span>
-                </div>
-              </div>
-            </div>
-
+            <a href="/static/crm-xaydung.apk" download="FECON-CRM.apk" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-lg shadow transition flex items-center gap-1.5">
+              <i class="fa-solid fa-download"></i> Tải APK
+            </a>
           </div>
-        </div>
 
-        <!-- Android APK Download Card -->
-        <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-xl border border-blue-100">
-          <div class="flex items-center space-x-2.5">
-            <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow">
-              <i class="fa-brands fa-android"></i>
-            </div>
-            <div>
-              <div class="text-xs font-bold text-slate-800">App Android Native (.APK)</div>
-              <div class="text-[10px] text-slate-500">Bản cài đặt trực tiếp cho điện thoại</div>
+          <!-- Demo Accounts Helper Toggle -->
+          <div>
+            <button type="button" onclick="toggleAccountsHelper()" class="w-full text-center text-[11px] text-slate-500 hover:text-blue-600 font-medium py-1 flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-circle-info text-blue-500"></i> Danh mục tài khoản mẫu (Demo)
+              <i id="helper-chevron" class="fa-solid fa-chevron-down text-[9px] transition-transform"></i>
+            </button>
+
+            <div id="accounts-helper-box" class="hidden mt-2 p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] space-y-2 text-left">
+              <div class="text-slate-500 italic text-[10px]">
+                * Mật khẩu mặc định hệ thống: <span class="font-mono font-bold text-amber-600">123456</span>
+              </div>
+              <div class="space-y-1">
+                <div class="font-bold text-slate-800 text-[10px] uppercase">👑 Ban Lãnh Đạo (Admin):</div>
+                <div onclick="fillLoginCredentials('admin')" class="flex items-center justify-between bg-white p-1.5 rounded border border-slate-200 cursor-pointer hover:border-amber-400 transition">
+                  <span class="font-mono font-bold text-amber-700">admin</span>
+                  <span class="text-slate-500 text-[10px]">Chủ Tịch & TGĐ</span>
+                </div>
+              </div>
+              <div class="space-y-1">
+                <div class="font-bold text-slate-800 text-[10px] uppercase">💼 GĐKD 5 SBU:</div>
+                <div class="grid grid-cols-2 gap-1 text-[10px]">
+                  <div onclick="fillLoginCredentials('gdkd_sbu1')" class="bg-white p-1 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400">
+                    <span class="font-mono font-bold text-blue-700">gdkd_sbu1</span>
+                    <span class="text-slate-500">SBU 1</span>
+                  </div>
+                  <div onclick="fillLoginCredentials('gdkd_sbu2')" class="bg-white p-1 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400">
+                    <span class="font-mono font-bold text-blue-700">gdkd_sbu2</span>
+                    <span class="text-slate-500">SBU 2</span>
+                  </div>
+                  <div onclick="fillLoginCredentials('gdkd_sbu3')" class="bg-white p-1 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400">
+                    <span class="font-mono font-bold text-blue-700">gdkd_sbu3</span>
+                    <span class="text-slate-500">SBU 3</span>
+                  </div>
+                  <div onclick="fillLoginCredentials('gdkd_sbu4')" class="bg-white p-1 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400">
+                    <span class="font-mono font-bold text-blue-700">gdkd_sbu4</span>
+                    <span class="text-slate-500">SBU 4</span>
+                  </div>
+                  <div onclick="fillLoginCredentials('gdkd_sbu5')" class="bg-white p-1 rounded border border-slate-200 flex justify-between col-span-2 cursor-pointer hover:border-blue-400">
+                    <span class="font-mono font-bold text-blue-700">gdkd_sbu5</span>
+                    <span class="text-slate-500">SBU 5</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <a href="/static/crm-xaydung.apk" download="CRM-XayDung.apk" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition flex items-center gap-1.5">
-            <i class="fa-solid fa-download"></i> Tải APK
-          </a>
         </div>
 
       </div>
 
-      <div class="text-center text-slate-500 text-[11px]">
-        Hệ Thống Quản Trị Khách Hàng Xây Dựng 5 Khối SBU • Bảo Mật Chuẩn Doanh Nghiệp
+      <!-- Bottom Right Brand Tag (Matching mock-up) -->
+      <div class="lg:absolute lg:bottom-4 lg:right-6 mt-4 lg:mt-0 text-white/60 text-[11px] font-medium flex items-center gap-1.5">
+        <i class="fa-solid fa-shield-halved text-amber-400"></i>
+        <span>FECON CRM • Executive Portal</span>
       </div>
 
     </div>
+
   </div>
 
   <!-- ==================== MAIN APPLICATION ROOT (Hidden until authenticated) ==================== -->

@@ -1057,6 +1057,96 @@
     </div>
   </div>
 
+  <!-- Modal 4.1: Bid Pipeline Detail & Stage Transition -->
+  <div id="modal-bid-detail" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <span id="bid-detail-sbu-badge" class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-blue-100 text-blue-700">SBU</span>
+          <h3 id="bid-detail-title" class="font-black text-slate-900 text-base mt-1">Chi Tiết Hồ Sơ Dự Thầu</h3>
+        </div>
+        <button onclick="closeModal('modal-bid-detail')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <input type="hidden" id="bid-detail-id">
+
+      <!-- Basic Info Box -->
+      <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs space-y-2">
+        <div class="flex justify-between">
+          <span class="text-slate-500 font-medium">Đối tác / Chủ đầu tư:</span>
+          <span id="bid-detail-customer" class="font-bold text-slate-900">--</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500 font-medium">Người đại diện CĐT:</span>
+          <span id="bid-detail-contact" class="font-semibold text-blue-600">--</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500 font-medium">Giá trị dự toán:</span>
+          <span id="bid-detail-value" class="font-black text-purple-700 text-sm">-- Tỷ VNĐ</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500 font-medium">Hạn nộp thầu:</span>
+          <span id="bid-detail-deadline" class="font-semibold text-slate-700">--</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500 font-medium">Lãnh đạo phụ trách:</span>
+          <span id="bid-detail-director" class="font-semibold text-slate-700">--</span>
+        </div>
+      </div>
+
+      <!-- Quick Stage Action Buttons (Requested: Trúng thầu hoặc Trượt thầu luôn) -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold text-slate-700">⚡ Chuyển Trực Tiếp Kết Quả Thầu:</label>
+        <div class="grid grid-cols-2 gap-2.5">
+          <button type="button" onclick="quickChangeBidStage('WON')" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-trophy text-amber-300"></i> 🏆 TRÚNG THẦU (Ký HĐ)
+          </button>
+          <button type="button" onclick="quickChangeBidStage('LOST')" class="py-2.5 px-3 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-black rounded-xl text-xs transition shadow flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-circle-xmark"></i> ❌ TRƯỢT THẦU / DỪNG
+          </button>
+        </div>
+      </div>
+
+      <!-- Stage Selector & Win Rate -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Giai đoạn đấu thầu hiện tại *</label>
+          <select id="bid-detail-stage" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-900">
+            <option value="INFORMATION">1. Tiếp cận thông tin sơ bộ</option>
+            <option value="EVALUATION">2. Khảo sát & Đánh giá</option>
+            <option value="TENDER_PREP">3. Lập hồ sơ thầu / Báo giá</option>
+            <option value="NEGOTIATION">4. Thương thảo hợp đồng</option>
+            <option value="WON">5. Trúng thầu (Ký HĐ)</option>
+            <option value="LOST">6. Trượt thầu / Tạm dừng</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Xác suất thắng thầu (%) *</label>
+          <input type="number" id="bid-detail-winrate" min="0" max="100" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-purple-700">
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="text-xs">
+        <label class="block font-bold text-slate-700 mb-1">Ghi chú chiến lược & Tiến độ trao đổi</label>
+        <textarea id="bid-detail-notes" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800" placeholder="Ghi nhận chiến lược đối tác, yêu cầu kỹ thuật đặc biệt, cam kết của FECON..."></textarea>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
+        <button type="button" id="btn-delete-bid-modal" onclick="deleteCurrentBid()" class="px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-xl font-bold transition flex items-center gap-1">
+          <i class="fa-solid fa-trash"></i> Xóa
+        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="closeModal('modal-bid-detail')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Đóng</button>
+          <button type="button" onclick="saveBidDetailChanges()" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl font-bold shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu Thay Đổi
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal 5: New Project -->
   <div id="modal-project" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">

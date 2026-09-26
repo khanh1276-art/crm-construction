@@ -104,3 +104,20 @@ data class UserItem(
     val email: String = "",
     val phone: String = ""
 )
+
+data class PipelineBidItem(
+    val id: Int,
+    val customerId: Int = 0,
+    val customerName: String = "",
+    val sbu: String = "",
+    val projectTitle: String = "",
+    val estimatedValueBillion: Double = 0.0,
+    val stage: String = "INFORMATION",
+    val winRate: Int = 50,
+    val tenderDeadline: String = "",
+    val targetKickoff: String = "",
+    val assignedDirector: String = "",
+    val biddingNotes: String = "",
+    val keyDecisionMaker: String = "",
+    val decisionMakerPhone: String = ""
+)

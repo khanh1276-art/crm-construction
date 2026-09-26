@@ -1084,7 +1084,7 @@ async function loadPipeline() {
               const canEditBid = currentUser.role === 'ADMIN' || currentUser.sbu === item.sbu;
 
               return `
-                <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs hover-card space-y-2">
+                <div onclick="openBidDetailModal(${item.id})" class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs hover-card space-y-2 cursor-pointer hover:border-purple-400 transition" title="Bấm để xem chi tiết & cập nhật trạng thái gói thầu">
                   <div class="flex items-center justify-between">
                     ${getSBUBadge(item.sbu)}
                     <span class="text-[10px] font-black text-purple-700">${item.win_rate}% Win</span>
@@ -1093,7 +1093,7 @@ async function loadPipeline() {
                   <div class="text-[11px] text-slate-500">${item.customer_name}</div>
                   <div class="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
                     <span class="font-black text-slate-900">${formatVND(item.estimated_value)}</span>
-                    <div class="flex items-center gap-1">
+                    <div class="flex items-center gap-1" onclick="event.stopPropagation()">
                       ${canEditBid && stage.id !== 'WON' && stage.id !== 'LOST' ? `
                         <button onclick="advanceBidStage(${item.id}, '${stage.id}')" class="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded text-[10px] font-bold">
                           Tiến &gt;
@@ -1117,6 +1117,104 @@ async function loadPipeline() {
   } catch (err) {
     console.error("Error loading pipeline:", err);
   }
+}
+
+async function openBidDetailModal(bidId) {
+  try {
+    const res = await authFetch(`/api/customers/bids/${bidId}`);
+    if (!res.ok) {
+      showToast("Không tìm thấy thông tin gói thầu", "error");
+      return;
+    }
+    const bid = await res.json();
+
+    document.getElementById('bid-detail-id').value = bid.id;
+    document.getElementById('bid-detail-title').textContent = bid.project_title;
+    document.getElementById('bid-detail-customer').textContent = bid.customer_name || '--';
+    document.getElementById('bid-detail-contact').textContent = `${bid.key_decision_maker || 'Chưa cập nhật'} (${bid.decision_maker_phone || '--'})`;
+    document.getElementById('bid-detail-value').textContent = formatVND(bid.estimated_value);
+    document.getElementById('bid-detail-deadline').textContent = bid.tender_deadline || 'Chưa thiết lập';
+    document.getElementById('bid-detail-director').textContent = bid.assigned_director || 'Chưa chỉ định';
+    
+    const sbuBadge = document.getElementById('bid-detail-sbu-badge');
+    if (sbuBadge) {
+      sbuBadge.textContent = bid.sbu;
+      sbuBadge.className = `px-2 py-0.5 rounded text-[10px] font-black uppercase ${bid.sbu === 'SBU1' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`;
+    }
+
+    const stageSelect = document.getElementById('bid-detail-stage');
+    if (stageSelect) stageSelect.value = bid.stage || 'INFORMATION';
+
+    const winrateInput = document.getElementById('bid-detail-winrate');
+    if (winrateInput) winrateInput.value = (bid.win_rate !== undefined && bid.win_rate !== null) ? bid.win_rate : 50;
+
+    const notesInput = document.getElementById('bid-detail-notes');
+    if (notesInput) notesInput.value = bid.bidding_notes || '';
+
+    const delBtn = document.getElementById('btn-delete-bid-modal');
+    if (delBtn) delBtn.style.display = currentUser.role === 'ADMIN' ? 'flex' : 'none';
+
+    openModal('modal-bid-detail');
+  } catch (err) {
+    showToast("Lỗi khi mở chi tiết gói thầu", "error");
+  }
+}
+
+async function quickChangeBidStage(targetStage) {
+  const bidId = document.getElementById('bid-detail-id').value;
+  if (!bidId) return;
+
+  const stageSelect = document.getElementById('bid-detail-stage');
+  if (stageSelect) stageSelect.value = targetStage;
+
+  const winrateInput = document.getElementById('bid-detail-winrate');
+  if (winrateInput) {
+    if (targetStage === 'WON') winrateInput.value = 100;
+    else if (targetStage === 'LOST') winrateInput.value = 0;
+  }
+
+  await saveBidDetailChanges();
+}
+
+async function saveBidDetailChanges() {
+  const bidId = document.getElementById('bid-detail-id').value;
+  if (!bidId) return;
+
+  const stage = document.getElementById('bid-detail-stage').value;
+  const winRate = parseInt(document.getElementById('bid-detail-winrate').value, 10) || 50;
+  const notes = document.getElementById('bid-detail-notes').value.trim();
+
+  try {
+    const res = await authFetch(`/api/customers/bids/${bidId}/stage`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        stage: stage,
+        win_rate: winRate,
+        bidding_notes: notes
+      })
+    });
+
+    if (res.ok) {
+      const stageName = stage === 'WON' ? '🏆 TRÚNG THẦU' : (stage === 'LOST' ? '❌ TRƯỢT THẦU' : stage);
+      showToast(`Đã cập nhật trạng thái gói thầu: ${stageName}!`);
+      closeModal('modal-bid-detail');
+      loadPipeline();
+      loadDashboard();
+    } else {
+      const err = await res.json();
+      showToast(err.detail || "Lỗi khi lưu", "error");
+    }
+  } catch (err) {
+    showToast("Lỗi kết nối máy chủ", "error");
+  }
+}
+
+async function deleteCurrentBid() {
+  const bidId = document.getElementById('bid-detail-id').value;
+  if (!bidId) return;
+  await deleteBid(bidId);
+  closeModal('modal-bid-detail');
 }
 
 async function advanceBidStage(bidId, currentStage) {

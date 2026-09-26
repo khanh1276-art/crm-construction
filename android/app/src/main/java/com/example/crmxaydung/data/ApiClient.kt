@@ -521,4 +521,73 @@ object ApiClient {
             Result.failure(e)
         }
     }
+
+    // --- Bidding Pipeline ---
+    suspend fun fetchPipelineBids(sbu: String = "ALL"): Result<List<PipelineBidItem>> = withContext(Dispatchers.IO) {
+        try {
+            val endpoint = if (sbu == "ALL") "/api/customers/bids/pipeline" else "/api/customers/bids/pipeline?sbu=$sbu"
+            val conn = openConnection(endpoint)
+            if (conn.responseCode == 200) {
+                val responseText = BufferedReader(InputStreamReader(conn.inputStream)).readText()
+                val json = JSONObject(responseText)
+                val itemsObj = json.getJSONObject("items")
+                val list = mutableListOf<PipelineBidItem>()
+                val keys = itemsObj.keys()
+                while (keys.hasNext()) {
+                    val k = keys.next()
+                    val arr = itemsObj.getJSONArray(k)
+                    for (i in 0 until arr.length()) {
+                        val obj = arr.getJSONObject(i)
+                        list.add(
+                            PipelineBidItem(
+                                id = obj.getInt("id"),
+                                customerId = obj.optInt("customer_id", 0),
+                                customerName = obj.optString("customer_name", ""),
+                                sbu = obj.optString("sbu", ""),
+                                projectTitle = obj.optString("project_title", ""),
+                                estimatedValueBillion = obj.optDouble("estimated_value", 0.0) / 1_000_000_000.0,
+                                stage = obj.optString("stage", "INFORMATION"),
+                                winRate = obj.optInt("win_rate", 50),
+                                tenderDeadline = obj.optString("tender_deadline", ""),
+                                targetKickoff = obj.optString("target_kickoff", ""),
+                                assignedDirector = obj.optString("assigned_director", ""),
+                                biddingNotes = obj.optString("bidding_notes", ""),
+                                keyDecisionMaker = obj.optString("key_decision_maker", ""),
+                                decisionMakerPhone = obj.optString("decision_maker_phone", "")
+                            )
+                        )
+                    }
+                }
+                Result.success(list)
+            } else {
+                Result.failure(Exception("Lỗi tải phễu thầu: ${conn.responseCode}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateBidStage(bidId: Int, stage: String, winRate: Int, notes: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val json = JSONObject().apply {
+                put("stage", stage)
+                put("win_rate", winRate)
+                put("bidding_notes", notes)
+            }
+            val conn = openConnection("/api/customers/bids/$bidId/stage", "PUT").apply {
+                setRequestProperty("Content-Type", "application/json; utf-8")
+                doOutput = true
+            }
+            OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
+            if (conn.responseCode in 200..204) {
+                Result.success(true)
+            } else {
+                val err = BufferedReader(InputStreamReader(conn.errorStream ?: conn.inputStream)).readText()
+                val errMsg = try { JSONObject(err).optString("detail", err) } catch (_: Exception) { err }
+                Result.failure(Exception(errMsg))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

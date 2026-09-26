@@ -3,9 +3,8 @@ package com.example.crmxaydung.ui
 import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,17 +13,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import com.example.crmxaydung.R
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.crmxaydung.R
 import com.example.crmxaydung.data.ApiClient
 import com.example.crmxaydung.data.UserSession
 import kotlinx.coroutines.launch
@@ -52,11 +53,17 @@ fun LoginScreen(
     var username by remember { mutableStateOf("admin") }
     var password by remember { mutableStateOf("123456") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var rememberMe by remember { mutableStateOf(true) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showDemoHelper by remember { mutableStateOf(false) }
+    var showServerSettings by remember { mutableStateOf(false) }
     var isCheckingHealth by remember { mutableStateOf(false) }
     var healthMessage by remember { mutableStateOf<String?>(null) }
     var healthSuccess by remember { mutableStateOf(false) }
+
+    val deepNavyBlue = Color(0xFF0A3583)
+    val feconOrange = Color(0xFFEA5713)
 
     val demoUsers = listOf(
         DemoUser("admin", "Chủ Tịch & TGĐ", "ALL", "Ban Lãnh Đạo"),
@@ -68,280 +75,351 @@ fun LoginScreen(
         DemoUser("ctv_hanoi", "CTV Nguyễn Văn Hùng", "SBU1", "Cộng tác viên")
     )
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A))
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(deepNavyBlue)
     ) {
-        Spacer(modifier = Modifier.height(28.dp))
-
-        // Header Card / Logo
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
         ) {
+            // Top Hero Banner (Construction site matching web mockup)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.login_hero_building),
+                    contentDescription = "FECON Project Hero",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                // Gradient overlay blending into deep navy
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, deepNavyBlue.copy(alpha = 0.5f), deepNavyBlue)
+                            )
+                        )
+                )
+            }
+
+            // White Login Card
             Column(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Surface(
-                    color = Color.White,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.padding(bottom = 12.dp)
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(24.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.fecon_crm_logo),
-                        contentDescription = "FECON CRM",
-                        modifier = Modifier
-                            .height(52.dp)
-                            .padding(horizontal = 16.dp, vertical = 6.dp),
-                        contentScale = ContentScale.Fit
-                    )
-                }
-                Text(
-                    text = "FECON CRM",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Quản Trị Khách Hàng Ban Lãnh Đạo & 5 Khối SBU",
-                    color = Color(0xFFCBD5E1),
-                    fontSize = 12.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Surface(
-                    color = Color(0xFF065F46),
-                    shape = RoundedCornerShape(6.dp)
-                ) {
-                    Text(
-                        text = "☁️ Render Cloud Live",
-                        color = Color(0xFF6EE7B7),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    )
-                }
-            }
-        }
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // FECON CRM Logo at Top
+                        Image(
+                            painter = painterResource(id = R.drawable.fecon_crm_logo),
+                            contentDescription = "FECON CRM",
+                            modifier = Modifier
+                                .height(56.dp)
+                                .padding(vertical = 4.dp),
+                            contentScale = ContentScale.Fit
+                        )
 
-        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
-        // Server URL Configuration
-        OutlinedTextField(
-            value = serverUrl,
-            onValueChange = {
-                serverUrl = it
-                ApiClient.baseUrl = it
-                prefs.edit().putString("server_url", it).apply()
-            },
-            label = { Text("Máy chủ Render (API Base URL)") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.LightGray,
-                focusedBorderColor = Color(0xFF38BDF8),
-                unfocusedBorderColor = Color(0xFF475569)
-            )
-        )
+                        // Username/Email Field
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "Username/Email",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF334155)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            OutlinedTextField(
+                                value = username,
+                                onValueChange = { username = it },
+                                placeholder = { Text("Username/Email", fontSize = 13.sp, color = Color(0xFF94A3B8)) },
+                                singleLine = true,
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = Color(0xFF0F172A),
+                                    unfocusedTextColor = Color(0xFF0F172A),
+                                    focusedBorderColor = Color(0xFF2563EB),
+                                    unfocusedBorderColor = Color(0xFFCBD5E1),
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White
+                                )
+                            )
+                        }
 
-        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-        // Quick button to check connection or reset to Render
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(
-                onClick = {
-                    serverUrl = defaultRenderUrl
-                    ApiClient.baseUrl = defaultRenderUrl
-                    prefs.edit().putString("server_url", defaultRenderUrl).apply()
-                }
-            ) {
-                Text("🔄 Đặt lại Render", color = Color(0xFF38BDF8), fontSize = 11.sp)
-            }
+                        // Password Field with Eye Toggle
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "Password",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF334155)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            OutlinedTextField(
+                                value = password,
+                                onValueChange = { password = it },
+                                placeholder = { Text("Password", fontSize = 13.sp, color = Color(0xFF94A3B8)) },
+                                singleLine = true,
+                                shape = RoundedCornerShape(8.dp),
+                                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                trailingIcon = {
+                                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                        Text(if (passwordVisible) "👁️" else "🔒", fontSize = 14.sp)
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = Color(0xFF0F172A),
+                                    unfocusedTextColor = Color(0xFF0F172A),
+                                    focusedBorderColor = Color(0xFF2563EB),
+                                    unfocusedBorderColor = Color(0xFFCBD5E1),
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White
+                                )
+                            )
+                        }
 
-            TextButton(
-                onClick = {
-                    isCheckingHealth = true
-                    healthMessage = null
-                    coroutineScope.launch {
-                        ApiClient.baseUrl = serverUrl
-                        val res = ApiClient.checkHealth()
-                        isCheckingHealth = false
-                        res.onSuccess {
-                            healthSuccess = true
-                            healthMessage = it
-                        }.onFailure { err ->
-                            healthSuccess = false
-                            healthMessage = err.message ?: "Không thể kết nối máy chủ"
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Remember Me & Forgot Password Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.clickable { rememberMe = !rememberMe }
+                            ) {
+                                Checkbox(
+                                    checked = rememberMe,
+                                    onCheckedChange = { rememberMe = it },
+                                    colors = CheckboxDefaults.colors(checkedColor = feconOrange)
+                                )
+                                Text("Remember Me", fontSize = 12.sp, color = Color(0xFF475569))
+                            }
+
+                            Text(
+                                text = "Forgot Password",
+                                fontSize = 12.sp,
+                                color = Color(0xFF1D4ED8),
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.clickable {
+                                    errorMessage = "Mật khẩu mặc định hệ thống cấp: 123456"
+                                }
+                            )
+                        }
+
+                        if (errorMessage != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Surface(
+                                color = Color(0xFFFEF2F2),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = errorMessage!!,
+                                    color = Color(0xFFDC2626),
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(10.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Submit Button (Matching Webapp #EA5713 Orange)
+                        Button(
+                            onClick = {
+                                errorMessage = null
+                                isLoading = true
+                                coroutineScope.launch {
+                                    ApiClient.baseUrl = serverUrl
+                                    prefs.edit().putString("server_url", serverUrl).apply()
+                                    val result = ApiClient.login(username.trim(), password)
+                                    isLoading = false
+                                    result.onSuccess { session ->
+                                        onLoginSuccess(session)
+                                    }.onFailure { err ->
+                                        errorMessage = err.message ?: "Đăng nhập thất bại"
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = feconOrange),
+                            enabled = !isLoading && username.isNotBlank() && password.isNotBlank()
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                            } else {
+                                Text(
+                                    text = "Đăng nhập",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Quick Demo Accounts Toggle
+                        TextButton(
+                            onClick = { showDemoHelper = !showDemoHelper },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = if (showDemoHelper) "Ẩn danh mục tài khoản mẫu ▲" else "ℹ️ Danh mục tài khoản mẫu (Demo) ▼",
+                                color = Color(0xFF2563EB),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        if (showDemoHelper) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFFF8FAFC), RoundedCornerShape(10.dp))
+                                    .padding(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text("Mật khẩu: 123456 (Chạm để tự điền):", fontSize = 10.sp, color = Color.Gray)
+                                demoUsers.forEach { u ->
+                                    Surface(
+                                        color = Color.White,
+                                        shape = RoundedCornerShape(6.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                username = u.username
+                                                password = "123456"
+                                            }
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(u.username, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = feconOrange)
+                                            Text("${u.name} • ${u.role}", fontSize = 10.sp, color = Color.DarkGray)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Server Settings Toggle (Compact)
+                        TextButton(
+                            onClick = { showServerSettings = !showServerSettings }
+                        ) {
+                            Text(
+                                text = "⚙️ Cài đặt kết nối máy chủ",
+                                color = Color(0xFF64748B),
+                                fontSize = 10.sp
+                            )
+                        }
+
+                        if (showServerSettings) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFFF1F5F9), RoundedCornerShape(10.dp))
+                                    .padding(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = serverUrl,
+                                    onValueChange = {
+                                        serverUrl = it
+                                        ApiClient.baseUrl = it
+                                        prefs.edit().putString("server_url", it).apply()
+                                    },
+                                    label = { Text("Server URL", fontSize = 10.sp) },
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    TextButton(onClick = {
+                                        serverUrl = defaultRenderUrl
+                                        ApiClient.baseUrl = defaultRenderUrl
+                                        prefs.edit().putString("server_url", defaultRenderUrl).apply()
+                                    }) {
+                                        Text("Đặt lại Render", fontSize = 10.sp, color = feconOrange)
+                                    }
+
+                                    TextButton(onClick = {
+                                        isCheckingHealth = true
+                                        healthMessage = null
+                                        coroutineScope.launch {
+                                            ApiClient.baseUrl = serverUrl
+                                            val res = ApiClient.checkHealth()
+                                            isCheckingHealth = false
+                                            if (res.isSuccess) {
+                                                healthSuccess = true
+                                                healthMessage = "Máy chủ hoạt động tốt!"
+                                            } else {
+                                                healthSuccess = false
+                                                healthMessage = "Không kết nối được: ${res.exceptionOrNull()?.message}"
+                                            }
+                                        }
+                                    }) {
+                                        Text(if (isCheckingHealth) "Đang kiểm tra..." else "Kiểm tra kết nối", fontSize = 10.sp, color = Color(0xFF2563EB))
+                                    }
+                                }
+
+                                healthMessage?.let {
+                                    Text(
+                                        text = it,
+                                        fontSize = 10.sp,
+                                        color = if (healthSuccess) Color(0xFF16A34A) else Color(0xFFDC2626)
+                                    )
+                                }
+                            }
                         }
                     }
-                },
-                enabled = !isCheckingHealth
-            ) {
-                if (isCheckingHealth) {
-                    CircularProgressIndicator(color = Color(0xFF38BDF8), modifier = Modifier.size(12.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Đang kiểm tra...", color = Color.Gray, fontSize = 11.sp)
-                } else {
-                    Text("⚡ Kiểm tra kết nối", color = Color(0xFF10B981), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
-            }
-        }
 
-        healthMessage?.let { msg ->
-            Card(
-                colors = CardDefaults.cardColors(containerColor = if (healthSuccess) Color(0xFF064E3B) else Color(0xFF7F1D1D)),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-            ) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Footer Watermark (Matching mock-up)
                 Text(
-                    text = msg,
-                    color = if (healthSuccess) Color(0xFF6EE7B7) else Color(0xFFFECACA),
+                    text = "FECON CRM • Executive Portal",
+                    color = Color(0x99FFFFFF),
                     fontSize = 11.sp,
-                    modifier = Modifier.padding(8.dp)
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Username
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Tên đăng nhập") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.LightGray,
-                focusedBorderColor = Color(0xFF38BDF8),
-                unfocusedBorderColor = Color(0xFF475569)
-            )
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Password
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Mật khẩu") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            trailingIcon = {
-                TextButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Text(if (passwordVisible) "Ẩn" else "Hiện", color = Color(0xFF38BDF8))
-                }
-            },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.LightGray,
-                focusedBorderColor = Color(0xFF38BDF8),
-                unfocusedBorderColor = Color(0xFF475569)
-            )
-        )
-
-        if (errorMessage != null) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF7F1D1D)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = errorMessage ?: "",
-                    color = Color(0xFFFECACA),
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(12.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Login Button
-        Button(
-            onClick = {
-                errorMessage = null
-                isLoading = true
-                coroutineScope.launch {
-                    ApiClient.baseUrl = serverUrl
-                    prefs.edit().putString("server_url", serverUrl).apply()
-                    val result = ApiClient.login(username.trim(), password)
-                    isLoading = false
-                    result.onSuccess { session ->
-                        onLoginSuccess(session)
-                    }.onFailure { err ->
-                        errorMessage = err.message ?: "Đăng nhập thất bại"
-                    }
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA580C)),
-            enabled = !isLoading && username.isNotBlank() && password.isNotBlank()
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-            } else {
-                Text(
-                    text = "ĐĂNG NHẬP HỆ THỐNG",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Demo User Quick Selector
-        Text(
-            text = "⚡ Chọn nhanh tài khoản kiểm thử:",
-            color = Color(0xFF94A3B8),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(demoUsers) { user ->
-                OutlinedButton(
-                    onClick = {
-                        username = user.username
-                        password = "123456"
-                    },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = if (username == user.username) Color(0xFF1E3A8A) else Color(0xFF1E293B)
-                    )
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(user.username, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        Text(user.sbu, color = Color(0xFF93C5FD), fontSize = 10.sp)
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
     }
 }

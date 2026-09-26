@@ -352,6 +352,22 @@ def create_bid(
     conn.close()
     return {"id": new_id, "message": "Thêm hồ sơ cơ hội / dự thầu thành công"}
 
+@router.get("/bids/{bid_id}")
+def get_bid_detail(bid_id: int):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT b.*, c.name as customer_name, c.key_decision_maker, c.decision_maker_phone, c.decision_maker_role
+    FROM pipeline_bids b
+    JOIN customers c ON b.customer_id = c.id
+    WHERE b.id = ?
+    """, (bid_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Không tìm thấy gói thầu")
+    return dict(row)
+
 @router.put("/bids/{bid_id}/stage")
 def update_bid_stage(
     bid_id: int,

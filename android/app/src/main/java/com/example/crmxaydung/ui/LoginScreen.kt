@@ -1,5 +1,6 @@
 package com.example.crmxaydung.ui
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -13,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -30,13 +32,27 @@ data class DemoUser(val username: String, val name: String, val sbu: String, val
 fun LoginScreen(
     onLoginSuccess: (UserSession) -> Unit
 ) {
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("crm_prefs", Context.MODE_PRIVATE) }
     val coroutineScope = rememberCoroutineScope()
-    var serverUrl by remember { mutableStateOf(ApiClient.baseUrl) }
+
+    val defaultRenderUrl = "https://crm-construction-6lrg.onrender.com"
+    var serverUrl by remember {
+        mutableStateOf(prefs.getString("server_url", defaultRenderUrl) ?: defaultRenderUrl)
+    }
+
+    LaunchedEffect(serverUrl) {
+        ApiClient.baseUrl = serverUrl
+    }
+
     var username by remember { mutableStateOf("admin") }
     var password by remember { mutableStateOf("123456") }
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isCheckingHealth by remember { mutableStateOf(false) }
+    var healthMessage by remember { mutableStateOf<String?>(null) }
+    var healthSuccess by remember { mutableStateOf(false) }
 
     val demoUsers = listOf(
         DemoUser("admin", "Chủ Tịch & TGĐ", "ALL", "Ban Lãnh Đạo"),
@@ -57,7 +73,7 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
         // Header Card / Logo
         Card(
@@ -81,10 +97,23 @@ fun LoginScreen(
                     color = Color(0xFF94A3B8),
                     fontSize = 12.sp
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    color = Color(0xFF065F46),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = "☁️ Render Cloud Live",
+                        color = Color(0xFF6EE7B7),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Server URL Configuration
         OutlinedTextField(
@@ -92,8 +121,9 @@ fun LoginScreen(
             onValueChange = {
                 serverUrl = it
                 ApiClient.baseUrl = it
+                prefs.edit().putString("server_url", it).apply()
             },
-            label = { Text("Địa chỉ Máy chủ CRM (API Base URL)") },
+            label = { Text("Máy chủ Render (API Base URL)") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
@@ -104,7 +134,68 @@ fun LoginScreen(
             )
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // Quick button to check connection or reset to Render
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(
+                onClick = {
+                    serverUrl = defaultRenderUrl
+                    ApiClient.baseUrl = defaultRenderUrl
+                    prefs.edit().putString("server_url", defaultRenderUrl).apply()
+                }
+            ) {
+                Text("🔄 Đặt lại Render", color = Color(0xFF38BDF8), fontSize = 11.sp)
+            }
+
+            TextButton(
+                onClick = {
+                    isCheckingHealth = true
+                    healthMessage = null
+                    coroutineScope.launch {
+                        ApiClient.baseUrl = serverUrl
+                        val res = ApiClient.checkHealth()
+                        isCheckingHealth = false
+                        res.onSuccess {
+                            healthSuccess = true
+                            healthMessage = it
+                        }.onFailure { err ->
+                            healthSuccess = false
+                            healthMessage = err.message ?: "Không thể kết nối máy chủ"
+                        }
+                    }
+                },
+                enabled = !isCheckingHealth
+            ) {
+                if (isCheckingHealth) {
+                    CircularProgressIndicator(color = Color(0xFF38BDF8), modifier = Modifier.size(12.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Đang kiểm tra...", color = Color.Gray, fontSize = 11.sp)
+                } else {
+                    Text("⚡ Kiểm tra kết nối", color = Color(0xFF10B981), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        healthMessage?.let { msg ->
+            Card(
+                colors = CardDefaults.cardColors(containerColor = if (healthSuccess) Color(0xFF064E3B) else Color(0xFF7F1D1D)),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+            ) {
+                Text(
+                    text = msg,
+                    color = if (healthSuccess) Color(0xFF6EE7B7) else Color(0xFFFECACA),
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Username
         OutlinedTextField(
@@ -121,7 +212,7 @@ fun LoginScreen(
             )
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Password
         OutlinedTextField(
@@ -146,7 +237,7 @@ fun LoginScreen(
         )
 
         if (errorMessage != null) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF7F1D1D)),
                 modifier = Modifier.fillMaxWidth()
@@ -160,7 +251,7 @@ fun LoginScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Login Button
         Button(
@@ -168,6 +259,8 @@ fun LoginScreen(
                 errorMessage = null
                 isLoading = true
                 coroutineScope.launch {
+                    ApiClient.baseUrl = serverUrl
+                    prefs.edit().putString("server_url", serverUrl).apply()
                     val result = ApiClient.login(username.trim(), password)
                     isLoading = false
                     result.onSuccess { session ->
@@ -196,7 +289,7 @@ fun LoginScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Demo User Quick Selector
         Text(

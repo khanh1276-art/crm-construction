@@ -11,10 +11,35 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object ApiClient {
-    // Default URL for Android Emulator pointing to host machine port 8088.
-    // Can be changed dynamically to LAN IP or Render live URL.
-    var baseUrl: String = "http://10.0.2.2:8088"
+    // Official Render live deployment URL
+    var baseUrl: String = "https://crm-construction-6lrg.onrender.com"
+        set(value) {
+            field = value.trim().removeSuffix("/")
+        }
+
     var currentUser: UserSession? = null
+
+    suspend fun checkHealth(): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val url = URL("$baseUrl/api/health")
+            val conn = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                setRequestProperty("Accept", "application/json")
+                connectTimeout = 45000
+                readTimeout = 45000
+            }
+            val responseCode = conn.responseCode
+            if (responseCode == 200) {
+                Result.success("Kết nối Render thành công (200 OK)")
+            } else if (responseCode == 503) {
+                Result.failure(Exception("Máy chủ Render đang thức dậy (Cold start). Vui lòng đợi 30 giây rồi thử lại."))
+            } else {
+                Result.failure(Exception("Mã phản hồi từ máy chủ: $responseCode"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     suspend fun login(username: String, password: String): Result<UserSession> = withContext(Dispatchers.IO) {
         try {
@@ -24,8 +49,8 @@ object ApiClient {
                 setRequestProperty("Content-Type", "application/json; utf-8")
                 setRequestProperty("Accept", "application/json")
                 doOutput = true
-                connectTimeout = 8000
-                readTimeout = 8000
+                connectTimeout = 45000
+                readTimeout = 45000
             }
 
             val body = JSONObject().apply {
@@ -73,8 +98,8 @@ object ApiClient {
             val conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
                 requestMethod = "GET"
                 setRequestProperty("Accept", "application/json")
-                connectTimeout = 8000
-                readTimeout = 8000
+                connectTimeout = 45000
+                readTimeout = 45000
             }
             if (conn.responseCode == 200) {
                 val responseText = BufferedReader(InputStreamReader(conn.inputStream)).readText()
@@ -104,8 +129,8 @@ object ApiClient {
             val conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
                 requestMethod = "GET"
                 setRequestProperty("Accept", "application/json")
-                connectTimeout = 8000
-                readTimeout = 8000
+                connectTimeout = 45000
+                readTimeout = 45000
             }
             if (conn.responseCode == 200) {
                 val responseText = BufferedReader(InputStreamReader(conn.inputStream)).readText()
@@ -156,8 +181,8 @@ object ApiClient {
                 setRequestProperty("Content-Type", "application/json; utf-8")
                 setRequestProperty("Accept", "application/json")
                 doOutput = true
-                connectTimeout = 8000
-                readTimeout = 8000
+                connectTimeout = 45000
+                readTimeout = 45000
             }
             OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
             if (conn.responseCode in 200..201) {
@@ -176,8 +201,8 @@ object ApiClient {
             val conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
                 requestMethod = "GET"
                 setRequestProperty("Accept", "application/json")
-                connectTimeout = 8000
-                readTimeout = 8000
+                connectTimeout = 45000
+                readTimeout = 45000
             }
             if (conn.responseCode == 200) {
                 val responseText = BufferedReader(InputStreamReader(conn.inputStream)).readText()
@@ -214,8 +239,8 @@ object ApiClient {
             val conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
                 requestMethod = "GET"
                 setRequestProperty("Accept", "application/json")
-                connectTimeout = 8000
-                readTimeout = 8000
+                connectTimeout = 45000
+                readTimeout = 45000
             }
             if (conn.responseCode == 200) {
                 val responseText = BufferedReader(InputStreamReader(conn.inputStream)).readText()

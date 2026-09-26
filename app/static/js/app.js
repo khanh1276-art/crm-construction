@@ -1527,7 +1527,7 @@ async function handleCareSubmit(e) {
       body: JSON.stringify(payload)
     });
     if (res.ok) {
-      showToast("Đã lưu nhật ký ngoại giao thành công!");
+      showToast("Đã lưu lịch chăm sóc khách hàng thành công!");
       closeModal('modal-care');
       loadCareActivities();
       loadDashboard();

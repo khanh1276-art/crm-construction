@@ -19,7 +19,7 @@
       <!-- Brand & Header -->
       <div class="text-center space-y-2">
         <div class="inline-flex items-center justify-center p-2.5 bg-white rounded-2xl shadow-xl shadow-amber-500/10 mb-1 border border-slate-700">
-          <img src="/static/img/fecon_logo.png" alt="FECON Logo" class="h-10 object-contain">
+          <img src="/static/img/fecon_crm_logo.png" alt="FECON CRM" class="h-12 object-contain">
         </div>
         <div class="flex items-center justify-center gap-2">
           <span class="text-2xl font-black text-white tracking-tight">FECON CRM</span>
@@ -173,8 +173,8 @@
         
         <!-- Logo & Corporate Branding -->
         <div class="flex items-center space-x-3">
-          <div class="bg-white rounded-xl p-1.5 shadow-md flex items-center justify-center h-10 border border-slate-700">
-            <img src="/static/img/fecon_logo.png" alt="FECON Logo" class="h-7 object-contain">
+          <div class="bg-white rounded-xl p-1 shadow-md flex items-center justify-center h-11 border border-slate-700">
+            <img src="/static/img/fecon_crm_logo.png" alt="FECON CRM" class="h-9 object-contain">
           </div>
           <div>
             <div class="font-black text-lg tracking-tight flex items-center gap-2">
@@ -265,7 +265,7 @@
         </button>
 
         <button onclick="switchTab('care')" id="nav-care" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-slate-600 hover:bg-slate-50 transition">
-          <i class="fa-solid fa-wine-glass-empty w-5 text-center text-rose-500 text-sm"></i> 5. Chăm Sóc & Ngoại Giao
+          <i class="fa-solid fa-calendar-check w-5 text-center text-amber-500 text-sm"></i> 5. Lịch Chăm Sóc Khách Hàng
         </button>
 
         <!-- Account Management Nav (Available to Admin) -->
@@ -538,15 +538,15 @@
       <section id="tab-care" class="hidden space-y-6">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 class="text-xl font-black text-slate-900">Chăm Sóc Khách Hàng & Ngoại Giao Lãnh Đạo</h2>
+            <h2 class="text-xl font-black text-slate-900">Lịch Chăm Sóc Khách Hàng & Ngoại Giao Lãnh Đạo</h2>
             <p class="text-slate-500 text-xs mt-1">Lịch gặp gỡ tiếp khách, tiệc tri ân, quà tặng lễ tết và gửi tin nhắn Zalo ZNS / SMS trang trọng</p>
           </div>
           <div class="flex items-center gap-2">
             <button onclick="triggerAutomatedScan()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1.5">
               <i class="fa-solid fa-bolt text-yellow-300"></i> Quét Ngoại Giao Tự Động
             </button>
-            <button onclick="openNewCareModal()" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1.5">
-              <i class="fa-solid fa-calendar-plus"></i> Ghi Nhật Ký Tiếp Khách
+            <button onclick="openNewCareModal()" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1.5">
+              <i class="fa-solid fa-calendar-plus"></i> Thêm Lịch Chăm Sóc Khách Hàng
             </button>
           </div>
         </div>
@@ -683,7 +683,7 @@
         <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
           <div class="flex items-center justify-between">
             <h3 class="font-black text-slate-900 text-sm flex items-center gap-2">
-              <i class="fa-solid fa-handshake text-emerald-600"></i> Nhật Ký Hoạt Động Ngoại Giao & Tiếp Khách Cấp Cao
+              <i class="fa-solid fa-calendar-days text-emerald-600"></i> Lịch Chăm Sóc & Tiếp Đón Khách Hàng Ngoại Giao
             </h3>
             <button onclick="loadCareActivities()" class="text-xs text-blue-600 font-bold hover:underline">Làm mới</button>
           </div>
@@ -1112,7 +1112,7 @@
   <div id="modal-care" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <h3 class="font-black text-slate-900 text-base">Ghi Nhận Hoạt Động Ngoại Giao & Tiếp Khách</h3>
+        <h3 class="font-black text-slate-900 text-base">Thêm Lịch Chăm Sóc & Tiếp Đón Khách Hàng</h3>
         <button onclick="closeModal('modal-care')" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
       </div>
 

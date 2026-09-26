@@ -65,7 +65,7 @@ fun CustomerScreen(user: UserSession) {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                containerColor = Color(0xFF2563EB),
+                containerColor = Color(0xFFEA580C),
                 contentColor = Color.White
             ) {
                 Text("➕", fontSize = 18.sp)

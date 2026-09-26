@@ -1,6 +1,7 @@
 package com.example.crmxaydung.ui
 
 import android.content.Context
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -14,8 +15,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import com.example.crmxaydung.R
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -85,16 +89,30 @@ fun LoginScreen(
                 modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Surface(
+                    color = Color.White,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.padding(bottom = 12.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.fecon_crm_logo),
+                        contentDescription = "FECON CRM",
+                        modifier = Modifier
+                            .height(52.dp)
+                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
                 Text(
-                    text = "🏗️ CRM TẬP ĐOÀN XÂY DỰNG",
-                    color = Color(0xFFF8FAFC),
+                    text = "FECON CRM",
+                    color = Color.White,
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Quản Trị Khách Hàng Ban Lãnh Đạo & 5 Khối SBU",
-                    color = Color(0xFF94A3B8),
+                    color = Color(0xFFCBD5E1),
                     fontSize = 12.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -274,7 +292,7 @@ fun LoginScreen(
                 .fillMaxWidth()
                 .height(50.dp),
             shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA580C)),
             enabled = !isLoading && username.isNotBlank() && password.isNotBlank()
         ) {
             if (isLoading) {

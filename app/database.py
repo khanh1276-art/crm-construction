@@ -8,10 +8,52 @@ Database setup for Executive Construction CRM tailored for:
   4. SBU4 - Hạ tầng tập trung và đường sắt cao tốc
   5. SBU5 - Cảng biển và biến đổi khí hậu
 """
+import os
+import shutil
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parent.parent / "crm_construction.db"
+def resolve_db_path() -> Path:
+    """
+    Determine the SQLite database path with support for Render Persistent Disk:
+    1. Check CRM_DB_PATH environment variable (custom override).
+    2. Check Render Persistent Disk standard mount points (/var/data, /data).
+    3. Fallback to local workspace root (crm_construction.db).
+    
+    If persistent disk directory exists and has no db file yet, but a local template
+    db exists in the repository root, copy it to persistent storage automatically.
+    """
+    local_db = Path(__file__).resolve().parent.parent / "crm_construction.db"
+
+    # 1. Environment variable override
+    env_path = os.environ.get("CRM_DB_PATH")
+    if env_path:
+        target = Path(env_path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if not target.exists() and local_db.exists() and local_db.stat().st_size > 0:
+            try:
+                shutil.copy2(local_db, target)
+                print(f"[Database] Copied initial database from {local_db} to persistent path {target}")
+            except Exception as e:
+                print(f"[Database] Notice: Could not copy initial db to {target}: {e}")
+        return target
+
+    # 2. Render Persistent Disk: standard mount points on Linux container
+    for mount_dir in [Path("/var/data"), Path("/data")]:
+        if mount_dir.exists() and mount_dir.is_dir():
+            target = mount_dir / "crm_construction.db"
+            if not target.exists() and local_db.exists() and local_db.stat().st_size > 0:
+                try:
+                    shutil.copy2(local_db, target)
+                    print(f"[Database] Initialized Render persistent DB at {target} from template.")
+                except Exception as e:
+                    print(f"[Database] Notice: Could not copy initial db to persistent disk: {e}")
+            return target
+
+    # 3. Default local development path
+    return local_db
+
+DB_PATH = resolve_db_path()
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)

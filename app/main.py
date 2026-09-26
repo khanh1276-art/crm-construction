@@ -50,11 +50,24 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 def get_executive_portal():
     return FileResponse(str(STATIC_DIR / "index.html"))
 
+import os
+from app.database import DB_PATH
+
 @app.get("/api/health")
 def health_check():
+    is_persistent = (
+        str(DB_PATH).startswith(("/var/data", "/data"))
+        or bool(os.environ.get("CRM_DB_PATH"))
+    )
     return {
         "status": "healthy",
         "app": "Executive Construction CRM",
+        "database": {
+            "path": str(DB_PATH),
+            "exists": DB_PATH.exists(),
+            "is_persistent_disk": is_persistent,
+            "size_bytes": DB_PATH.stat().st_size if DB_PATH.exists() else 0
+        },
         "sbus": [
             "SBU1 - Nền móng và Hầm",
             "SBU2 - Xây dựng Năng lượng và công nghiệp",

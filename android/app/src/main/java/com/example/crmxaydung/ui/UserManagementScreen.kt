@@ -1,10 +1,13 @@
 package com.example.crmxaydung.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,7 +44,7 @@ fun UserManagementScreen(currentUser: UserSession) {
     }
 
     Scaffold(
-        containerColor = Color(0xFF0F172A),
+        containerColor = Color(0xFFF8FAFC), // Nền sáng
         floatingActionButton = {
             if (currentUser.role == "ADMIN") {
                 FloatingActionButton(
@@ -68,18 +71,18 @@ fun UserManagementScreen(currentUser: UserSession) {
                 Column {
                     Text(
                         text = "👥 Quản Lý Tài Khoản Hệ Thống",
-                        color = Color.White,
+                        color = Color(0xFF0F172A),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "Phân quyền Ban Lãnh Đạo, 5 SBU & CTV",
-                        color = Color(0xFF94A3B8),
+                        color = Color(0xFF64748B),
                         fontSize = 12.sp
                     )
                 }
                 TextButton(onClick = { loadUsers() }) {
-                    Text("Làm mới", color = Color(0xFF38BDF8), fontSize = 12.sp)
+                    Text("Làm mới", color = Color(0xFFEA580C), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -87,7 +90,7 @@ fun UserManagementScreen(currentUser: UserSession) {
 
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color(0xFF38BDF8))
+                    CircularProgressIndicator(color = Color(0xFFEA580C))
                 }
             } else {
                 LazyColumn(
@@ -121,11 +124,11 @@ fun UserManagementScreen(currentUser: UserSession) {
     userToDelete?.let { u ->
         AlertDialog(
             onDismissRequest = { userToDelete = null },
-            title = { Text("Xác nhận xóa tài khoản", color = Color.White, fontWeight = FontWeight.Bold) },
+            title = { Text("Xác nhận xóa tài khoản", color = Color(0xFF0F172A), fontWeight = FontWeight.Bold) },
             text = {
                 Text(
-                    "Anh có chắc chắn muốn xóa tài khoản \"${u.fullName}\" (${u.username}) không?",
-                    color = Color(0xFFE2E8F0)
+                    "Anh có chắc chắn muốn xóa tài khoản \"${u.fullName}\" (@${u.username}) không?",
+                    color = Color(0xFF334155)
                 )
             },
             confirmButton = {
@@ -141,13 +144,13 @@ fun UserManagementScreen(currentUser: UserSession) {
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626))
                 ) {
-                    Text("Xóa Ngay")
+                    Text("Xóa Ngay", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { userToDelete = null }) { Text("Hủy", color = Color.Gray) }
+                TextButton(onClick = { userToDelete = null }) { Text("Hủy", color = Color(0xFF64748B)) }
             },
-            containerColor = Color(0xFF1E293B)
+            containerColor = Color.White
         )
     }
 }
@@ -155,9 +158,12 @@ fun UserManagementScreen(currentUser: UserSession) {
 @Composable
 fun UserCard(user: UserItem, canDelete: Boolean, onDelete: () -> Unit) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth()
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(
@@ -168,22 +174,22 @@ fun UserCard(user: UserItem, canDelete: Boolean, onDelete: () -> Unit) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = user.fullName,
-                        color = Color.White,
+                        color = Color(0xFF0F172A),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
                     Text(
                         text = "@${user.username} • ${user.title}",
-                        color = Color(0xFF94A3B8),
+                        color = Color(0xFF64748B),
                         fontSize = 12.sp
                     )
                 }
 
                 Surface(
                     color = when (user.role) {
-                        "ADMIN" -> Color(0xFFB45309)
-                        "SBU_DIRECTOR" -> Color(0xFF1D4ED8)
-                        else -> Color(0xFF047857)
+                        "ADMIN" -> Color(0xFFEA580C)
+                        "SBU_DIRECTOR" -> Color(0xFF0284C7)
+                        else -> Color(0xFF059669)
                     },
                     shape = RoundedCornerShape(6.dp)
                 ) {
@@ -210,13 +216,14 @@ fun UserCard(user: UserItem, canDelete: Boolean, onDelete: () -> Unit) {
             ) {
                 Text(
                     text = "SĐT: ${user.phone.ifEmpty { "Chưa cập nhật" }}",
-                    color = Color(0xFF38BDF8),
-                    fontSize = 11.sp
+                    color = Color(0xFF0284C7),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium
                 )
 
                 if (canDelete) {
                     TextButton(onClick = onDelete) {
-                        Text("🗑️ Xóa", color = Color(0xFFF87171), fontSize = 11.sp)
+                        Text("🗑️ Xóa", color = Color(0xFFDC2626), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -246,50 +253,86 @@ fun AddUserDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Thêm Tài Khoản Mới", color = Color.White, fontWeight = FontWeight.Bold) },
+        title = { Text("Thêm Tài Khoản Mới", color = Color(0xFF0F172A), fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
                     label = { Text("Tên đăng nhập (username)") },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF334155),
+                        focusedBorderColor = Color(0xFFEA580C),
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                    )
                 )
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
                     label = { Text("Mật khẩu") },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF334155),
+                        focusedBorderColor = Color(0xFFEA580C),
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                    )
                 )
                 OutlinedTextField(
                     value = fullName,
                     onValueChange = { fullName = it },
                     label = { Text("Họ và tên") },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF334155),
+                        focusedBorderColor = Color(0xFFEA580C),
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                    )
                 )
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
                     label = { Text("Số điện thoại") },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF334155),
+                        focusedBorderColor = Color(0xFFEA580C),
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                    )
                 )
 
+                Text("Khối SBU phụ trách:", color = Color(0xFF64748B), fontSize = 11.sp)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     sbus.take(3).forEach { s ->
+                        val isSelected = (sbu == s)
                         FilterChip(
-                            selected = (sbu == s),
+                            selected = isSelected,
                             onClick = { sbu = s },
-                            label = { Text(s, fontSize = 10.sp) }
+                            label = { Text(s, fontSize = 10.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFFEA580C),
+                                selectedLabelColor = Color.White,
+                                containerColor = Color.White,
+                                labelColor = Color(0xFF475569)
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = if (isSelected) Color.Transparent else Color(0xFFCBD5E1)
+                            )
                         )
                     }
                 }
 
                 errText?.let {
-                    Text(it, color = Color(0xFFF87171), fontSize = 12.sp)
+                    Text(it, color = Color(0xFFDC2626), fontSize = 12.sp)
                 }
             }
         },
@@ -314,15 +357,15 @@ fun AddUserDialog(
                     }
                 },
                 enabled = !isSaving && username.isNotBlank() && fullName.isNotBlank(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEA580C))
             ) {
                 if (isSaving) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
-                else Text("Tạo Tài Khoản")
+                else Text("Tạo Tài Khoản", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Hủy", color = Color.Gray) }
+            TextButton(onClick = onDismiss) { Text("Hủy", color = Color(0xFF64748B)) }
         },
-        containerColor = Color(0xFF1E293B)
+        containerColor = Color.White
     )
 }

@@ -48,7 +48,7 @@ fun ProjectScreen(user: UserSession) {
     var showAddDialog by remember { mutableStateOf(false) }
     var selectedPipelineStage by remember { mutableStateOf("ALL") }
 
-    val feconOrange = Color(0xFFEA5713)
+    val feconOrange = Color(0xFFEA580C)
     val df = DecimalFormat("#,##0.0")
 
     fun loadData() {
@@ -84,7 +84,7 @@ fun ProjectScreen(user: UserSession) {
     }
 
     Scaffold(
-        containerColor = Color(0xFF0F172A),
+        containerColor = Color(0xFFF8FAFC), // Nền sáng
         floatingActionButton = {
             if (user.role != "COLLABORATOR" && currentSubTab == ProjectViewTab.ACTIVE_PROJECTS) {
                 FloatingActionButton(
@@ -112,13 +112,13 @@ fun ProjectScreen(user: UserSession) {
                 Column {
                     Text(
                         text = "🏗️ Quản Lý Dự Án & Hồ Sơ Thầu",
-                        color = Color.White,
+                        color = Color(0xFF0F172A),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "Theo dõi phễu cơ hội, tiến trình đấu thầu & dự án",
-                        color = Color(0xFF94A3B8),
+                        color = Color(0xFF64748B),
                         fontSize = 12.sp
                     )
                 }
@@ -129,11 +129,12 @@ fun ProjectScreen(user: UserSession) {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Sub Tab Selector: PIPELINE vs ACTIVE PROJECTS
+            // Sub Tab Selector: PIPELINE vs ACTIVE PROJECTS (Light Theme Card)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF1E293B), RoundedCornerShape(10.dp))
+                    .background(Color.White, RoundedCornerShape(10.dp))
+                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
                     .padding(4.dp)
             ) {
                 Surface(
@@ -145,7 +146,7 @@ fun ProjectScreen(user: UserSession) {
                 ) {
                     Text(
                         text = "🎯 Phễu Dự Án (${pipelineBids.size})",
-                        color = Color.White,
+                        color = if (currentSubTab == ProjectViewTab.PIPELINE) Color.White else Color(0xFF475569),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(vertical = 8.dp),
@@ -162,7 +163,7 @@ fun ProjectScreen(user: UserSession) {
                 ) {
                     Text(
                         text = "🏗️ Đang Thi Công (${projects.size})",
-                        color = Color.White,
+                        color = if (currentSubTab == ProjectViewTab.ACTIVE_PROJECTS) Color.White else Color(0xFF475569),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(vertical = 8.dp),
@@ -184,10 +185,11 @@ fun ProjectScreen(user: UserSession) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(pipelineStages) { (key, label) ->
+                        val isSelected = (selectedPipelineStage == key)
                         FilterChip(
-                            selected = (selectedPipelineStage == key),
+                            selected = isSelected,
                             onClick = { selectedPipelineStage = key },
-                            label = { Text(label, fontSize = 10.sp) },
+                            label = { Text(label, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = when (key) {
                                     "WON" -> Color(0xFF059669)
@@ -195,8 +197,13 @@ fun ProjectScreen(user: UserSession) {
                                     else -> feconOrange
                                 },
                                 selectedLabelColor = Color.White,
-                                containerColor = Color(0xFF1E293B),
-                                labelColor = Color(0xFF94A3B8)
+                                containerColor = Color.White,
+                                labelColor = Color(0xFF475569)
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = if (isSelected) Color.Transparent else Color(0xFFCBD5E1)
                             )
                         )
                     }
@@ -206,7 +213,7 @@ fun ProjectScreen(user: UserSession) {
 
                 if (filteredBids.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Không có hồ sơ dự thầu nào trong giai đoạn này", color = Color.Gray, fontSize = 13.sp)
+                        Text("Không có hồ sơ thầu nào trong giai đoạn này", color = Color(0xFF94A3B8))
                     }
                 } else {
                     LazyColumn(
@@ -226,7 +233,7 @@ fun ProjectScreen(user: UserSession) {
                 // Active Projects List
                 if (projects.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Chưa có dự án nào được ghi nhận", color = Color.Gray)
+                        Text("Chưa có dự án nào được ghi nhận", color = Color(0xFF94A3B8))
                     }
                 } else {
                     LazyColumn(
@@ -251,7 +258,7 @@ fun ProjectScreen(user: UserSession) {
         }
     }
 
-    // Pipeline Bid Detail Dialog (Requested: View detail, switch status directly to Won/Lost, edit notes)
+    // Pipeline Bid Detail Dialog
     selectedBid?.let { bid ->
         PipelineDetailDialog(
             bid = bid,
@@ -264,7 +271,7 @@ fun ProjectScreen(user: UserSession) {
         )
     }
 
-    // Active Project Detail Dialog (Full Details & Milestones)
+    // Active Project Detail Dialog
     selectedProject?.let { proj ->
         ProjectDetailDialog(
             proj = proj,
@@ -290,10 +297,12 @@ fun ProjectScreen(user: UserSession) {
 @Composable
 fun PipelineBidCard(bid: PipelineBidItem, df: DecimalFormat, onClick: () -> Unit) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
+            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
             .clickable { onClick() }
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -327,7 +336,7 @@ fun PipelineBidCard(bid: PipelineBidItem, df: DecimalFormat, onClick: () -> Unit
                         "LOST" -> Color(0xFFDC2626)
                         "NEGOTIATION" -> Color(0xFFD97706)
                         "TENDER_PREP" -> Color(0xFF2563EB)
-                        else -> Color(0xFF475569)
+                        else -> Color(0xFF64748B)
                     },
                     shape = RoundedCornerShape(4.dp)
                 ) {
@@ -348,19 +357,19 @@ fun PipelineBidCard(bid: PipelineBidItem, df: DecimalFormat, onClick: () -> Unit
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = bid.projectTitle,
-                color = Color.White,
+                color = Color(0xFF0F172A),
                 fontWeight = FontWeight.Bold,
-                fontSize = 14.sp
+                fontSize = 15.sp
             )
 
             Spacer(modifier = Modifier.height(3.dp))
             Text(
                 text = "Đối tác: ${bid.customerName}",
-                color = Color(0xFF94A3B8),
+                color = Color(0xFF64748B),
                 fontSize = 12.sp
             )
 
@@ -373,13 +382,13 @@ fun PipelineBidCard(bid: PipelineBidItem, df: DecimalFormat, onClick: () -> Unit
             ) {
                 Text(
                     text = "${df.format(bid.estimatedValueBillion)} Tỷ VNĐ",
-                    color = Color(0xFFFDBA74),
+                    color = Color(0xFFEA580C),
                     fontWeight = FontWeight.Black,
                     fontSize = 14.sp
                 )
                 Text(
                     text = "${bid.winRate}% Xác Suất",
-                    color = Color(0xFFA855F7),
+                    color = Color(0xFF7C3AED),
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.sp
                 )
@@ -404,7 +413,7 @@ fun PipelineDetailDialog(
     var isSaving by remember { mutableStateOf(false) }
     var statusMsg by remember { mutableStateOf<String?>(null) }
 
-    val feconOrange = Color(0xFFEA5713)
+    val feconOrange = Color(0xFFEA580C)
 
     fun performUpdate(targetStage: String, targetWinRate: Int, targetNotes: String) {
         isSaving = true
@@ -432,10 +441,10 @@ fun PipelineDetailDialog(
                     ) {
                         Text(bid.sbu, color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp))
                     }
-                    Text("Chi Tiết Gói Thầu", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Chi Tiết Gói Thầu", color = Color(0xFF0F172A), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
                 Spacer(modifier = Modifier.height(2.dp))
-                Text(bid.projectTitle, color = Color(0xFFFDBA74), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(bid.projectTitle, color = feconOrange, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -445,12 +454,16 @@ fun PipelineDetailDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Partner & Representative Info
-                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)), shape = RoundedCornerShape(8.dp)) {
+                // Partner & Representative Info (Light Card)
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
+                ) {
                     Column(modifier = Modifier.padding(10.dp)) {
-                        Text("Đối tác / CĐT: ${bid.customerName}", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 12.sp)
+                        Text("Đối tác / CĐT: ${bid.customerName}", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), fontSize = 12.sp)
                         if (bid.keyDecisionMaker.isNotBlank()) {
-                            Text("Đại diện: ${bid.keyDecisionMaker}", color = Color(0xFFCBD5E1), fontSize = 11.sp)
+                            Text("Đại diện: ${bid.keyDecisionMaker}", color = Color(0xFF475569), fontSize = 11.sp)
                         }
                         if (bid.decisionMakerPhone.isNotBlank()) {
                             Row(
@@ -458,12 +471,12 @@ fun PipelineDetailDialog(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("SĐT: ${bid.decisionMakerPhone}", color = Color(0xFF38BDF8), fontSize = 11.sp)
+                                Text("SĐT: ${bid.decisionMakerPhone}", color = Color(0xFF0284C7), fontSize = 11.sp)
                                 TextButton(onClick = {
                                     val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${bid.decisionMakerPhone}"))
                                     context.startActivity(intent)
                                 }) {
-                                    Text("📞 Gọi CĐT", color = Color(0xFF10B981), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    Text("📞 Gọi CĐT", color = Color(0xFF059669), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -472,26 +485,26 @@ fun PipelineDetailDialog(
 
                 // Overview Values
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Giá trị dự toán:", color = Color(0xFF94A3B8), fontSize = 12.sp)
-                    Text("${df.format(bid.estimatedValueBillion)} Tỷ VNĐ", color = Color(0xFFFDBA74), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Giá trị dự toán:", color = Color(0xFF64748B), fontSize = 12.sp)
+                    Text("${df.format(bid.estimatedValueBillion)} Tỷ VNĐ", color = feconOrange, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
                 if (bid.tenderDeadline.isNotBlank()) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Hạn nộp thầu:", color = Color(0xFF94A3B8), fontSize = 12.sp)
-                        Text(bid.tenderDeadline, color = Color.White, fontSize = 12.sp)
+                        Text("Hạn nộp thầu:", color = Color(0xFF64748B), fontSize = 12.sp)
+                        Text(bid.tenderDeadline, color = Color(0xFF0F172A), fontSize = 12.sp)
                     }
                 }
                 if (bid.assignedDirector.isNotBlank()) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Lãnh đạo phụ trách:", color = Color(0xFF94A3B8), fontSize = 12.sp)
-                        Text(bid.assignedDirector, color = Color(0xFFCBD5E1), fontSize = 12.sp)
+                        Text("Lãnh đạo phụ trách:", color = Color(0xFF64748B), fontSize = 12.sp)
+                        Text(bid.assignedDirector, color = Color(0xFF334155), fontSize = 12.sp)
                     }
                 }
 
-                Divider(color = Color(0xFF334155))
+                HorizontalDivider(color = Color(0xFFE2E8F0), thickness = 1.dp)
 
-                // DIRECT STAGE CONVERSION BUTTONS (User explicitly requested: Chuyển luôn sang Trúng thầu hoặc Trượt thầu luôn)
-                Text("⚡ Chuyển Đổi Nhanh Kết Quả Thầu:", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                // DIRECT STAGE CONVERSION BUTTONS
+                Text("⚡ Chuyển Đổi Nhanh Kết Quả Thầu:", color = Color(0xFF0F172A), fontWeight = FontWeight.Bold, fontSize = 12.sp)
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -527,7 +540,7 @@ fun PipelineDetailDialog(
                 }
 
                 // Stage Select Chips
-                Text("Hoặc chuyển giai đoạn đấu thầu:", color = Color(0xFF94A3B8), fontSize = 11.sp)
+                Text("Hoặc chuyển giai đoạn đấu thầu:", color = Color(0xFF64748B), fontSize = 11.sp)
                 val allStages = listOf(
                     "INFORMATION" to "1. Tiếp cận",
                     "EVALUATION" to "2. Khảo sát",
@@ -539,17 +552,18 @@ fun PipelineDetailDialog(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     allStages.forEach { (stgKey, label) ->
+                        val isSelected = (currentStage == stgKey)
                         Surface(
-                            color = if (currentStage == stgKey) feconOrange else Color(0xFF0F172A),
+                            color = if (isSelected) feconOrange else Color(0xFFF8FAFC),
                             shape = RoundedCornerShape(6.dp),
                             modifier = Modifier
                                 .weight(1f)
-                                .border(0.5.dp, Color(0xFF334155), RoundedCornerShape(6.dp))
+                                .border(1.dp, if (isSelected) feconOrange else Color(0xFFE2E8F0), RoundedCornerShape(6.dp))
                                 .clickable { currentStage = stgKey }
                         ) {
                             Text(
                                 text = label,
-                                color = if (currentStage == stgKey) Color.White else Color(0xFF94A3B8),
+                                color = if (isSelected) Color.White else Color(0xFF475569),
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.padding(vertical = 6.dp),
@@ -567,9 +581,10 @@ fun PipelineDetailDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = feconOrange
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF334155),
+                        focusedBorderColor = feconOrange,
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
                     )
                 )
 
@@ -582,14 +597,15 @@ fun PipelineDetailDialog(
                     minLines = 3,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = feconOrange
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF334155),
+                        focusedBorderColor = feconOrange,
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
                     )
                 )
 
                 statusMsg?.let {
-                    Text(it, color = Color(0xFFF87171), fontSize = 11.sp)
+                    Text(it, color = Color(0xFFDC2626), fontSize = 11.sp)
                 }
             }
         },
@@ -607,19 +623,21 @@ fun PipelineDetailDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Đóng", color = Color.LightGray) }
+            TextButton(onClick = onDismiss) { Text("Đóng", color = Color(0xFF64748B)) }
         },
-        containerColor = Color(0xFF1E293B)
+        containerColor = Color.White
     )
 }
 
 @Composable
 fun ProjectCard(proj: ProjectItem, df: DecimalFormat, onClick: () -> Unit) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
+            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
             .clickable { onClick() }
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -630,16 +648,16 @@ fun ProjectCard(proj: ProjectItem, df: DecimalFormat, onClick: () -> Unit) {
             ) {
                 Text(
                     text = proj.name,
-                    color = Color.White,
+                    color = Color(0xFF0F172A),
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     modifier = Modifier.weight(1f)
                 )
                 Surface(
                     color = when (proj.projectHealth) {
-                        "GOOD" -> Color(0xFF065F46)
-                        "WARNING" -> Color(0xFF854D0E)
-                        else -> Color(0xFF7F1D1D)
+                        "GOOD" -> Color(0xFF059669)
+                        "WARNING" -> Color(0xFFD97706)
+                        else -> Color(0xFFDC2626)
                     },
                     shape = RoundedCornerShape(4.dp)
                 ) {
@@ -658,7 +676,7 @@ fun ProjectCard(proj: ProjectItem, df: DecimalFormat, onClick: () -> Unit) {
             }
 
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Chủ đầu tư: ${proj.customerName} (${proj.sbu})", color = Color(0xFF38BDF8), fontSize = 12.sp)
+            Text("Chủ đầu tư: ${proj.customerName} (${proj.sbu})", color = Color(0xFFEA580C), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
 
             Spacer(modifier = Modifier.height(8.dp))
             Row(
@@ -666,12 +684,12 @@ fun ProjectCard(proj: ProjectItem, df: DecimalFormat, onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Giá trị HĐ", color = Color(0xFF94A3B8), fontSize = 11.sp)
-                    Text("${df.format(proj.contractValueBillion)} Tỷ", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Giá trị HĐ", color = Color(0xFF64748B), fontSize = 11.sp)
+                    Text("${df.format(proj.contractValueBillion)} Tỷ", color = Color(0xFF0F172A), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("Đã thu", color = Color(0xFF94A3B8), fontSize = 11.sp)
-                    Text("${df.format(proj.collectedAmountBillion)} Tỷ", color = Color(0xFF10B981), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Đã thu", color = Color(0xFF64748B), fontSize = 11.sp)
+                    Text("${df.format(proj.collectedAmountBillion)} Tỷ", color = Color(0xFF059669), fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
             }
 
@@ -680,8 +698,8 @@ fun ProjectCard(proj: ProjectItem, df: DecimalFormat, onClick: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Công nợ còn lại:", color = Color(0xFF94A3B8), fontSize = 11.sp)
-                Text("${df.format(proj.unpaidBillion)} Tỷ", color = Color(0xFFF87171), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("Công nợ còn lại:", color = Color(0xFF64748B), fontSize = 11.sp)
+                Text("${df.format(proj.unpaidBillion)} Tỷ", color = Color(0xFFDC2626), fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
     }
@@ -695,8 +713,8 @@ fun ProjectDetailDialog(proj: ProjectItem, df: DecimalFormat, onDismiss: () -> U
         onDismissRequest = onDismiss,
         title = {
             Column {
-                Text(proj.name, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
-                Text("Mã DA: ${proj.code} • Khối: ${proj.sbu}", color = Color(0xFF38BDF8), fontSize = 12.sp)
+                Text(proj.name, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), fontSize = 16.sp)
+                Text("Mã DA: ${proj.code} • Khối: ${proj.sbu}", color = Color(0xFFEA580C), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
         },
         text = {
@@ -706,11 +724,15 @@ fun ProjectDetailDialog(proj: ProjectItem, df: DecimalFormat, onDismiss: () -> U
                     .verticalScroll(rememberScrollState())
             ) {
                 // Customer & Decision Maker
-                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)), shape = RoundedCornerShape(8.dp)) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
+                ) {
                     Column(modifier = Modifier.padding(10.dp)) {
-                        Text("Chủ đầu tư: ${proj.customerName}", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                        Text("Chủ đầu tư: ${proj.customerName}", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), fontSize = 13.sp)
                         if (proj.keyDecisionMaker.isNotBlank()) {
-                            Text("Đại diện: ${proj.keyDecisionMaker}", color = Color(0xFFCBD5E1), fontSize = 12.sp)
+                            Text("Đại diện: ${proj.keyDecisionMaker}", color = Color(0xFF475569), fontSize = 12.sp)
                         }
                         if (proj.decisionMakerPhone.isNotBlank()) {
                             Row(
@@ -718,12 +740,12 @@ fun ProjectDetailDialog(proj: ProjectItem, df: DecimalFormat, onDismiss: () -> U
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("SĐT: ${proj.decisionMakerPhone}", color = Color(0xFF38BDF8), fontSize = 12.sp)
+                                Text("SĐT: ${proj.decisionMakerPhone}", color = Color(0xFF0284C7), fontSize = 12.sp)
                                 TextButton(onClick = {
                                     val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${proj.decisionMakerPhone}"))
                                     context.startActivity(intent)
                                 }) {
-                                    Text("📞 Gọi CĐT", color = Color(0xFF10B981), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Text("📞 Gọi CĐT", color = Color(0xFF059669), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
@@ -733,65 +755,70 @@ fun ProjectDetailDialog(proj: ProjectItem, df: DecimalFormat, onDismiss: () -> U
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // Financial Overview
-                Text("💰 Tình Hình Dòng Tiền:", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                Text("💰 Tình Hình Dòng Tiền:", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), fontSize = 13.sp)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Tổng giá trị HĐ:", color = Color(0xFF94A3B8), fontSize = 12.sp)
-                    Text("${df.format(proj.contractValueBillion)} Tỷ", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("Tổng giá trị HĐ:", color = Color(0xFF64748B), fontSize = 12.sp)
+                    Text("${df.format(proj.contractValueBillion)} Tỷ", color = Color(0xFF0F172A), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Đã thu hồi:", color = Color(0xFF94A3B8), fontSize = 12.sp)
-                    Text("${df.format(proj.collectedAmountBillion)} Tỷ", color = Color(0xFF10B981), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("Đã thu hồi:", color = Color(0xFF64748B), fontSize = 12.sp)
+                    Text("${df.format(proj.collectedAmountBillion)} Tỷ", color = Color(0xFF059669), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Công nợ còn lại:", color = Color(0xFF94A3B8), fontSize = 12.sp)
-                    Text("${df.format(proj.unpaidBillion)} Tỷ", color = Color(0xFFF87171), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("Công nợ còn lại:", color = Color(0xFF64748B), fontSize = 12.sp)
+                    Text("${df.format(proj.unpaidBillion)} Tỷ", color = Color(0xFFDC2626), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 if (proj.projectDirector.isNotBlank()) {
-                    Text("Giám đốc điều hành DA: ${proj.projectDirector}", color = Color(0xFFCBD5E1), fontSize = 12.sp)
+                    Text("Giám đốc điều hành DA: ${proj.projectDirector}", color = Color(0xFF334155), fontSize = 12.sp)
                 }
                 if (proj.contractNumber.isNotBlank()) {
-                    Text("Số hợp đồng: ${proj.contractNumber}", color = Color(0xFF94A3B8), fontSize = 11.sp)
+                    Text("Số hợp đồng: ${proj.contractNumber}", color = Color(0xFF64748B), fontSize = 11.sp)
                 }
                 if (proj.summaryScope.isNotBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("Quy mô: ${proj.summaryScope}", color = Color(0xFF94A3B8), fontSize = 11.sp)
+                    Text("Quy mô: ${proj.summaryScope}", color = Color(0xFF64748B), fontSize = 11.sp)
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Milestones & Cashflow
-                Text("📋 Các Đợt Nghiệm Thu & Giải Ngân:", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                Text("📋 Các Đợt Nghiệm Thu & Giải Ngân:", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), fontSize = 13.sp)
                 Spacer(modifier = Modifier.height(6.dp))
 
                 if (proj.milestones.isEmpty()) {
-                    Text("Chưa có mốc giải ngân nào được thiết lập.", color = Color.Gray, fontSize = 11.sp)
+                    Text("Chưa có mốc giải ngân nào được thiết lập.", color = Color(0xFF94A3B8), fontSize = 11.sp)
                 } else {
                     proj.milestones.forEach { m ->
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
                             shape = RoundedCornerShape(6.dp),
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 3.dp)
+                                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(6.dp))
                         ) {
                             Row(
-                                modifier = Modifier.padding(8.dp).fillMaxWidth(),
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(m.title, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                    Text("Đáo hạn: ${m.dueDate} • ${m.percentage}% HĐ", color = Color(0xFF94A3B8), fontSize = 10.sp)
+                                    Text(m.title, color = Color(0xFF0F172A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text("Đáo hạn: ${m.dueDate} • ${m.percentage}% HĐ", color = Color(0xFF64748B), fontSize = 10.sp)
                                 }
                                 Surface(
-                                    color = if (m.paymentStatus == "PAID") Color(0xFF065F46) else Color(0xFF78350F),
+                                    color = if (m.paymentStatus == "PAID") Color(0xFF059669) else Color(0xFFD97706),
                                     shape = RoundedCornerShape(4.dp)
                                 ) {
                                     Text(
                                         text = if (m.paymentStatus == "PAID") "ĐÃ THU" else "CHỜ THU",
-                                        color = if (m.paymentStatus == "PAID") Color(0xFF6EE7B7) else Color(0xFFFDE68A),
+                                        color = Color.White,
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -804,9 +831,9 @@ fun ProjectDetailDialog(proj: ProjectItem, df: DecimalFormat, onDismiss: () -> U
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Đóng", color = Color(0xFF38BDF8)) }
+            TextButton(onClick = onDismiss) { Text("Đóng", color = Color(0xFFEA580C), fontWeight = FontWeight.Bold) }
         },
-        containerColor = Color(0xFF1E293B)
+        containerColor = Color.White
     )
 }
 
@@ -828,11 +855,11 @@ fun AddProjectDialog(
     var isSaving by remember { mutableStateOf(false) }
     var errText by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val feconOrange = Color(0xFFEA5713)
+    val feconOrange = Color(0xFFEA580C)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Tạo Hồ Sơ Dự Án Mới", color = Color.White, fontWeight = FontWeight.Bold) },
+        title = { Text("Tạo Hồ Sơ Dự Án Mới", color = Color(0xFF0F172A), fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -843,7 +870,12 @@ fun AddProjectDialog(
                     onValueChange = { name = it },
                     label = { Text("Tên Dự Án / Gói Thầu") },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF334155),
+                        focusedBorderColor = feconOrange,
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                    )
                 )
 
                 OutlinedTextField(
@@ -851,7 +883,12 @@ fun AddProjectDialog(
                     onValueChange = { contractValueBillion = it },
                     label = { Text("Giá trị Hợp đồng (Tỷ VNĐ)") },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF334155),
+                        focusedBorderColor = feconOrange,
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                    )
                 )
 
                 OutlinedTextField(
@@ -859,18 +896,28 @@ fun AddProjectDialog(
                     onValueChange = { director = it },
                     label = { Text("Giám đốc phụ trách") },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF334155),
+                        focusedBorderColor = feconOrange,
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                    )
                 )
 
                 OutlinedTextField(
                     value = summaryScope,
                     onValueChange = { summaryScope = it },
                     label = { Text("Quy mô tóm tắt") },
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF334155),
+                        focusedBorderColor = feconOrange,
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                    )
                 )
 
                 errText?.let {
-                    Text(it, color = Color(0xFFF87171), fontSize = 12.sp)
+                    Text(it, color = Color(0xFFDC2626), fontSize = 12.sp)
                 }
             }
         },
@@ -904,8 +951,8 @@ fun AddProjectDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Hủy", color = Color.Gray) }
+            TextButton(onClick = onDismiss) { Text("Hủy", color = Color(0xFF64748B)) }
         },
-        containerColor = Color(0xFF1E293B)
+        containerColor = Color.White
     )
 }

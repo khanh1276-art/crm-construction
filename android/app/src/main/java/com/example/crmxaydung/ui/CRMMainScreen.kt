@@ -3,6 +3,7 @@ package com.example.crmxaydung.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,13 +30,13 @@ fun CRMMainScreen(
 ) {
     var currentTab by remember { mutableStateOf(NavTab.DASHBOARD) }
 
-    // Light Orange Color Palette for Toolbars
-    val lightOrangeBg = Color(0xFFFFF2E6)
-    val lightOrangeBorder = Color(0xFFFED7AA)
-    val brandOrange = Color(0xFFEA580C)
-    val brandDarkOrange = Color(0xFF9A3412)
-    val tabUnselectedColor = Color(0xFF78716C)
-    val tabSelectedIndicator = Color(0xFFFFD7BA)
+    // FECON Brand Palette
+    val feconDeepOrange = Color(0xFFEA580C) // Vàng cam đậm thương hiệu FECON
+    val feconLightCream = Color(0xFFFEF3C7) // Màu kem nhạt cho phụ đề trên thanh cam
+    val lightBg = Color(0xFFF8FAFC)         // Nền ứng dụng sáng (Slate 50)
+    val dividerColor = Color(0xFFE2E8F0)    // Viền nhẹ
+    val navSelectedIndicator = Color(0xFFFFEDD5) // Cam rất nhạt cho icon được chọn
+    val navUnselectedText = Color(0xFF64748B)    // Xám cho icon không chọn
 
     Scaffold(
         topBar = {
@@ -57,43 +58,49 @@ fun CRMMainScreen(
                             Column {
                                 Text(
                                     text = "FECON CRM",
-                                    fontSize = 16.sp,
+                                    fontSize = 17.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = brandDarkOrange
+                                    color = Color.White
                                 )
                                 Text(
-                                    text = "${user.fullName} (${user.sbu})",
+                                    text = "${user.fullName} • ${user.sbu}",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = brandOrange
+                                    color = feconLightCream
                                 )
                             }
                         }
                     },
                     actions = {
-                        TextButton(
-                            onClick = {
-                                ApiClient.currentUser = null
-                                onLogout()
-                            }
+                        Surface(
+                            color = Color.White.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.padding(end = 8.dp)
                         ) {
-                            Text("🚪 Đăng xuất", color = Color(0xFFDC2626), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            TextButton(
+                                onClick = {
+                                    ApiClient.currentUser = null
+                                    onLogout()
+                                },
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text("🚪 Đăng xuất", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = lightOrangeBg
+                        containerColor = feconDeepOrange
                     )
                 )
-                // Subtle divider below top app bar
-                HorizontalDivider(color = lightOrangeBorder, thickness = 1.dp)
             }
         },
         bottomBar = {
             Column {
-                HorizontalDivider(color = lightOrangeBorder, thickness = 1.dp)
+                HorizontalDivider(color = dividerColor, thickness = 1.dp)
                 NavigationBar(
-                    containerColor = lightOrangeBg,
-                    contentColor = brandDarkOrange
+                    containerColor = Color.White,
+                    contentColor = feconDeepOrange,
+                    tonalElevation = 4.dp
                 ) {
                     NavigationBarItem(
                         selected = (currentTab == NavTab.DASHBOARD),
@@ -101,11 +108,11 @@ fun CRMMainScreen(
                         icon = { Text("📊", fontSize = 16.sp) },
                         label = { Text("Tổng Quan", fontSize = 10.sp, fontWeight = if (currentTab == NavTab.DASHBOARD) FontWeight.Bold else FontWeight.Normal) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedTextColor = brandOrange,
-                            selectedIconColor = brandOrange,
-                            indicatorColor = tabSelectedIndicator,
-                            unselectedTextColor = tabUnselectedColor,
-                            unselectedIconColor = tabUnselectedColor
+                            selectedTextColor = feconDeepOrange,
+                            selectedIconColor = feconDeepOrange,
+                            indicatorColor = navSelectedIndicator,
+                            unselectedTextColor = navUnselectedText,
+                            unselectedIconColor = navUnselectedText
                         )
                     )
                     NavigationBarItem(
@@ -114,11 +121,11 @@ fun CRMMainScreen(
                         icon = { Text("🏢", fontSize = 16.sp) },
                         label = { Text("Khách Hàng", fontSize = 10.sp, fontWeight = if (currentTab == NavTab.CUSTOMERS) FontWeight.Bold else FontWeight.Normal) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedTextColor = brandOrange,
-                            selectedIconColor = brandOrange,
-                            indicatorColor = tabSelectedIndicator,
-                            unselectedTextColor = tabUnselectedColor,
-                            unselectedIconColor = tabUnselectedColor
+                            selectedTextColor = feconDeepOrange,
+                            selectedIconColor = feconDeepOrange,
+                            indicatorColor = navSelectedIndicator,
+                            unselectedTextColor = navUnselectedText,
+                            unselectedIconColor = navUnselectedText
                         )
                     )
                     NavigationBarItem(
@@ -127,11 +134,11 @@ fun CRMMainScreen(
                         icon = { Text("🏗️", fontSize = 16.sp) },
                         label = { Text("Dự Án", fontSize = 10.sp, fontWeight = if (currentTab == NavTab.PROJECTS) FontWeight.Bold else FontWeight.Normal) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedTextColor = brandOrange,
-                            selectedIconColor = brandOrange,
-                            indicatorColor = tabSelectedIndicator,
-                            unselectedTextColor = tabUnselectedColor,
-                            unselectedIconColor = tabUnselectedColor
+                            selectedTextColor = feconDeepOrange,
+                            selectedIconColor = feconDeepOrange,
+                            indicatorColor = navSelectedIndicator,
+                            unselectedTextColor = navUnselectedText,
+                            unselectedIconColor = navUnselectedText
                         )
                     )
                     NavigationBarItem(
@@ -140,11 +147,11 @@ fun CRMMainScreen(
                         icon = { Text("📅", fontSize = 16.sp) },
                         label = { Text("Lịch Chăm Sóc", fontSize = 10.sp, fontWeight = if (currentTab == NavTab.CARE) FontWeight.Bold else FontWeight.Normal) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedTextColor = brandOrange,
-                            selectedIconColor = brandOrange,
-                            indicatorColor = tabSelectedIndicator,
-                            unselectedTextColor = tabUnselectedColor,
-                            unselectedIconColor = tabUnselectedColor
+                            selectedTextColor = feconDeepOrange,
+                            selectedIconColor = feconDeepOrange,
+                            indicatorColor = navSelectedIndicator,
+                            unselectedTextColor = navUnselectedText,
+                            unselectedIconColor = navUnselectedText
                         )
                     )
                     NavigationBarItem(
@@ -153,11 +160,11 @@ fun CRMMainScreen(
                         icon = { Text("👥", fontSize = 16.sp) },
                         label = { Text("Tài Khoản", fontSize = 10.sp, fontWeight = if (currentTab == NavTab.ACCOUNTS) FontWeight.Bold else FontWeight.Normal) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedTextColor = brandOrange,
-                            selectedIconColor = brandOrange,
-                            indicatorColor = tabSelectedIndicator,
-                            unselectedTextColor = tabUnselectedColor,
-                            unselectedIconColor = tabUnselectedColor
+                            selectedTextColor = feconDeepOrange,
+                            selectedIconColor = feconDeepOrange,
+                            indicatorColor = navSelectedIndicator,
+                            unselectedTextColor = navUnselectedText,
+                            unselectedIconColor = navUnselectedText
                         )
                     )
                 }
@@ -168,7 +175,7 @@ fun CRMMainScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFF0F172A))
+                .background(lightBg)
         ) {
             when (currentTab) {
                 NavTab.DASHBOARD -> DashboardScreen(user = user)

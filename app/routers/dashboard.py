@@ -165,6 +165,8 @@ def get_executive_metrics(sbu: Optional[str] = Query(None)):
         act_params.append(sbu)
     act_query += " ORDER BY a.occurred_at DESC, a.id DESC LIMIT 5"
     cursor.execute(act_query, act_params)
+    recent_activities = [dict(r) for r in cursor.fetchall()]
+
     # 8. Customer Tiers Summary & Care Budget
     tier_query = "SELECT tier, COUNT(*), COALESCE(SUM(annual_care_budget), 0), COALESCE(SUM(spent_care_budget), 0) FROM customers" + ("" if is_all else " WHERE sbu = ?") + " GROUP BY tier"
     cursor.execute(tier_query, [] if is_all else [sbu])

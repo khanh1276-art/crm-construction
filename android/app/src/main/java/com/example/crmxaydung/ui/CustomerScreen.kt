@@ -399,6 +399,7 @@ fun LogCareDialog(
                                 activityType = activityType,
                                 title = title.trim(),
                                 content = content.trim(),
+                                occurredAt = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date()),
                                 leaderInCharge = currentUser.fullName
                             )
                             isSaving = false

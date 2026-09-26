@@ -405,7 +405,9 @@ object ApiClient {
         activityType: String,
         title: String,
         content: String,
-        leaderInCharge: String
+        occurredAt: String,
+        leaderInCharge: String,
+        outcomeStatus: String = "SUCCESS"
     ): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
             val json = JSONObject().apply {
@@ -414,8 +416,9 @@ object ApiClient {
                 put("activity_type", activityType)
                 put("title", title)
                 put("content", content)
+                put("occurred_at", occurredAt)
                 put("leader_in_charge", leaderInCharge)
-                put("outcome_status", "SUCCESS")
+                put("outcome_status", outcomeStatus)
             }
             val conn = openConnection("/api/care-activities", "POST").apply {
                 setRequestProperty("Content-Type", "application/json; utf-8")

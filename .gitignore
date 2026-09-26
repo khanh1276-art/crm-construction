@@ -18,6 +18,7 @@ venv.bak/
 
 # Database
 # Note: SQLite DB can be kept or auto-seeded on first launch
+*.db
 *.db-journal
 
 # IDE & Editor

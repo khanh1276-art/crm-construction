@@ -12,6 +12,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crmxaydung.R
@@ -41,41 +43,55 @@ fun CRMMainScreen(
     Scaffold(
         topBar = {
             Column {
-                TopAppBar(
-                    title = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(vertical = 4.dp)
+                CenterAlignedTopAppBar(
+                    navigationIcon = {
+                        // Logo đặt gọn gàng phía bên trái màn hình với nền trắng nổi bật
+                        Surface(
+                            color = Color.White,
+                            shape = RoundedCornerShape(8.dp),
+                            shadowElevation = 2.dp,
+                            modifier = Modifier.padding(start = 12.dp)
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.fecon_crm_logo),
                                 contentDescription = "FECON CRM",
                                 modifier = Modifier
-                                    .height(38.dp)
-                                    .padding(end = 8.dp),
+                                    .height(34.dp)
+                                    .padding(horizontal = 6.dp, vertical = 3.dp),
                                 contentScale = ContentScale.Fit
                             )
-                            Column {
-                                Text(
-                                    text = "FECON CRM",
-                                    fontSize = 17.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.White
-                                )
-                                Text(
-                                    text = "${user.fullName} • ${user.sbu}",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = feconLightCream
-                                )
-                            }
+                        }
+                    },
+                    title = {
+                        // Tên app và diễn giải app căn giữa cân đối
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        ) {
+                            Text(
+                                text = "FECON CRM",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = "${user.fullName} • ${user.sbu}",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = feconLightCream,
+                                textAlign = TextAlign.Center,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     },
                     actions = {
+                        // Nút đăng xuất bên phải màn hình
                         Surface(
                             color = Color.White.copy(alpha = 0.2f),
                             shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.padding(end = 8.dp)
+                            modifier = Modifier.padding(end = 12.dp)
                         ) {
                             TextButton(
                                 onClick = {
@@ -84,7 +100,7 @@ fun CRMMainScreen(
                                 },
                                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                             ) {
-                                Text("🚪 Đăng xuất", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text("🚪 Đăng xuất", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     },

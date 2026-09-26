@@ -1,0 +1,1698 @@
+/**
+ * EXECUTIVE CONSTRUCT-CRM Frontend Logic
+ * Supports:
+ * 1. Account Management (Admin creates, edits, deletes; SBU Directors create & edit)
+ * 2. Strict SBU Scope Enforcement (GĐKD SBU only manages their SBU)
+ * 3. Real-time Customer Duplicate Detection & Immediate Data Reuse
+ */
+
+let allUsers = [];
+let currentUser = null;
+let currentSBU = "ALL";
+let currentTab = "dashboard";
+
+let allCustomers = [];
+let allProjects = [];
+let lastMatchedCustomer = null;
+
+const SBU_CONFIG = {
+  "ALL": { name: "Toàn Tập Đoàn (5 SBU)", icon: "fa-globe", color: "amber", badgeBg: "bg-slate-800 text-white" },
+  "SBU1": { name: "SBU 1 - Nền móng và Hầm", icon: "fa-layer-group", color: "blue", badgeBg: "bg-blue-100 text-blue-800 border-blue-300" },
+  "SBU2": { name: "SBU 2 - Năng lượng & Công nghiệp", icon: "fa-bolt", color: "amber", badgeBg: "bg-amber-100 text-amber-800 border-amber-300" },
+  "SBU3": { name: "SBU 3 - Metro & Ngầm đô thị", icon: "fa-train-subway", color: "purple", badgeBg: "bg-purple-100 text-purple-800 border-purple-300" },
+  "SBU4": { name: "SBU 4 - Hạ tầng & ĐS cao tốc", icon: "fa-road", color: "emerald", badgeBg: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+  "SBU5": { name: "SBU 5 - Cảng biển & BĐKH", icon: "fa-anchor", color: "cyan", badgeBg: "bg-cyan-100 text-cyan-800 border-cyan-300" }
+};
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await checkAuthAndInitialize();
+});
+
+// Helper: Custom fetch with Role & SBU headers
+async function authFetch(url, options = {}) {
+  if (!currentUser) {
+    showLoginScreen();
+    throw new Error("Chưa đăng nhập");
+  }
+
+  const headers = options.headers || {};
+  headers['X-User-Role'] = currentUser.role;
+  headers['X-User-SBU'] = currentUser.sbu;
+  options.headers = headers;
+
+  const res = await fetch(url, options);
+  if (res.status === 401) {
+    showToast("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!", "error");
+    handleLogout();
+    throw new Error("Unauthorized");
+  }
+  return res;
+}
+
+// Currency format helper
+function formatVND(amount) {
+  if (!amount || amount === 0) return "0 đ";
+  if (amount >= 1000000000) {
+    const val = (amount / 1000000000).toFixed(1);
+    return `${val.endsWith('.0') ? val.slice(0, -2) : val} Tỷ`;
+  }
+  if (amount >= 1000000) {
+    return `${(amount / 1000000).toFixed(0)} Tr`;
+  }
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+}
+
+function getSBUBadge(sbu) {
+  const cfg = SBU_CONFIG[sbu] || { name: sbu, badgeBg: "bg-slate-100 text-slate-800", icon: "fa-building" };
+  return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${cfg.badgeBg}"><i class="fa-solid ${cfg.icon}"></i> ${cfg.name}</span>`;
+}
+
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  const bg = type === 'success' ? 'bg-emerald-600 text-white' : type === 'error' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-white';
+  const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-bell';
+
+  toast.className = `p-3.5 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-semibold ${bg} transition-all transform duration-300 translate-y-2 pointer-events-auto`;
+  toast.innerHTML = `<i class="fa-solid ${icon} text-sm"></i> <span>${message}</span>`;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-y-4');
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('hidden');
+}
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('hidden');
+}
+
+// ==========================================
+// 1. MANDATORY AUTHENTICATION & LOGIN LOGIC
+// ==========================================
+async function checkAuthAndInitialize() {
+  const authData = localStorage.getItem('crm_auth_user');
+  if (!authData) {
+    showLoginScreen();
+    return;
+  }
+
+  try {
+    currentUser = JSON.parse(authData);
+    await loadUsers();
+    // Verify currentUser is still present in database
+    const matched = allUsers.find(u => u.username === currentUser.username);
+    if (matched) {
+      currentUser = matched;
+      localStorage.setItem('crm_auth_user', JSON.stringify(currentUser));
+      showAppScreen();
+      applyUserRoleState();
+      refreshAllData();
+    } else {
+      showLoginScreen();
+    }
+  } catch (err) {
+    console.error("Auth init error:", err);
+    showLoginScreen();
+  }
+}
+
+function showLoginScreen() {
+  const screen = document.getElementById('login-screen');
+  const app = document.getElementById('app-root');
+  if (screen) screen.classList.remove('hidden');
+  if (app) app.classList.add('hidden');
+}
+
+function showAppScreen() {
+  const screen = document.getElementById('login-screen');
+  const app = document.getElementById('app-root');
+  if (screen) screen.classList.add('hidden');
+  if (app) app.classList.remove('hidden');
+}
+
+async function handleScreenLogin(e) {
+  e.preventDefault();
+  const usernameInput = document.getElementById('screen-login-username');
+  const passwordInput = document.getElementById('screen-login-password');
+  const submitBtn = document.getElementById('btn-submit-login');
+
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (!username || !password) {
+    showToast("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!", "error");
+    return;
+  }
+
+  const originalBtnText = submitBtn.innerHTML;
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực...';
+
+  try {
+    const res = await fetch('/api/users/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      currentUser = data.user;
+      localStorage.setItem('crm_auth_user', JSON.stringify(currentUser));
+      
+      showAppScreen();
+      await loadUsers();
+      applyUserRoleState();
+      refreshAllData();
+      showToast(data.message || `Đăng nhập thành công với vai trò: ${currentUser.full_name}`);
+    } else {
+      const err = await res.json();
+      showToast(err.detail || "Tên đăng nhập hoặc mật khẩu không chính xác!", "error");
+    }
+  } catch (err) {
+    showToast("Lỗi kết nối máy chủ xác thực!", "error");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalBtnText;
+  }
+}
+
+function handleLogout() {
+  localStorage.removeItem('crm_auth_user');
+  currentUser = null;
+  const passEl = document.getElementById('screen-login-password');
+  if (passEl) passEl.value = '123456';
+  showLoginScreen();
+  showToast("Đã đăng xuất khỏi hệ thống!");
+}
+
+function toggleAccountsHelper() {
+  const box = document.getElementById('accounts-helper-box');
+  const chevron = document.getElementById('helper-chevron');
+  if (!box) return;
+  const isHidden = box.classList.toggle('hidden');
+  if (chevron) {
+    chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+  }
+}
+
+function fillLoginCredentials(username) {
+  const uInput = document.getElementById('screen-login-username');
+  const pInput = document.getElementById('screen-login-password');
+  if (uInput) uInput.value = username;
+  if (pInput) {
+    pInput.value = '123456';
+    pInput.focus();
+  }
+}
+
+function togglePasswordVisibility(inputId) {
+  const input = document.getElementById(inputId);
+  const icon = document.getElementById(`eye-icon-${inputId}`);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    if (icon) icon.className = 'fa-solid fa-eye-slash';
+  } else {
+    input.type = 'password';
+    if (icon) icon.className = 'fa-solid fa-eye';
+  }
+}
+
+async function loadUsers() {
+  try {
+    const res = await authFetch('/api/users');
+    allUsers = await res.json();
+
+    if (currentTab === 'users') {
+      renderUsersTable();
+    }
+  } catch (err) {
+    console.error("Error loading users:", err);
+  }
+}
+
+function applyUserRoleState() {
+  if (!currentUser) return;
+
+  // 1. Header user widget
+  const headerName = document.getElementById('user-header-name');
+  const headerBadge = document.getElementById('user-header-role-badge');
+  const headerTitle = document.getElementById('user-header-title');
+  const iconEl = document.getElementById('user-avatar-icon');
+
+  if (headerName) headerName.innerText = currentUser.full_name;
+  if (headerTitle) headerTitle.innerText = currentUser.title;
+
+  if (iconEl) {
+    let iconBg = 'bg-amber-400/20 text-amber-400';
+    if (currentUser.role === 'SBU_DIRECTOR') iconBg = 'bg-blue-500/20 text-blue-400';
+    if (currentUser.role === 'COLLABORATOR') iconBg = 'bg-emerald-500/20 text-emerald-400';
+    iconEl.className = `w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center text-sm group-hover:scale-105 transition`;
+    iconEl.innerHTML = `<i class="fa-solid ${currentUser.avatar_icon || 'fa-user-tie'}"></i>`;
+  }
+
+  if (headerBadge) {
+    if (currentUser.role === 'ADMIN') {
+      headerBadge.className = 'px-1.5 py-0.5 bg-amber-400/20 text-amber-300 text-[9px] font-black rounded uppercase';
+      headerBadge.innerText = 'ADMIN';
+    } else if (currentUser.role === 'COLLABORATOR') {
+      headerBadge.className = 'px-1.5 py-0.5 bg-emerald-400/20 text-emerald-300 text-[9px] font-black rounded uppercase';
+      headerBadge.innerText = 'CTV';
+    } else {
+      headerBadge.className = 'px-1.5 py-0.5 bg-blue-400/20 text-blue-300 text-[9px] font-black rounded uppercase';
+      headerBadge.innerText = currentUser.sbu;
+    }
+  }
+
+  const pillsBar = document.getElementById('sbu-pills-bar');
+  const bannerBadge = document.getElementById('banner-role-badge');
+  const dashTitle = document.getElementById('dashboard-title');
+  const dashSub = document.getElementById('dashboard-subtitle');
+  const sbuBadge = document.getElementById('sidebar-sbu-name');
+  const navUsers = document.getElementById('nav-users');
+
+  if (currentUser.role === 'ADMIN') {
+    // Leadership (Admin)
+    if (pillsBar) pillsBar.classList.remove('hidden');
+    if (navUsers) navUsers.classList.remove('hidden');
+    currentSBU = "ALL";
+    if (bannerBadge) bannerBadge.innerText = "Cổng Điều Hành Ban Lãnh Đạo (Admin)";
+    if (dashTitle) dashTitle.innerText = "Báo Cáo Điều Hành Khách Hàng & Kinh Doanh";
+    if (dashSub) dashSub.innerText = "Toàn quyền quản trị, thêm mới, sửa, xóa đối tác và dự án trên cả 5 Khối SBU.";
+    if (sbuBadge) sbuBadge.innerHTML = `<i class="fa-solid fa-globe text-amber-500"></i> Toàn Tập Đoàn (5 SBU)`;
+  } else if (currentUser.role === 'COLLABORATOR') {
+    // Collaborator (CTV)
+    currentSBU = currentUser.sbu;
+    if (pillsBar) pillsBar.classList.toggle('hidden', currentUser.sbu !== 'ALL');
+    if (navUsers) navUsers.classList.add('hidden');
+    if (currentTab === 'users') switchTab('dashboard');
+
+    if (bannerBadge) bannerBadge.innerText = "Cổng Kết Nối Dành Cho Cộng Tác Viên (CTV)";
+    if (dashTitle) dashTitle.innerText = "Mạng Lưới Phát Triển Khách Hàng & Cơ Hội Dự Án";
+    if (dashSub) dashSub.innerText = "Quyền hạn: Giới thiệu thông tin đối tác tiềm năng & hồ sơ dự thầu; Theo dõi tiến độ chung.";
+    if (sbuBadge) sbuBadge.innerHTML = `<i class="fa-solid fa-handshake text-emerald-500"></i> Mạng Lưới CTV (${currentUser.sbu === 'ALL' ? 'Toàn Quốc' : currentUser.sbu})`;
+  } else {
+    // SBU Director (Member)
+    currentSBU = currentUser.sbu;
+    if (pillsBar) pillsBar.classList.add('hidden');
+    if (navUsers) navUsers.classList.add('hidden');
+    if (currentTab === 'users') switchTab('dashboard');
+
+    const sbuCfg = SBU_CONFIG[currentSBU] || { name: currentSBU };
+    if (bannerBadge) bannerBadge.innerText = `Cổng Điều Hành Giám Đốc Kinh Doanh`;
+    if (dashTitle) dashTitle.innerText = `Báo Cáo Khách Hàng & Kinh Doanh: ${sbuCfg.name}`;
+    if (dashSub) dashSub.innerText = `Quyền hạn: Thêm mới và cập nhật đối tác, dự án thuộc ${sbuCfg.name} (Không được xóa).`;
+    if (sbuBadge) sbuBadge.innerHTML = `<i class="fa-solid ${sbuCfg.icon || 'fa-briefcase'} text-amber-500"></i> ${sbuCfg.name}`;
+  }
+
+  // Adjust button visibility and text based on role
+  const btnAddProj = document.getElementById('btn-add-project');
+  const labelAddCust = document.getElementById('label-add-customer');
+  if (btnAddProj) {
+    if (currentUser.role === 'COLLABORATOR') {
+      btnAddProj.classList.add('hidden');
+    } else {
+      btnAddProj.classList.remove('hidden');
+    }
+  }
+  if (labelAddCust) {
+    labelAddCust.innerText = (currentUser.role === 'COLLABORATOR') ? 'Giới Thiệu Đối Tác' : 'Thêm Đối Tác';
+  }
+
+  updatePillStyles();
+}
+
+function changeSBUFilter(sbu) {
+  if (currentUser.role !== 'ADMIN' && sbu !== currentUser.sbu && sbu !== 'ALL') {
+    showToast("Bạn chỉ có quyền xem dữ liệu thuộc SBU của mình!", "error");
+    return;
+  }
+  currentSBU = sbu;
+  updatePillStyles();
+
+  const sbuCfg = SBU_CONFIG[currentSBU] || { name: currentSBU };
+  const sbuBadge = document.getElementById('sidebar-sbu-name');
+  if (sbuBadge) {
+    sbuBadge.innerHTML = `<i class="fa-solid ${sbuCfg.icon || 'fa-globe'} text-amber-500"></i> ${sbuCfg.name}`;
+  }
+
+  refreshAllData();
+}
+
+function updatePillStyles() {
+  document.querySelectorAll('.sbu-filter-pill').forEach(btn => {
+    btn.className = 'sbu-filter-pill px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition';
+  });
+  const activeBtn = document.getElementById(`pill-${currentSBU}`);
+  if (activeBtn) activeBtn.className = 'sbu-filter-pill px-2.5 py-1.5 rounded-lg transition bg-amber-400 text-slate-950 font-bold';
+}
+
+function refreshAllData() {
+  loadDashboard();
+  loadCustomers();
+  loadPipeline();
+  loadProjects();
+  loadCareActivities();
+  populateCustomerSelects();
+  if (currentTab === 'users') renderUsersTable();
+}
+
+// Tab Switching
+function switchTab(tabName) {
+  if (tabName === 'users' && currentUser.role !== 'ADMIN') {
+    showToast("Chỉ Ban Lãnh Đạo (Admin) mới có quyền truy cập Quản lý Tài khoản!", "error");
+    return;
+  }
+
+  currentTab = tabName;
+  const tabs = ['dashboard', 'customers', 'pipeline', 'projects', 'care', 'users'];
+  
+  tabs.forEach(t => {
+    const el = document.getElementById(`tab-${t}`);
+    const nav = document.getElementById(`nav-${t}`);
+    if (el) el.classList.toggle('hidden', t !== tabName);
+    if (nav) {
+      if (t === tabName) {
+        nav.className = 'nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs text-amber-900 bg-amber-50 transition';
+      } else {
+        nav.className = 'nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-slate-600 hover:bg-slate-50 transition';
+      }
+    }
+  });
+
+  if (tabName === 'dashboard') loadDashboard();
+  if (tabName === 'customers') loadCustomers();
+  if (tabName === 'pipeline') loadPipeline();
+  if (tabName === 'projects') loadProjects();
+  if (tabName === 'care') {
+    populateCustomerSelects();
+    loadCareActivities();
+  }
+  if (tabName === 'users') renderUsersTable();
+}
+
+// User CRUD (Admin Only)
+function renderUsersTable() {
+  const tbody = document.getElementById('users-table-body');
+  if (!tbody) return;
+
+  document.getElementById('stat-user-count').innerText = allUsers.length;
+
+  tbody.innerHTML = allUsers.map(u => {
+    let roleBadge = '';
+    if (u.role === 'ADMIN') {
+      roleBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">👑 Ban Lãnh Đạo (Admin)</span>';
+    } else if (u.role === 'COLLABORATOR') {
+      roleBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300">🤝 Cộng Tác Viên (CTV)</span>';
+    } else {
+      roleBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-900 border border-blue-300">💼 Giám Đốc KD (SBU)</span>';
+    }
+
+    return `
+      <tr class="hover:bg-slate-50 transition">
+        <td class="p-3.5">
+          <div class="font-black text-slate-900 flex items-center gap-2">
+            <i class="fa-solid ${u.avatar_icon || 'fa-user-tie'} text-slate-500"></i>
+            <span>${u.full_name}</span>
+          </div>
+          <div class="text-[11px] text-slate-400 font-mono">@${u.username} • MK: ${u.password || '123456'}</div>
+        </td>
+        <td class="p-3.5">
+          ${roleBadge}
+        </td>
+        <td class="p-3.5">
+          ${u.sbu === 'ALL' ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border bg-slate-800 text-white"><i class="fa-solid fa-globe"></i> Toàn Tập Đoàn (5 SBU)</span>' : getSBUBadge(u.sbu)}
+        </td>
+        <td class="p-3.5 text-slate-700 font-semibold text-xs">
+          ${u.title}
+        </td>
+        <td class="p-3.5 text-[11px] text-slate-600">
+          <div><i class="fa-solid fa-envelope text-slate-400 mr-1"></i> ${u.email || 'N/A'}</div>
+          <div><i class="fa-solid fa-phone text-blue-500 mr-1"></i> ${u.phone || 'N/A'}</div>
+        </td>
+        <td class="p-3.5 text-right space-x-1">
+          <button onclick="openEditUserModal(${u.id})" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">
+            <i class="fa-solid fa-pen-to-square"></i> Sửa
+          </button>
+          ${u.username !== 'admin' ? `
+            <button onclick="deleteUserAccount(${u.id})" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold transition">
+              <i class="fa-solid fa-trash"></i> Xóa
+            </button>
+          ` : ''}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function openNewUserModal() {
+  document.getElementById('form-user').reset();
+  document.getElementById('user-id').value = "";
+  document.getElementById('user-username').disabled = false;
+  const passEl = document.getElementById('user-password');
+  if (passEl) passEl.value = "123456";
+  document.getElementById('modal-user-title').innerText = "Tạo Tài Khoản Người Dùng Mới";
+  openModal('modal-user');
+}
+
+function openEditUserModal(userId) {
+  const u = allUsers.find(x => x.id === userId);
+  if (!u) return;
+
+  document.getElementById('user-id').value = u.id;
+  document.getElementById('user-username').value = u.username;
+  document.getElementById('user-username').disabled = true;
+  const passEl = document.getElementById('user-password');
+  if (passEl) passEl.value = u.password || '123456';
+  document.getElementById('user-fullname').value = u.full_name;
+  document.getElementById('user-role').value = u.role;
+  document.getElementById('user-sbu').value = u.sbu;
+  document.getElementById('user-title').value = u.title;
+  document.getElementById('user-email').value = u.email || '';
+  document.getElementById('user-phone').value = u.phone || '';
+
+  document.getElementById('modal-user-title').innerText = `Chỉnh Sửa Tài Khoản: @${u.username}`;
+  openModal('modal-user');
+}
+
+function onUserRoleChange() {
+  const role = document.getElementById('user-role').value;
+  const sbuSelect = document.getElementById('user-sbu');
+  if (role === 'ADMIN' || role === 'COLLABORATOR') {
+    sbuSelect.value = 'ALL';
+  } else if (sbuSelect.value === 'ALL') {
+    sbuSelect.value = 'SBU1';
+  }
+}
+
+async function handleUserSubmit(e) {
+  e.preventDefault();
+  const userId = document.getElementById('user-id').value;
+  const isEdit = Boolean(userId);
+
+  const payload = {
+    username: document.getElementById('user-username').value,
+    password: document.getElementById('user-password') ? document.getElementById('user-password').value : '123456',
+    full_name: document.getElementById('user-fullname').value,
+    role: document.getElementById('user-role').value,
+    sbu: document.getElementById('user-sbu').value,
+    title: document.getElementById('user-title').value,
+    email: document.getElementById('user-email').value,
+    phone: document.getElementById('user-phone').value
+  };
+
+  try {
+    const url = isEdit ? `/api/users/${userId}` : '/api/users';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    const res = await authFetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      showToast(isEdit ? "Cập nhật tài khoản thành công!" : "Tạo tài khoản mới thành công!");
+      closeModal('modal-user');
+      await loadUsers();
+    } else {
+      const err = await res.json();
+      showToast(err.detail || "Lỗi thao tác tài khoản", "error");
+    }
+  } catch (err) {
+    showToast("Lỗi kết nối", "error");
+  }
+}
+
+async function deleteUserAccount(userId) {
+  const u = allUsers.find(x => x.id === userId);
+  if (!u) return;
+
+  if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản ${u.full_name} (@${u.username}) không?`)) {
+    return;
+  }
+
+  try {
+    const res = await authFetch(`/api/users/${userId}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast("Đã xóa tài khoản người dùng!");
+      await loadUsers();
+    } else {
+      const err = await res.json();
+      showToast(err.detail || "Lỗi xóa tài khoản", "error");
+    }
+  } catch (err) {
+    showToast("Lỗi kết nối", "error");
+  }
+}
+
+// ==========================================
+// 2. DASHBOARD LOGIC
+// ==========================================
+async function loadDashboard() {
+  try {
+    const sbuParam = currentSBU !== 'ALL' ? `?sbu=${currentSBU}` : '';
+    const res = await authFetch(`/api/dashboard/metrics${sbuParam}`);
+    const data = await res.json();
+
+    document.getElementById('stat-contract-val').innerText = formatVND(data.overview.total_contract_value);
+    document.getElementById('stat-project-count').innerText = data.overview.total_projects;
+    document.getElementById('stat-paid-val').innerText = formatVND(data.overview.total_paid_amount);
+
+    const ratio = data.overview.total_contract_value > 0 
+      ? Math.round((data.overview.total_paid_amount / data.overview.total_contract_value) * 100) 
+      : 0;
+    document.getElementById('stat-paid-pct').innerText = `${ratio}%`;
+
+    document.getElementById('stat-balance-val').innerText = formatVND(data.overview.unpaid_balance);
+    document.getElementById('stat-bids-val').innerText = formatVND(data.overview.active_bids_value);
+    document.getElementById('stat-bids-count').innerText = data.overview.active_bids_count;
+
+    const matrixSection = document.getElementById('sbu-matrix-section');
+    if (currentSBU !== 'ALL') {
+      matrixSection.classList.add('hidden');
+    } else {
+      matrixSection.classList.remove('hidden');
+      renderSBUMatrix(data.sbu_matrix);
+    }
+
+    renderUrgentMilestones(data.upcoming_payments);
+    renderExecutiveReminders(data.executive_reminders);
+
+  } catch (err) {
+    console.error("Error loading dashboard metrics:", err);
+  }
+}
+
+function renderSBUMatrix(matrix) {
+  const tbody = document.getElementById('sbu-matrix-body');
+  if (!tbody) return;
+
+  tbody.innerHTML = matrix.map(row => `
+    <tr class="hover:bg-slate-50 transition">
+      <td class="p-3">
+        <div class="font-extrabold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid ${row.icon} text-slate-500"></i>
+          <span>${row.name}</span>
+        </div>
+      </td>
+      <td class="p-3">
+        <span class="font-bold text-slate-800">${row.customer_count}</span> đối tác
+      </td>
+      <td class="p-3">
+        <span class="font-bold text-slate-800">${row.project_count}</span> dự án
+      </td>
+      <td class="p-3 font-black text-slate-900">${formatVND(row.contract_value)}</td>
+      <td class="p-3 font-bold text-emerald-600">${formatVND(row.paid_amount)}</td>
+      <td class="p-3">
+        <span class="font-black text-purple-700">${formatVND(row.bid_value)}</span>
+        <div class="text-[10px] text-slate-400 font-semibold">${row.bid_count} gói thầu</div>
+      </td>
+      <td class="p-3 text-right">
+        <button onclick="changeSBUFilter('${row.sbu}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold">
+          Xem &gt;
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderUrgentMilestones(milestones) {
+  const container = document.getElementById('urgent-milestones-list');
+  if (!container) return;
+
+  if (!milestones || milestones.length === 0) {
+    container.innerHTML = '<div class="text-xs text-slate-400 py-4 text-center">Không có mốc thanh toán nào đến hạn.</div>';
+    return;
+  }
+
+  container.innerHTML = milestones.map(m => `
+    <div class="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200/70 flex items-center justify-between gap-3 transition">
+      <div class="space-y-0.5">
+        <div class="flex items-center gap-2">
+          ${getSBUBadge(m.sbu)}
+          <span class="font-bold text-slate-900 text-xs">${m.title}</span>
+        </div>
+        <div class="text-[11px] text-slate-500">
+          ${m.project_name} • <span class="font-semibold text-slate-700">${m.customer_name}</span>
+        </div>
+      </div>
+      <div class="text-right">
+        <div class="font-black text-slate-900 text-xs">${formatVND(m.amount)}</div>
+        <div class="text-[10px] text-slate-400">Hạn: ${m.due_date || 'N/A'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderExecutiveReminders(reminders) {
+  const container = document.getElementById('executive-reminders-list');
+  if (!container) return;
+
+  if (!reminders || reminders.length === 0) {
+    container.innerHTML = '<div class="text-xs text-slate-400 py-4 text-center">Không có sự kiện ngoại giao trong 60 ngày tới.</div>';
+    return;
+  }
+
+  container.innerHTML = reminders.map(r => `
+    <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-200/60 flex items-center justify-between gap-3">
+      <div class="space-y-0.5">
+        <div class="flex items-center gap-2">
+          ${getSBUBadge(r.sbu)}
+          <span class="font-bold text-slate-900 text-xs">${r.event_title}</span>
+        </div>
+        <div class="text-[11px] text-slate-600">${r.name} (${r.decision_maker_role || 'Lãnh đạo'})</div>
+        <div class="text-[10px] text-amber-800 font-bold">Ngày sự kiện: ${r.target_date} (còn ${r.days_until} ngày)</div>
+      </div>
+      <button onclick="prepareZaloGreeting('${r.id}', '${r.key_decision_maker}', '${r.decision_maker_phone || ''}', '${r.name}')" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm whitespace-nowrap">
+        <i class="fa-solid fa-gift"></i> Gửi Lời Chúc
+      </button>
+    </div>
+  `).join('');
+}
+
+// ==========================================
+// 3. STRATEGIC CUSTOMERS & DUPLICATE REUSE
+// ==========================================
+let searchCustTimeout = null;
+function debounceCustomerSearch() {
+  clearTimeout(searchCustTimeout);
+  searchCustTimeout = setTimeout(loadCustomers, 300);
+}
+
+// Real-time Duplicate Detection
+let dupScanTimeout = null;
+function triggerDuplicateScan() {
+  clearTimeout(dupScanTimeout);
+  dupScanTimeout = setTimeout(async () => {
+    const tax = document.getElementById('cust-tax')?.value || "";
+    const phone = document.getElementById('cust-decision-phone')?.value || "";
+    const name = document.getElementById('cust-name')?.value || "";
+
+    if (tax.length < 5 && phone.length < 8 && name.length < 4) {
+      document.getElementById('duplicate-warning-banner').classList.add('hidden');
+      return;
+    }
+
+    try {
+      const res = await authFetch(`/api/customers/check-duplicate?tax_code=${encodeURIComponent(tax)}&phone=${encodeURIComponent(phone)}&name=${encodeURIComponent(name)}`);
+      const data = await res.json();
+
+      const banner = document.getElementById('duplicate-warning-banner');
+      const infoEl = document.getElementById('duplicate-matched-info');
+
+      if (data.found && data.matches.length > 0) {
+        lastMatchedCustomer = data.matches[0];
+        infoEl.innerHTML = `
+          <div class="font-bold text-slate-900">${lastMatchedCustomer.name} (Mã: ${lastMatchedCustomer.code})</div>
+          <div class="text-slate-600 mt-0.5">
+            <b>MST:</b> ${lastMatchedCustomer.tax_code || 'N/A'} • 
+            <b>Khối hiện tại:</b> ${getSBUBadge(lastMatchedCustomer.sbu)} • 
+            <b>Lãnh đạo:</b> ${lastMatchedCustomer.key_decision_maker} (${lastMatchedCustomer.decision_maker_phone || 'N/A'})
+          </div>
+        `;
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, 400);
+}
+
+// Reuse existing matched customer profile
+function reuseMatchedCustomer() {
+  if (!lastMatchedCustomer) return;
+
+  document.getElementById('cust-name').value = lastMatchedCustomer.name;
+  document.getElementById('cust-tax').value = lastMatchedCustomer.tax_code || '';
+  document.getElementById('cust-tier').value = lastMatchedCustomer.tier || 'STRATEGIC_VIP';
+  document.getElementById('cust-segment').value = lastMatchedCustomer.segment || 'B2B';
+  document.getElementById('cust-headquarters').value = lastMatchedCustomer.headquarters || '';
+  document.getElementById('cust-decision-maker').value = lastMatchedCustomer.key_decision_maker || '';
+  document.getElementById('cust-decision-role').value = lastMatchedCustomer.decision_maker_role || '';
+  document.getElementById('cust-decision-phone').value = lastMatchedCustomer.decision_maker_phone || '';
+  document.getElementById('cust-decision-bday').value = lastMatchedCustomer.decision_maker_birthday || '';
+  document.getElementById('cust-anniversary').value = lastMatchedCustomer.founding_anniversary || '';
+  document.getElementById('cust-notes').value = lastMatchedCustomer.strategic_notes || `Sử dụng lại hồ sơ từ ${lastMatchedCustomer.sbu}`;
+
+  document.getElementById('duplicate-warning-banner').classList.add('hidden');
+  showToast(`Đã đồng bộ thông tin đối tác ${lastMatchedCustomer.name}! Nhấn "Lưu" để liên kết vào SBU của bạn.`);
+}
+
+async function loadCustomers() {
+  const search = document.getElementById('cust-search')?.value || "";
+  const sbuFilter = document.getElementById('cust-filter-sbu')?.value || currentSBU;
+  const tierFilter = document.getElementById('cust-filter-tier')?.value || "";
+
+  let url = `/api/customers?`;
+  if (sbuFilter && sbuFilter !== 'ALL') url += `sbu=${sbuFilter}&`;
+  if (tierFilter) url += `tier=${tierFilter}&`;
+  if (search) url += `search=${encodeURIComponent(search)}&`;
+
+  try {
+    const res = await authFetch(url);
+    const data = await res.json();
+    allCustomers = data;
+
+    const tbody = document.getElementById('customers-table-body');
+    const hint = document.getElementById('cust-permission-hint');
+    if (hint) {
+      if (currentUser.role === 'ADMIN') {
+        hint.innerHTML = '<span class="text-amber-600 font-bold">👑 Ban Lãnh Đạo: Toàn quyền Tạo, Sửa, Xóa cả 5 SBU</span>';
+      } else if (currentUser.role === 'COLLABORATOR') {
+        hint.innerHTML = `<span class="text-emerald-600 font-bold">🤝 Cộng Tác Viên (${currentUser.sbu === 'ALL' ? 'Toàn quốc' : currentUser.sbu}): Được phép Giới thiệu & Thêm mới đối tác (Không sửa hợp đồng/xóa)</span>`;
+      } else {
+        hint.innerHTML = `<span class="text-blue-600 font-bold">💼 Giám Đốc KD ${currentUser.sbu}: Chỉ được Tạo & Sửa khách hàng thuộc ${currentUser.sbu} (Không được xóa)</span>`;
+      }
+    }
+
+    if (!tbody) return;
+
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400 text-xs">Không có đối tác phù hợp.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(c => {
+      const isCTV = currentUser.role === 'COLLABORATOR';
+      const canEdit = currentUser.role === 'ADMIN' || (currentUser.role === 'SBU_DIRECTOR' && currentUser.sbu === c.sbu);
+      const canDelete = currentUser.role === 'ADMIN';
+
+      return `
+        <tr class="hover:bg-slate-50 transition cursor-pointer" onclick="viewCustomer360(${c.id})">
+          <td class="p-3.5">
+            <div class="font-black text-slate-900">${c.name}</div>
+            <div class="text-[11px] text-slate-400 font-mono">${c.code} ${c.tax_code ? `• MST: ${c.tax_code}` : ''} • ${c.segment}</div>
+          </td>
+          <td class="p-3.5">
+            ${getSBUBadge(c.sbu)}
+          </td>
+          <td class="p-3.5">
+            <div class="font-bold text-slate-900">${c.key_decision_maker}</div>
+            <div class="text-[11px] text-slate-500">${c.decision_maker_role || ''} • <span class="text-blue-600 font-semibold">${c.decision_maker_phone || c.phone || ''}</span></div>
+          </td>
+          <td class="p-3.5">
+            <div class="font-black text-slate-900">${formatVND(c.total_contract_value)}</div>
+            <div class="text-[11px] text-slate-500">${c.project_count || 0} dự án đang theo dõi</div>
+          </td>
+          <td class="p-3.5 text-[11px] text-slate-600">
+            <div><i class="fa-solid fa-cake-candles text-amber-500 mr-1"></i> Sinh nhật: ${c.decision_maker_birthday || 'N/A'}</div>
+            <div><i class="fa-solid fa-building text-blue-500 mr-1"></i> Thành lập: ${c.founding_anniversary || 'N/A'}</div>
+          </td>
+          <td class="p-3.5">
+            <div class="text-amber-500 text-xs">${'★'.repeat(c.relationship_score || 5)}</div>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">${c.tier === 'STRATEGIC_VIP' ? 'VIP Chiến Lược' : c.tier}</span>
+          </td>
+          <td class="p-3.5 text-right space-x-1" onclick="event.stopPropagation()">
+            <button onclick="viewCustomer360(${c.id})" class="p-1.5 text-slate-500 hover:text-blue-600 transition" title="Xem Hồ Sơ 360°">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+            ${canEdit ? `
+              <button onclick="openEditCustomerModal(${c.id})" class="p-1.5 text-slate-500 hover:text-amber-600 transition" title="Chỉnh sửa thông tin">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+            ` : (!isCTV ? `
+              <span class="p-1.5 text-slate-300 cursor-not-allowed" title="Chỉ GĐKD ${c.sbu} mới được sửa"><i class="fa-solid fa-lock"></i></span>
+            ` : '')}
+            ${canDelete ? `
+              <button onclick="deleteCustomer(${c.id})" class="p-1.5 text-slate-500 hover:text-rose-600 transition" title="Xóa đối tác (Admin)">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            ` : ''}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error("Error loading customers:", err);
+  }
+}
+
+async function viewCustomer360(id) {
+  try {
+    const res = await authFetch(`/api/customers/${id}`);
+    const c = await res.json();
+
+    document.getElementById('view-cust-code').innerText = c.code;
+    document.getElementById('view-cust-name').innerText = c.name;
+
+    const content = document.getElementById('customer-detail-content');
+    content.innerHTML = `
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+          <div class="text-slate-400 font-bold uppercase text-[10px]">Phân loại SBU</div>
+          <div class="mt-1">${getSBUBadge(c.sbu)}</div>
+          <div class="text-xs text-slate-700 font-bold mt-2">Hạng: ${c.tier} • ${c.segment}</div>
+        </div>
+        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+          <div class="text-slate-400 font-bold uppercase text-[10px]">Lãnh đạo then chốt</div>
+          <div class="font-extrabold text-slate-900 text-xs mt-1">${c.key_decision_maker}</div>
+          <div class="text-[11px] text-slate-600">${c.decision_maker_role || ''}</div>
+          <div class="text-[11px] text-blue-600 font-bold mt-1"><i class="fa-solid fa-phone mr-1"></i> ${c.decision_maker_phone || c.phone}</div>
+        </div>
+        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+          <div class="text-slate-400 font-bold uppercase text-[10px]">Sự kiện ngoại giao</div>
+          <div class="text-xs text-slate-800 mt-1"><i class="fa-solid fa-cake-candles text-amber-500 mr-1"></i> Sinh nhật: ${c.decision_maker_birthday || 'Chưa cập nhật'}</div>
+          <div class="text-xs text-slate-800 mt-1"><i class="fa-solid fa-building text-blue-500 mr-1"></i> Thành lập: ${c.founding_anniversary || 'Chưa cập nhật'}</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <h4 class="font-black text-xs text-slate-900 uppercase mb-2">Hợp Đồng & Dự Án Đang Thực Hiện</h4>
+          <div class="space-y-2">
+            ${c.projects && c.projects.length > 0 ? c.projects.map(p => `
+              <div class="p-2.5 bg-white rounded-xl border border-slate-200">
+                <div class="font-bold text-slate-900 text-xs">${p.name}</div>
+                <div class="text-[11px] text-slate-500 flex justify-between mt-1">
+                  <span>Tiến độ: <b class="text-emerald-600">${p.progress_percent}%</b></span>
+                  <span class="font-black text-slate-900">${formatVND(p.contract_value)}</span>
+                </div>
+              </div>
+            `).join('') : '<div class="text-slate-400 text-xs">Chưa có dự án.</div>'}
+          </div>
+        </div>
+
+        <div>
+          <h4 class="font-black text-xs text-slate-900 uppercase mb-2">Cơ Hội Thầu Đang Theo Đuổi</h4>
+          <div class="space-y-2">
+            ${c.bids && c.bids.length > 0 ? c.bids.map(b => `
+              <div class="p-2.5 bg-white rounded-xl border border-slate-200">
+                <div class="font-bold text-slate-900 text-xs">${b.project_title}</div>
+                <div class="text-[11px] text-slate-500 flex justify-between mt-1">
+                  <span>Giai đoạn: <b>${b.stage}</b></span>
+                  <span class="font-black text-purple-700">${formatVND(b.estimated_value)}</span>
+                </div>
+              </div>
+            `).join('') : '<div class="text-slate-400 text-xs">Không có hồ sơ thầu.</div>'}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="font-black text-xs text-slate-900 uppercase mb-2">Nhật Ký Ngoại Giao & Tiếp Khách Gần Nhất</h4>
+        <div class="space-y-2">
+          ${c.activities && c.activities.length > 0 ? c.activities.map(a => `
+            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+              <div class="flex items-center justify-between font-bold text-slate-800">
+                <span>${a.title}</span>
+                <span class="text-slate-400 font-mono text-[10px]">${a.occurred_at}</span>
+              </div>
+              <p class="text-slate-600 mt-1">${a.content || ''}</p>
+              <div class="text-[10px] text-blue-600 mt-1 font-semibold">Lãnh đạo tham gia: ${a.leader_in_charge}</div>
+            </div>
+          `).join('') : '<div class="text-slate-400 text-xs">Chưa có hoạt động tiếp khách ghi nhận.</div>'}
+        </div>
+      </div>
+    `;
+
+    openModal('modal-customer-detail');
+
+  } catch (err) {
+    console.error("Error viewing customer:", err);
+  }
+}
+
+function openNewCustomerModal() {
+  document.getElementById('form-customer').reset();
+  document.getElementById('cust-id').value = "";
+  document.getElementById('duplicate-warning-banner').classList.add('hidden');
+  document.getElementById('modal-customer-title').innerText = "Thêm Đối Tác / Chủ Đầu Tư Chiến Lược";
+
+  const sbuSelect = document.getElementById('cust-sbu');
+  const sbuHint = document.getElementById('cust-sbu-hint');
+
+  if (currentUser.role === 'SBU_DIRECTOR') {
+    sbuSelect.value = currentUser.sbu;
+    sbuSelect.disabled = true;
+    sbuHint.innerText = `🔒 Bạn là GĐKD ${currentUser.sbu}: Khách hàng mới sẽ tự động được lưu trữ vào ${currentUser.sbu}.`;
+    document.getElementById('modal-customer-title').innerText = `Thêm Đối Tác Chiến Lược (${currentUser.sbu})`;
+  } else if (currentUser.role === 'COLLABORATOR') {
+    sbuSelect.disabled = false;
+    if (currentUser.sbu !== 'ALL') sbuSelect.value = currentUser.sbu;
+    sbuHint.innerText = `🤝 Bạn là Cộng Tác Viên: Nhập thông tin đối tác & dự án tiềm năng để chuyển tiếp cho Ban Lãnh Đạo & GĐKD SBU tiếp nhận.`;
+    document.getElementById('modal-customer-title').innerText = "🤝 Giới Thiệu Đối Tác / Cơ Hội Mới (Cộng Tác Viên)";
+  } else {
+    sbuSelect.disabled = false;
+    sbuHint.innerText = `👑 Ban Lãnh Đạo: Có thể gán đối tác cho bất kỳ khối SBU nào.`;
+    document.getElementById('modal-customer-title').innerText = "Thêm Đối Tác / Chủ Đầu Tư Chiến Lược";
+  }
+
+  openModal('modal-customer');
+}
+
+function openEditCustomerModal(id) {
+  const c = allCustomers.find(x => x.id === id);
+  if (!c) return;
+
+  document.getElementById('cust-id').value = c.id;
+  document.getElementById('cust-name').value = c.name;
+  document.getElementById('cust-tax').value = c.tax_code || '';
+  document.getElementById('cust-tier').value = c.tier;
+  document.getElementById('cust-segment').value = c.segment;
+  document.getElementById('cust-headquarters').value = c.headquarters || '';
+  document.getElementById('cust-decision-maker').value = c.key_decision_maker;
+  document.getElementById('cust-decision-role').value = c.decision_maker_role || '';
+  document.getElementById('cust-decision-phone').value = c.decision_maker_phone || '';
+  document.getElementById('cust-decision-bday').value = c.decision_maker_birthday || '';
+  document.getElementById('cust-anniversary').value = c.founding_anniversary || '';
+  document.getElementById('cust-notes').value = c.strategic_notes || '';
+
+  const sbuSelect = document.getElementById('cust-sbu');
+  sbuSelect.value = c.sbu;
+  if (currentUser.role === 'SBU_DIRECTOR') {
+    sbuSelect.disabled = true;
+  } else {
+    sbuSelect.disabled = false;
+  }
+
+  document.getElementById('duplicate-warning-banner').classList.add('hidden');
+  document.getElementById('modal-customer-title').innerText = `Chỉnh Sửa Đối Tác: ${c.name}`;
+  openModal('modal-customer');
+}
+
+async function handleCustomerSubmit(e) {
+  e.preventDefault();
+  const custId = document.getElementById('cust-id').value;
+  const isEdit = Boolean(custId);
+  const sbuSelect = document.getElementById('cust-sbu');
+
+  const payload = {
+    name: document.getElementById('cust-name').value,
+    sbu: currentUser.role === 'SBU_DIRECTOR' ? currentUser.sbu : sbuSelect.value,
+    tier: document.getElementById('cust-tier').value,
+    segment: document.getElementById('cust-segment').value,
+    tax_code: document.getElementById('cust-tax').value,
+    headquarters: document.getElementById('cust-headquarters').value,
+    key_decision_maker: document.getElementById('cust-decision-maker').value,
+    decision_maker_role: document.getElementById('cust-decision-role').value,
+    decision_maker_phone: document.getElementById('cust-decision-phone').value,
+    decision_maker_birthday: document.getElementById('cust-decision-bday').value,
+    founding_anniversary: document.getElementById('cust-anniversary').value,
+    strategic_notes: document.getElementById('cust-notes').value
+  };
+
+  try {
+    const url = isEdit ? `/api/customers/${custId}` : '/api/customers';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    const res = await authFetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      showToast(isEdit ? "Cập nhật đối tác thành công!" : "Lưu trữ đối tác thành công vào hệ thống!");
+      closeModal('modal-customer');
+      loadCustomers();
+      loadDashboard();
+      populateCustomerSelects();
+    } else {
+      const err = await res.json();
+      showToast(err.detail || "Lỗi lưu đối tác", "error");
+    }
+  } catch (err) {
+    showToast("Lỗi kết nối", "error");
+  }
+}
+
+async function deleteCustomer(id) {
+  if (currentUser.role !== 'ADMIN') {
+    showToast("Chỉ Ban Lãnh Đạo (Admin) mới có quyền xóa khách hàng!", "error");
+    return;
+  }
+
+  const c = allCustomers.find(x => x.id === id);
+  if (!confirm(`Bạn có chắc chắn muốn xóa đối tác ${c?.name} không?`)) return;
+
+  try {
+    const res = await authFetch(`/api/customers/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast("Đã xóa khách hàng!");
+      loadCustomers();
+      loadDashboard();
+    } else {
+      const err = await res.json();
+      showToast(err.detail || "Lỗi xóa khách hàng", "error");
+    }
+  } catch (err) {
+    showToast("Lỗi kết nối", "error");
+  }
+}
+
+// ==========================================
+// 4. BIDDING PIPELINE KANBAN LOGIC
+// ==========================================
+async function loadPipeline() {
+  try {
+    const sbuParam = currentSBU !== 'ALL' ? `?sbu=${currentSBU}` : '';
+    const res = await authFetch(`/api/customers/bids/pipeline${sbuParam}`);
+    const data = await res.json();
+
+    const board = document.getElementById('pipeline-board');
+    if (!board) return;
+
+    board.innerHTML = data.stages.map(stage => {
+      const items = data.items[stage.id] || [];
+      const totalVal = items.reduce((sum, item) => sum + (item.estimated_value || 0), 0);
+
+      return `
+        <div class="kanban-column bg-slate-100 rounded-2xl p-3 flex flex-col border border-slate-200">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+            <div>
+              <div class="font-black text-xs text-slate-900">${stage.label}</div>
+              <div class="text-[10px] text-purple-700 font-bold">${formatVND(totalVal)}</div>
+            </div>
+            <span class="w-5 h-5 rounded-full bg-white text-slate-800 font-black text-[11px] flex items-center justify-center shadow-xs">
+              ${items.length}
+            </span>
+          </div>
+
+          <div class="flex-1 space-y-2.5 overflow-y-auto max-h-[600px] pr-1">
+            ${items.length > 0 ? items.map(item => {
+              const canEditBid = currentUser.role === 'ADMIN' || currentUser.sbu === item.sbu;
+
+              return `
+                <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs hover-card space-y-2">
+                  <div class="flex items-center justify-between">
+                    ${getSBUBadge(item.sbu)}
+                    <span class="text-[10px] font-black text-purple-700">${item.win_rate}% Win</span>
+                  </div>
+                  <div class="font-extrabold text-slate-900 text-xs leading-snug">${item.project_title}</div>
+                  <div class="text-[11px] text-slate-500">${item.customer_name}</div>
+                  <div class="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+                    <span class="font-black text-slate-900">${formatVND(item.estimated_value)}</span>
+                    <div class="flex items-center gap-1">
+                      ${canEditBid && stage.id !== 'WON' && stage.id !== 'LOST' ? `
+                        <button onclick="advanceBidStage(${item.id}, '${stage.id}')" class="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded text-[10px] font-bold">
+                          Tiến &gt;
+                        </button>
+                      ` : ''}
+                      ${currentUser.role === 'ADMIN' ? `
+                        <button onclick="deleteBid(${item.id})" class="p-1 text-slate-400 hover:text-rose-600 text-[10px]" title="Xóa thầu">
+                          <i class="fa-solid fa-trash"></i>
+                        </button>
+                      ` : ''}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('') : '<div class="text-[11px] text-slate-400 text-center py-6">Không có hồ sơ</div>'}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error("Error loading pipeline:", err);
+  }
+}
+
+async function advanceBidStage(bidId, currentStage) {
+  const stageOrder = ["INFORMATION", "EVALUATION", "TENDER_PREP", "NEGOTIATION", "WON"];
+  const curIdx = stageOrder.indexOf(currentStage);
+  if (curIdx < 0 || curIdx >= stageOrder.length - 1) return;
+
+  const nextStage = stageOrder[curIdx + 1];
+  try {
+    const res = await authFetch(`/api/customers/bids/${bidId}/stage`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: nextStage })
+    });
+    if (res.ok) {
+      showToast("Đã chuyển giai đoạn đấu thầu thành công!");
+      loadPipeline();
+      loadDashboard();
+    } else {
+      const err = await res.json();
+      showToast(err.detail || "Lỗi cập nhật", "error");
+    }
+  } catch (err) {
+    showToast("Lỗi khi chuyển giai đoạn", "error");
+  }
+}
+
+async function deleteBid(bidId) {
+  if (currentUser.role !== 'ADMIN') return;
+  if (!confirm("Xóa hồ sơ dự thầu này khỏi hệ thống?")) return;
+
+  try {
+    const res = await authFetch(`/api/customers/bids/${bidId}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast("Đã xóa hồ sơ thầu!");
+      loadPipeline();
+      loadDashboard();
+    }
+  } catch (e) {
+    showToast("Lỗi xóa hồ sơ thầu", "error");
+  }
+}
+
+function openNewBidModal() {
+  const custSelect = document.getElementById('bid-customer');
+  if (custSelect) {
+    custSelect.innerHTML = allCustomers.map(c => `<option value="${c.id}">${c.name} (${c.sbu})</option>`).join('');
+  }
+  const sbuSelect = document.getElementById('bid-sbu');
+  if (currentUser.role === 'SBU_DIRECTOR') {
+    sbuSelect.value = currentUser.sbu;
+    sbuSelect.disabled = true;
+  } else {
+    sbuSelect.disabled = false;
+    if (currentSBU !== 'ALL') sbuSelect.value = currentSBU;
+  }
+  openModal('modal-bid');
+}
+
+async function handleBidSubmit(e) {
+  e.preventDefault();
+  const sbuSelect = document.getElementById('bid-sbu');
+  const payload = {
+    customer_id: parseInt(document.getElementById('bid-customer').value),
+    sbu: currentUser.role === 'SBU_DIRECTOR' ? currentUser.sbu : sbuSelect.value,
+    project_title: document.getElementById('bid-title').value,
+    estimated_value: parseFloat(document.getElementById('bid-val').value) || 0,
+    stage: document.getElementById('bid-stage').value,
+    win_rate: parseInt(document.getElementById('bid-winrate').value) || 50,
+    tender_deadline: document.getElementById('bid-deadline').value
+  };
+
+  try {
+    const res = await authFetch('/api/customers/bids', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      showToast("Thêm gói thầu / cơ hội thành công!");
+      closeModal('modal-bid');
+      loadPipeline();
+      loadDashboard();
+    } else {
+      const err = await res.json();
+      showToast(err.detail || "Lỗi thêm gói thầu", "error");
+    }
+  } catch (err) {
+    showToast("Lỗi kết nối", "error");
+  }
+}
+
+// ==========================================
+// 5. PROJECTS & CASHFLOW TRACKING LOGIC
+// ==========================================
+async function loadProjects() {
+  try {
+    const sbuParam = currentSBU !== 'ALL' ? `?sbu=${currentSBU}` : '';
+    const res = await authFetch(`/api/projects${sbuParam}`);
+    allProjects = await res.json();
+
+    const container = document.getElementById('projects-container');
+    if (!container) return;
+
+    if (allProjects.length === 0) {
+      container.innerHTML = '<div class="col-span-2 text-center text-slate-400 text-xs py-8">Chưa có dự án nào.</div>';
+      return;
+    }
+
+    container.innerHTML = allProjects.map(p => {
+      const canEdit = currentUser.role === 'ADMIN' || (currentUser.role === 'SBU_DIRECTOR' && currentUser.sbu === p.sbu);
+      const canDelete = currentUser.role === 'ADMIN';
+
+      return `
+        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover-card space-y-3">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                ${getSBUBadge(p.sbu)}
+                <span class="text-xs font-mono font-bold text-slate-400">${p.code}</span>
+              </div>
+              <h3 class="font-black text-slate-900 text-sm mt-1">${p.name}</h3>
+              <p class="text-xs text-slate-500">${p.customer_name} • ${p.key_decision_maker || ''}</p>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${p.project_health === 'GOOD' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}">
+                ${p.project_health === 'GOOD' ? '🟢 Tiến độ tốt' : '🟡 Cần lưu ý'}
+              </span>
+              ${canDelete ? `
+                <button onclick="deleteProject(${p.id})" class="p-1 text-slate-300 hover:text-rose-600 transition" title="Xóa dự án (Admin)">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-bold mb-1">
+              <span class="text-slate-600">Tiến độ thi công cam kết:</span>
+              <span class="text-emerald-600">${p.progress_percent}%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+              <div class="bg-emerald-500 h-2.5 rounded-full" style="width: ${p.progress_percent}%"></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-xl text-xs">
+            <div>
+              <div class="text-[10px] uppercase font-bold text-slate-400">Tổng Giá Trị Hợp Đồng</div>
+              <div class="font-black text-slate-900">${formatVND(p.contract_value)}</div>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase font-bold text-slate-400">Đã Giải Ngân Thực Tế</div>
+              <div class="font-black text-emerald-600">${formatVND(p.paid_amount)}</div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-[11px] pt-1 text-slate-500">
+            <div>GĐKD phụ trách: <span class="font-bold text-slate-700">${p.project_director || 'Đang cập nhật'}</span></div>
+            <button onclick="viewProjectCashflow(${p.id})" class="text-blue-600 font-bold hover:underline">
+              Xem Mốc Dòng Tiền &gt;
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error("Error loading projects:", err);
+  }
+}
+
+async function viewProjectCashflow(id) {
+  try {
+    const res = await authFetch(`/api/projects/${id}`);
+    const p = await res.json();
+    const canEdit = currentUser.role === 'ADMIN' || currentUser.sbu === p.sbu;
+
+    const content = `
+      <div class="space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2">
+              ${getSBUBadge(p.sbu)}
+              <span class="font-mono text-xs text-slate-400 font-bold">${p.code}</span>
+            </div>
+            <h3 class="font-black text-slate-900 text-base mt-1">${p.name}</h3>
+            <p class="text-xs text-slate-500">Chủ đầu tư: ${p.customer_name} • HĐ: ${p.contract_number || 'N/A'}</p>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-slate-400">Tổng giá trị</div>
+            <div class="text-base font-black text-slate-900">${formatVND(p.contract_value)}</div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="font-black text-xs text-slate-900 uppercase mb-2">Các Mốc Nghiệm Thu & Kế Hoạch Giải Ngân</h4>
+          <div class="space-y-2 max-h-64 overflow-y-auto">
+            ${p.milestones && p.milestones.length > 0 ? p.milestones.map(m => `
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <div class="font-bold text-slate-900 text-xs">${m.title}</div>
+                  <div class="text-[10px] text-slate-500">Hạn thanh toán: ${m.due_date || 'N/A'} • Tỷ lệ: ${m.percentage}%</div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="font-black text-xs text-slate-800">${formatVND(m.amount)}</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${m.payment_status === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                    ${m.payment_status === 'PAID' ? 'Đã thu hồi' : 'Chờ thu'}
+                  </span>
+                  ${canEdit && m.payment_status !== 'PAID' ? `
+                    <button onclick="confirmDisbursement(${m.id})" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold">
+                      Xác nhận đã thu
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+            `).join('') : '<div class="text-slate-400 text-xs">Chưa có mốc.</div>'}
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('view-cust-code').innerText = "DÒNG TIỀN DỰ ÁN";
+    document.getElementById('view-cust-name').innerText = p.name;
+    document.getElementById('customer-detail-content').innerHTML = content;
+    openModal('modal-customer-detail');
+
+  } catch (err) {
+    console.error("Error viewing cashflow:", err);
+  }
+}
+
+async function confirmDisbursement(milestoneId) {
+  try {
+    const res = await authFetch(`/api/projects/milestones/${milestoneId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payment_status: 'PAID' })
+    });
+    if (res.ok) {
+      showToast("Đã xác nhận thu hồi dòng tiền thành công!");
+      closeModal('modal-customer-detail');
+      loadProjects();
+      loadDashboard();
+    }
+  } catch (err) {
+    showToast("Lỗi khi xác nhận", "error");
+  }
+}
+
+function openNewProjectModal() {
+  document.getElementById('form-project').reset();
+  const custSelect = document.getElementById('proj-customer');
+  if (custSelect) {
+    custSelect.innerHTML = allCustomers.map(c => `<option value="${c.id}">${c.name} (${c.sbu})</option>`).join('');
+  }
+  const sbuSelect = document.getElementById('proj-sbu');
+  if (currentUser.role === 'SBU_DIRECTOR') {
+    sbuSelect.value = currentUser.sbu;
+    sbuSelect.disabled = true;
+    document.getElementById('proj-director').value = currentUser.full_name;
+  } else {
+    sbuSelect.disabled = false;
+    if (currentSBU !== 'ALL') sbuSelect.value = currentSBU;
+  }
+  openModal('modal-project');
+}
+
+async function handleProjectSubmit(e) {
+  e.preventDefault();
+  const sbuSelect = document.getElementById('proj-sbu');
+  const payload = {
+    code: document.getElementById('proj-code').value,
+    name: document.getElementById('proj-name').value,
+    customer_id: parseInt(document.getElementById('proj-customer').value),
+    sbu: currentUser.role === 'SBU_DIRECTOR' ? currentUser.sbu : sbuSelect.value,
+    contract_value: parseFloat(document.getElementById('proj-val').value) || 0,
+    contract_number: document.getElementById('proj-contract').value,
+    project_director: document.getElementById('proj-director').value
+  };
+
+  try {
+    const res = await authFetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      showToast("Khởi tạo dự án theo dõi thành công!");
+      closeModal('modal-project');
+      loadProjects();
+      loadDashboard();
+    } else {
+      const err = await res.json();
+      showToast(err.detail || "Lỗi khởi tạo dự án", "error");
+    }
+  } catch (err) {
+    showToast("Lỗi kết nối", "error");
+  }
+}
+
+async function deleteProject(id) {
+  if (currentUser.role !== 'ADMIN') {
+    showToast("Chỉ Ban Lãnh Đạo mới có quyền xóa dự án!", "error");
+    return;
+  }
+
+  const p = allProjects.find(x => x.id === id);
+  if (!confirm(`Xóa dự án "${p?.name}" khỏi hệ thống theo dõi?`)) return;
+
+  try {
+    const res = await authFetch(`/api/projects/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      showToast("Đã xóa dự án!");
+      loadProjects();
+      loadDashboard();
+    } else {
+      const err = await res.json();
+      showToast(err.detail || "Lỗi khi xóa", "error");
+    }
+  } catch (err) {
+    showToast("Lỗi kết nối", "error");
+  }
+}
+
+// ==========================================
+// 6. EXECUTIVE CARE & NETWORKING LOGIC
+// ==========================================
+async function loadCareActivities() {
+  try {
+    const sbuParam = currentSBU !== 'ALL' ? `?sbu=${currentSBU}` : '';
+    const res = await authFetch(`/api/care-activities${sbuParam}`);
+    const activities = await res.json();
+
+    const container = document.getElementById('care-activities-container');
+    if (!container) return;
+
+    if (activities.length === 0) {
+      container.innerHTML = '<div class="text-center text-slate-400 text-xs py-6">Chưa có nhật ký tiếp khách ngoại giao.</div>';
+      return;
+    }
+
+    const typeLabels = {
+      "DINNER_NETWORKING": "Bữa tối thân mật",
+      "EXECUTIVE_MEETING": "Họp chiến lược cấp cao",
+      "GIFT_DELIVERY": "Gửi quà tri ân",
+      "EVENT_INVITATION": "Mời dự sự kiện",
+      "CALL_DISCUSS": "Điện đàm ngoại giao"
+    };
+
+    container.innerHTML = activities.map(a => `
+      <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            ${getSBUBadge(a.sbu)}
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700">${typeLabels[a.activity_type] || a.activity_type}</span>
+            <span class="font-extrabold text-slate-900 text-xs">${a.title}</span>
+          </div>
+          <span class="text-[11px] text-slate-400 font-mono">${a.occurred_at}</span>
+        </div>
+
+        <p class="text-xs text-slate-600 leading-relaxed">${a.content || ''}</p>
+
+        <div class="flex items-center justify-between text-[11px] pt-1 text-slate-500 border-t border-slate-200/60">
+          <div>Đối tác: <b class="text-slate-800">${a.customer_name}</b> (${a.key_decision_maker})</div>
+          <div class="text-blue-700 font-bold">Lãnh đạo tham gia: ${a.leader_in_charge}</div>
+        </div>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    console.error("Error loading care activities:", err);
+  }
+}
+
+function openNewCareModal() {
+  const custSelect = document.getElementById('care-customer');
+  if (custSelect) {
+    custSelect.innerHTML = allCustomers.map(c => `<option value="${c.id}" data-sbu="${c.sbu}">${c.name} (${c.key_decision_maker})</option>`).join('');
+  }
+  document.getElementById('care-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('care-leader').value = currentUser.full_name;
+  openModal('modal-care');
+}
+
+async function handleCareSubmit(e) {
+  e.preventDefault();
+  const custSelect = document.getElementById('care-customer');
+  const custId = parseInt(custSelect.value);
+  const custOpt = custSelect.options[custSelect.selectedIndex];
+  const sbu = custOpt ? custOpt.getAttribute('data-sbu') : (currentSBU !== 'ALL' ? currentSBU : 'SBU1');
+
+  const payload = {
+    customer_id: custId,
+    sbu: sbu,
+    activity_type: document.getElementById('care-type').value,
+    occurred_at: document.getElementById('care-date').value,
+    title: document.getElementById('care-title').value,
+    leader_in_charge: document.getElementById('care-leader').value,
+    content: document.getElementById('care-content').value,
+    outcome_status: 'SUCCESS'
+  };
+
+  try {
+    const res = await authFetch('/api/care-activities', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      showToast("Đã lưu nhật ký ngoại giao thành công!");
+      closeModal('modal-care');
+      loadCareActivities();
+      loadDashboard();
+    }
+  } catch (err) {
+    showToast("Lỗi khi lưu", "error");
+  }
+}
+
+// ==========================================
+// 7. EXECUTIVE MESSAGING & AUTOMATION LOGIC
+// ==========================================
+function populateCustomerSelects() {
+  const msgCustSelect = document.getElementById('msg-customer-select');
+  const msgProjSelect = document.getElementById('msg-project-select');
+
+  if (msgCustSelect && allCustomers.length > 0) {
+    msgCustSelect.innerHTML = allCustomers.map(c => `
+      <option value="${c.id}" data-sbu="${c.sbu}" data-name="${c.name}" data-person="${c.key_decision_maker}" data-role="${c.decision_maker_role || ''}" data-phone="${c.decision_maker_phone || c.phone || ''}">
+        ${c.name} - ${c.key_decision_maker} (${c.sbu})
+      </option>
+    `).join('');
+  }
+
+  if (msgProjSelect && allProjects.length > 0) {
+    msgProjSelect.innerHTML = '<option value="">-- Không gắn dự án cụ thể --</option>' + 
+      allProjects.map(p => `<option value="${p.id}" data-name="${p.name}">${p.name} (${p.sbu})</option>`).join('');
+  }
+
+  onMessageCustomerChange();
+}
+
+function onMessageCustomerChange() {
+  const custSelect = document.getElementById('msg-customer-select');
+  const opt = custSelect?.options[custSelect.selectedIndex];
+  const phone = opt ? opt.getAttribute('data-phone') : '';
+  const recipientDisplay = document.getElementById('msg-recipient-display');
+  if (recipientDisplay) recipientDisplay.innerText = phone || 'Chưa có SĐT';
+
+  applyTemplateToComposer();
+}
+
+function applyTemplateToComposer() {
+  const tpl = document.getElementById('msg-template-select')?.value || 'CHUC_MUNG_SINH_NHAT';
+  const custSelect = document.getElementById('msg-customer-select');
+  const projSelect = document.getElementById('msg-project-select');
+
+  const custOpt = custSelect?.options[custSelect.selectedIndex];
+  const projOpt = projSelect?.options[projSelect.selectedIndex];
+
+  const custName = custOpt?.getAttribute('data-name') || "Quý Tập Đoàn";
+  const person = custOpt?.getAttribute('data-person') || "Lãnh Đạo Đối Tác";
+  const role = custOpt?.getAttribute('data-role') || "Chủ tịch / Tổng Giám Đốc";
+  const projName = projOpt?.getAttribute('data-name') || "Dự án trọng điểm";
+
+  let title = "";
+  let body = "";
+
+  switch (tpl) {
+    case 'CHUC_MUNG_SINH_NHAT':
+      title = `Chúc mừng Sinh nhật ${person}`;
+      body = `Kính gửi ${person} (${role} - ${custName}): Nhân dịp ngày sinh nhật, Ban Lãnh Đạo Công ty Xây dựng xin trân trọng kính chúc Anh/Chị tuổi mới ngập tràn niềm vui, dồi dào sức khỏe, dẫn dắt Tập đoàn gặt hái thêm nhiều thắng lợi mới và tiếp tục gắn bó bền chặt cùng chúng tôi!`;
+      break;
+    case 'THANH_LAP_DOI_TAC':
+      title = `Chúc mừng Ngày truyền thống / Thành lập ${custName}`;
+      body = `Ban Lãnh Đạo Công ty Xây dựng trân trọng chúc mừng ${custName} nhân dịp kỷ niệm ngày truyền thống. Kính chúc Quý Tập đoàn ngày càng lớn mạnh, tiếp tục khẳng định vị thế dẫn đầu và đồng hành cùng chúng tôi kiến tạo các công trình tầm vóc quốc gia!`;
+      break;
+    case 'TIEN_DO_LANH_DAO':
+      title = `Báo cáo tiến độ điều hành: ${projName}`;
+      body = `Kính gửi ${person} (${custName}): Ban Lãnh Đạo Công ty Xây dựng trân trọng báo cáo: Hạng mục trọng điểm thuộc dự án ${projName} đã vượt mốc tiến độ đề ra, bảo đảm an toàn và chất lượng tuyệt đối theo đúng cam kết.`;
+      break;
+    case 'THONG_BAO_NGHIEM_THU':
+      title = `Thông báo nghiệm thu mốc hoàn thành: ${projName}`;
+      body = `Kính gửi ${person}: Công tác nghiệm thu kỹ thuật mốc đợt này thuộc công trình ${projName} đã hoàn tất đạt chuẩn. Kính đề nghị Quý Lãnh đạo hỗ trợ phê duyệt giải ngân theo điều khoản hợp đồng. Trân trọng cảm ơn!`;
+      break;
+  }
+
+  const titleInput = document.getElementById('msg-title-input');
+  const bodyInput = document.getElementById('msg-body-input');
+  if (titleInput) titleInput.value = title;
+  if (bodyInput) bodyInput.value = body;
+
+  updateLivePreview();
+}
+
+function updateLivePreview() {
+  const title = document.getElementById('msg-title-input')?.value || "";
+  const body = document.getElementById('msg-body-input')?.value || "";
+  const previewTitle = document.getElementById('preview-msg-title');
+  const previewBody = document.getElementById('preview-msg-body');
+
+  if (previewTitle) previewTitle.innerText = title;
+  if (previewBody) previewBody.innerText = body;
+}
+
+async function submitSendMessage() {
+  const custSelect = document.getElementById('msg-customer-select');
+  const projSelect = document.getElementById('msg-project-select');
+  const channel = document.querySelector('input[name="msg-channel"]:checked')?.value || "ZALO_ZNS";
+  const templateType = document.getElementById('msg-template-select')?.value;
+  const title = document.getElementById('msg-title-input')?.value;
+  const messageBody = document.getElementById('msg-body-input')?.value;
+  const recipient = document.getElementById('msg-recipient-display')?.innerText;
+
+  const custOpt = custSelect?.options[custSelect.selectedIndex];
+  const sbu = custOpt ? custOpt.getAttribute('data-sbu') : 'SBU1';
+
+  if (!custSelect?.value || !messageBody) {
+    showToast("Vui lòng nhập nội dung tin nhắn", "error");
+    return;
+  }
+
+  const payload = {
+    customer_id: parseInt(custSelect.value),
+    project_id: projSelect?.value ? parseInt(projSelect.value) : null,
+    sbu: sbu,
+    channel: channel,
+    template_type: templateType,
+    recipient: recipient,
+    title: title,
+    message_body: messageBody
+  };
+
+  try {
+    const res = await authFetch('/api/notifications/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      showToast(`Đã gửi tin nhắn ngoại giao qua kênh ${channel} thành công!`);
+    } else {
+      showToast("Lỗi khi gửi tin nhắn", "error");
+    }
+  } catch (err) {
+    showToast("Lỗi kết nối", "error");
+  }
+}
+
+async function triggerAutomatedScan() {
+  showToast("Đang quét lịch sinh nhật và ngày thành lập đối tác...", "info");
+  try {
+    const res = await authFetch('/api/notifications/run-auto', { method: 'POST' });
+    const data = await res.json();
+    showToast(data.message || "Quét thành công!");
+    loadDashboard();
+  } catch (err) {
+    showToast("Lỗi khi quét tự động", "error");
+  }
+}
+
+function prepareZaloGreeting(custId, personName, phone, custName) {
+  switchTab('care');
+  const custSelect = document.getElementById('msg-customer-select');
+  if (custSelect) {
+    custSelect.value = custId;
+    onMessageCustomerChange();
+  }
+}
+
+function quickMessageToLeader(custId) {
+  switchTab('care');
+  const custSelect = document.getElementById('msg-customer-select');
+  if (custSelect) {
+    custSelect.value = custId;
+    onMessageCustomerChange();
+  }
+}

@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EXECUTIVE-CRM | Quản Trị Khách Hàng Chiến Lược 5 Khối SBU</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/custom.css">
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+  <!-- ==================== MANDATORY LOGIN SCREEN ==================== -->
+  <div id="login-screen" class="fixed inset-0 z-50 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div class="w-full max-w-lg my-auto space-y-6">
+      
+      <!-- Brand & Header -->
+      <div class="text-center space-y-2">
+        <div class="inline-flex w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 items-center justify-center text-slate-950 text-3xl shadow-xl shadow-amber-500/10 mb-1">
+          <i class="fa-solid fa-landmark"></i>
+        </div>
+        <div class="flex items-center justify-center gap-2">
+          <span class="text-2xl font-black text-white tracking-tight">CONSTRUCT-CRM</span>
+          <span class="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded tracking-wider uppercase">Executive</span>
+        </div>
+        <p class="text-xs text-slate-400">Hệ Thống Quản Trị & Chăm Sóc Khách Hàng Chiến Lược 5 Khối SBU</p>
+      </div>
+
+      <!-- Main Login Card -->
+      <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-800/20 space-y-5">
+        
+        <div class="text-center pb-3 border-b border-slate-100">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-xs font-bold mb-2">
+            <i class="fa-solid fa-shield-halved text-amber-600"></i> Xác Thực Tài Khoản Đăng Nhập
+          </div>
+          <h2 class="text-base font-black text-slate-900">Vui lòng đăng nhập để truy cập hệ thống</h2>
+          <p class="text-[11px] text-slate-500 mt-0.5">Phân quyền theo: Ban Lãnh Đạo • GĐKD 5 SBU • Cộng Tác Viên</p>
+        </div>
+
+        <!-- Login Form -->
+        <form id="form-login-screen" onsubmit="handleScreenLogin(event)" class="space-y-4 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">Tên Đăng Nhập (Username) *</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
+                <i class="fa-solid fa-user"></i>
+              </span>
+              <input type="text" id="screen-login-username" required autocomplete="username" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:outline-none transition" placeholder="VD: admin, gdkd_sbu1, ctv_hanoi...">
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1.5">Mật Khẩu Đăng Nhập (Password) *</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
+                <i class="fa-solid fa-lock"></i>
+              </span>
+              <input type="password" id="screen-login-password" required autocomplete="current-password" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-11 py-2.5 text-slate-900 focus:bg-white focus:ring-2 focus:ring-amber-400 focus:outline-none transition" placeholder="Nhập mật khẩu (mặc định: 123456)..." value="123456">
+              <button type="button" onclick="togglePasswordVisibility('screen-login-password')" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600">
+                <i id="eye-icon-screen-login-password" class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" id="btn-submit-login" class="w-full py-3 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-slate-950 font-black rounded-xl text-xs transition shadow-lg shadow-amber-400/20 flex items-center justify-center gap-2 cursor-pointer">
+            <i class="fa-solid fa-right-to-bracket"></i> Đăng Nhập Vào Hệ Thống
+          </button>
+        </form>
+
+        <!-- Collapsible Reference Section of Authorized Accounts -->
+        <div class="pt-3 border-t border-slate-100">
+          <button type="button" onclick="toggleAccountsHelper()" class="w-full flex items-center justify-between text-xs font-bold text-slate-600 hover:text-slate-900 transition py-1">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-question text-amber-500"></i> Danh mục tài khoản hệ thống (Demo)
+            </span>
+            <i id="helper-chevron" class="fa-solid fa-chevron-down text-slate-400 transition transform"></i>
+          </button>
+
+          <div id="accounts-helper-box" class="hidden mt-3 p-3 bg-slate-50 rounded-2xl border border-slate-200 text-[11px] space-y-2.5">
+            <div class="text-slate-500 italic text-[10px]">
+              * Mật khẩu mặc định hệ thống cấp cho tất cả tài khoản: <span class="font-mono font-bold text-amber-600">123456</span>
+            </div>
+            
+            <div class="space-y-1">
+              <div class="font-bold text-slate-800 text-[10px] uppercase">👑 Khối Ban Lãnh Đạo (Admin):</div>
+              <div onclick="fillLoginCredentials('admin')" class="flex items-center justify-between bg-white p-2 rounded-lg border border-slate-200 cursor-pointer hover:border-amber-400 transition" title="Bấm để điền tên đăng nhập">
+                <span class="font-mono font-bold text-amber-800">admin</span>
+                <span class="text-slate-600 text-[10px]">Chủ Tịch & TGĐ (Toàn quyền 5 SBU)</span>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <div class="font-bold text-slate-800 text-[10px] uppercase">💼 Khối Giám Đốc Kinh Doanh (5 SBU):</div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[10px]">
+                <div onclick="fillLoginCredentials('gdkd_sbu1')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400 transition">
+                  <span class="font-mono font-bold text-blue-700">gdkd_sbu1</span>
+                  <span class="text-slate-500">SBU 1 (Nền móng & Hầm)</span>
+                </div>
+                <div onclick="fillLoginCredentials('gdkd_sbu2')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400 transition">
+                  <span class="font-mono font-bold text-blue-700">gdkd_sbu2</span>
+                  <span class="text-slate-500">SBU 2 (Năng lượng & CN)</span>
+                </div>
+                <div onclick="fillLoginCredentials('gdkd_sbu3')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400 transition">
+                  <span class="font-mono font-bold text-blue-700">gdkd_sbu3</span>
+                  <span class="text-slate-500">SBU 3 (Metro & Ngầm)</span>
+                </div>
+                <div onclick="fillLoginCredentials('gdkd_sbu4')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400 transition">
+                  <span class="font-mono font-bold text-blue-700">gdkd_sbu4</span>
+                  <span class="text-slate-500">SBU 4 (Hạ tầng & ĐS)</span>
+                </div>
+                <div onclick="fillLoginCredentials('gdkd_sbu5')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between sm:col-span-2 cursor-pointer hover:border-blue-400 transition">
+                  <span class="font-mono font-bold text-blue-700">gdkd_sbu5</span>
+                  <span class="text-slate-500">SBU 5 (Cảng biển & BĐKH)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <div class="font-bold text-slate-800 text-[10px] uppercase">🤝 Khối Cộng Tác Viên (CTV):</div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-[10px]">
+                <div onclick="fillLoginCredentials('ctv_hanoi')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-emerald-400 transition">
+                  <span class="font-mono font-bold text-emerald-700">ctv_hanoi</span>
+                  <span class="text-slate-500">Miền Bắc</span>
+                </div>
+                <div onclick="fillLoginCredentials('ctv_saigon')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-emerald-400 transition">
+                  <span class="font-mono font-bold text-emerald-700">ctv_saigon</span>
+                  <span class="text-slate-500">SBU 2</span>
+                </div>
+                <div onclick="fillLoginCredentials('ctv_mientay')" class="bg-white p-1.5 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-emerald-400 transition">
+                  <span class="font-mono font-bold text-emerald-700">ctv_mientay</span>
+                  <span class="text-slate-500">SBU 5</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <div class="text-center text-slate-500 text-[11px]">
+        Hệ Thống Quản Trị Khách Hàng Xây Dựng 5 Khối SBU • Bảo Mật Chuẩn Doanh Nghiệp
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== MAIN APPLICATION ROOT (Hidden until authenticated) ==================== -->
+  <div id="app-root" class="hidden flex-1 flex flex-col">
+
+  <!-- ==================== TOP EXECUTIVE HEADER ==================== -->
+  <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-lg border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Logo & Corporate Branding -->
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-md">
+            <i class="fa-solid fa-landmark"></i>
+          </div>
+          <div>
+            <div class="font-black text-lg tracking-tight flex items-center gap-2">
+              CONSTRUCT-CRM <span class="bg-amber-400 text-slate-950 text-[10px] px-2 py-0.5 rounded font-black tracking-wider uppercase">Executive</span>
+            </div>
+            <p class="text-[11px] text-slate-400 hidden sm:block">Hệ Thống Quản Trị & Chăm Sóc Khách Hàng Chiến Lược 5 Khối SBU</p>
+          </div>
+        </div>
+
+        <!-- SBU Filter Pills (Visible for Leadership / Admin) -->
+        <div id="sbu-pills-bar" class="hidden md:flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700 text-xs font-bold">
+          <button onclick="changeSBUFilter('ALL')" id="pill-ALL" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg transition bg-amber-400 text-slate-950">
+            Toàn Tập Đoàn
+          </button>
+          <button onclick="changeSBUFilter('SBU1')" id="pill-SBU1" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition" title="Nền móng và Hầm">
+            <i class="fa-solid fa-layer-group text-blue-400 mr-1"></i> SBU 1
+          </button>
+          <button onclick="changeSBUFilter('SBU2')" id="pill-SBU2" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition" title="Xây dựng Năng lượng và công nghiệp">
+            <i class="fa-solid fa-bolt text-amber-400 mr-1"></i> SBU 2
+          </button>
+          <button onclick="changeSBUFilter('SBU3')" id="pill-SBU3" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition" title="Metro và ngầm đô thị">
+            <i class="fa-solid fa-train-subway text-purple-400 mr-1"></i> SBU 3
+          </button>
+          <button onclick="changeSBUFilter('SBU4')" id="pill-SBU4" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition" title="Hạ tầng tập trung và đường sắt cao tốc">
+            <i class="fa-solid fa-road text-emerald-400 mr-1"></i> SBU 4
+          </button>
+          <button onclick="changeSBUFilter('SBU5')" id="pill-SBU5" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition" title="Cảng biển và biến đổi khí hậu">
+            <i class="fa-solid fa-anchor text-cyan-400 mr-1"></i> SBU 5
+          </button>
+        </div>
+
+        <!-- Account Profile & Logout Widget -->
+        <div class="flex items-center space-x-2">
+          <!-- Active Account Card -->
+          <div class="flex items-center gap-2.5 bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-1.5 shadow-sm">
+            <div id="user-avatar-icon" class="w-8 h-8 rounded-lg bg-amber-400/20 text-amber-400 flex items-center justify-center text-sm">
+              <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <div class="text-left">
+              <div class="flex items-center gap-1.5">
+                <span id="user-header-name" class="font-extrabold text-white text-xs">Ban Lãnh Đạo</span>
+                <span id="user-header-role-badge" class="px-1.5 py-0.5 bg-amber-400/20 text-amber-300 text-[9px] font-black rounded uppercase">ADMIN</span>
+              </div>
+              <div id="user-header-title" class="text-[10px] text-slate-400 truncate max-w-[130px] sm:max-w-[190px]">Chủ Tịch & Tổng Giám Đốc</div>
+            </div>
+          </div>
+
+          <!-- Mandatory Logout Button -->
+          <button onclick="handleLogout()" class="px-3 py-2 bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition border border-slate-700 shadow-sm flex items-center gap-1.5 cursor-pointer" title="Đăng xuất khỏi hệ thống">
+            <i class="fa-solid fa-right-from-bracket text-rose-400"></i>
+            <span class="hidden sm:inline">Đăng Xuất</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT WRAPPER ==================== -->
+  <div class="flex-1 flex max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 gap-6">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 flex-shrink-0 hidden lg:block">
+      <nav class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-3 space-y-1 sticky top-24">
+        
+        <!-- Active SBU Badge indicator -->
+        <div id="sidebar-sbu-badge" class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 mb-2">
+          <div class="text-[10px] uppercase font-bold text-slate-400">Phạm Vi Quyền Hạn:</div>
+          <div id="sidebar-sbu-name" class="font-extrabold text-slate-900 text-xs mt-0.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-globe text-amber-500"></i> Toàn Tập Đoàn (5 SBU)
+          </div>
+        </div>
+
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs text-amber-900 bg-amber-50 transition">
+          <i class="fa-solid fa-chart-pie w-5 text-center text-amber-500 text-sm"></i> 1. Tổng Quan Điều Hành
+        </button>
+
+        <button onclick="switchTab('customers')" id="nav-customers" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-slate-600 hover:bg-slate-50 transition">
+          <i class="fa-solid fa-handshake-simple w-5 text-center text-blue-500 text-sm"></i> 2. Khách Hàng Chiến Lược
+        </button>
+
+        <button onclick="switchTab('pipeline')" id="nav-pipeline" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-slate-600 hover:bg-slate-50 transition">
+          <i class="fa-solid fa-filter-circle-dollar w-5 text-center text-purple-500 text-sm"></i> 3. Phễu Cơ Hội & Dự Thầu
+        </button>
+
+        <button onclick="switchTab('projects')" id="nav-projects" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-slate-600 hover:bg-slate-50 transition">
+          <i class="fa-solid fa-city w-5 text-center text-emerald-600 text-sm"></i> 4. Theo Dõi Dự Án & Dòng Tiền
+        </button>
+
+        <button onclick="switchTab('care')" id="nav-care" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-slate-600 hover:bg-slate-50 transition">
+          <i class="fa-solid fa-wine-glass-empty w-5 text-center text-rose-500 text-sm"></i> 5. Chăm Sóc & Ngoại Giao
+        </button>
+
+        <!-- Account Management Nav (Available to Admin) -->
+        <button onclick="switchTab('users')" id="nav-users" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-slate-600 hover:bg-slate-50 transition">
+          <i class="fa-solid fa-users-gear w-5 text-center text-indigo-600 text-sm"></i> 6. Quản Lý Tài Khoản (Admin)
+        </button>
+
+        <div class="pt-4 border-t border-slate-100 px-2 space-y-2">
+          <div class="text-[10px] font-bold uppercase text-slate-400">5 Khối Kinh Doanh (SBUs):</div>
+          <div class="space-y-1.5 text-[11px] font-semibold text-slate-600">
+            <div class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer" onclick="changeSBUFilter('SBU1')">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span> SBU 1: Nền móng & Hầm
+            </div>
+            <div class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer" onclick="changeSBUFilter('SBU2')">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span> SBU 2: Năng lượng & CN
+            </div>
+            <div class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer" onclick="changeSBUFilter('SBU3')">
+              <span class="w-2 h-2 rounded-full bg-purple-500"></span> SBU 3: Metro & Ngầm đô thị
+            </div>
+            <div class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer" onclick="changeSBUFilter('SBU4')">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> SBU 4: Hạ tầng & ĐS cao tốc
+            </div>
+            <div class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 cursor-pointer" onclick="changeSBUFilter('SBU5')">
+              <span class="w-2 h-2 rounded-full bg-cyan-500"></span> SBU 5: Cảng biển & BĐKH
+            </div>
+          </div>
+        </div>
+
+      </nav>
+    </aside>
+
+    <!-- Main Dynamic Content -->
+    <main class="flex-1 min-w-0">
+
+      <!-- ==================== TAB 1: EXECUTIVE DASHBOARD ==================== -->
+      <section id="tab-dashboard" class="space-y-6">
+
+        <!-- Executive Banner -->
+        <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-950 rounded-2xl p-6 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-xs font-semibold mb-2">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <span id="banner-role-badge">Cổng Điều Hành Ban Lãnh Đạo</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight" id="dashboard-title">Báo Cáo Điều Hành Khách Hàng & Kinh Doanh</h1>
+            <p class="text-slate-300 text-xs mt-1" id="dashboard-subtitle">Theo dõi chiến lược quan hệ đối tác, dòng tiền hợp đồng và cơ hội đấu thầu 5 SBU.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="triggerAutomatedScan()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1.5">
+              <i class="fa-solid fa-bolt text-yellow-300"></i> Quét Ngoại Giao Tự Động
+            </button>
+            <button onclick="openNewCustomerModal()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-bold transition shadow">
+              <i class="fa-solid fa-plus"></i> Khách Hàng Mới
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Top Executive KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
+            <div class="flex items-center justify-between text-slate-400">
+              <span class="text-[10px] font-black uppercase tracking-wider">Tổng Giá Trị Hợp Đồng</span>
+              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-file-contract"></i></div>
+            </div>
+            <div id="stat-contract-val" class="text-2xl font-black text-slate-900 mt-2">-- Tỷ</div>
+            <p class="text-[11px] text-slate-500 mt-1"><span id="stat-project-count" class="font-bold text-slate-800">--</span> dự án trọng điểm</p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
+            <div class="flex items-center justify-between text-slate-400">
+              <span class="text-[10px] font-black uppercase tracking-wider">Đã Thu Hồi Dòng Tiền</span>
+              <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-vault"></i></div>
+            </div>
+            <div id="stat-paid-val" class="text-2xl font-black text-emerald-600 mt-2">-- Tỷ</div>
+            <p class="text-[11px] text-slate-500 mt-1">Đạt <span id="stat-paid-pct" class="font-bold text-emerald-700">--%</span> kế hoạch</p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
+            <div class="flex items-center justify-between text-slate-400">
+              <span class="text-[10px] font-black uppercase tracking-wider">Mốc Cần Giải Ngân</span>
+              <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            </div>
+            <div id="stat-balance-val" class="text-2xl font-black text-amber-600 mt-2">-- Tỷ</div>
+            <p class="text-[11px] text-slate-500 mt-1">Công nợ mốc nghiệm thu</p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
+            <div class="flex items-center justify-between text-slate-400">
+              <span class="text-[10px] font-black uppercase tracking-wider">Phễu Cơ Hội & Đấu Thầu</span>
+              <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xs"><i class="fa-solid fa-bullseye"></i></div>
+            </div>
+            <div id="stat-bids-val" class="text-2xl font-black text-purple-600 mt-2">-- Tỷ</div>
+            <p class="text-[11px] text-slate-500 mt-1"><span id="stat-bids-count" class="font-bold text-slate-800">--</span> hồ sơ đang theo đuổi</p>
+          </div>
+        </div>
+
+        <!-- SBU COMPARISON MATRIX (Key Feature for Leadership) -->
+        <div id="sbu-matrix-section" class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-black text-slate-900 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-network-wired text-amber-500"></i> Ma Trận Hiệu Quả Kinh Doanh & Quan Hệ Khách Hàng 5 Khối SBU
+              </h3>
+              <p class="text-xs text-slate-500">Báo cáo so sánh toàn diện giá trị hợp đồng, dòng tiền và cơ hội thầu</p>
+            </div>
+            <span class="text-[11px] font-bold text-slate-400">Dữ liệu thời gian thực</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                <tr>
+                  <th class="p-3">Khối SBU</th>
+                  <th class="p-3">Khách Hàng Chiến Lược</th>
+                  <th class="p-3">Dự Án Đang Thực Hiện</th>
+                  <th class="p-3">Tổng Giá Trị HĐ</th>
+                  <th class="p-3">Đã Thu Hồi</th>
+                  <th class="p-3">Phễu Cơ Hội Thầu</th>
+                  <th class="p-3 text-right">Chi Tiết</th>
+                </tr>
+              </thead>
+              <tbody id="sbu-matrix-body" class="divide-y divide-slate-100">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 2 Columns: Critical Cashflow Milestones & VIP Relations Reminders -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Column 1: Cashflow Milestones -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-black text-slate-900 text-sm flex items-center gap-2">
+                  <i class="fa-solid fa-file-invoice-dollar text-blue-600"></i> Mốc Giải Ngân Trọng Điểm Cần Thu Hồi
+                </h3>
+                <p class="text-xs text-slate-500">Các đợt thanh toán lớn từ Chủ đầu tư / Ban QLDA</p>
+              </div>
+              <span class="px-2.5 py-0.5 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-bold">Dòng tiền</span>
+            </div>
+
+            <div id="urgent-milestones-list" class="space-y-3">
+              <!-- Injected via JS -->
+            </div>
+          </div>
+
+          <!-- Column 2: VIP Executive Care & Anniversaries -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-black text-slate-900 text-sm flex items-center gap-2">
+                  <i class="fa-solid fa-cake-candles text-amber-500"></i> Lịch Ngoại Giao: Sinh Nhật & Ngày Thành Lập
+                </h3>
+                <p class="text-xs text-slate-500">Lãnh đạo cấp cao (Chủ tịch, TGĐ đối tác) có sự kiện trong 60 ngày tới</p>
+              </div>
+              <span class="px-2.5 py-0.5 bg-amber-50 text-amber-700 rounded-lg text-[10px] font-bold">Ngoại giao VIP</span>
+            </div>
+
+            <div id="executive-reminders-list" class="space-y-3">
+              <!-- Injected via JS -->
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ==================== TAB 2: STRATEGIC CUSTOMERS ==================== -->
+      <section id="tab-customers" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-black text-slate-900">Quản Lý Khách Hàng & Đối Tác Chiến Lược (Strategic CRM)</h2>
+            <p class="text-slate-500 text-xs mt-1">Hồ sơ 360° các Tập đoàn BĐS, Chủ đầu tư FDI, Tổng công ty Nhà nước và Ban QLDA</p>
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <input type="text" id="cust-search" oninput="debounceCustomerSearch()" placeholder="Tìm tên đối tác, MST, Lãnh đạo, SĐT..." class="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs w-full sm:w-64 focus:ring-2 focus:ring-amber-400 focus:outline-none">
+            <button id="btn-add-customer" onclick="openNewCustomerModal()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-bold transition shadow whitespace-nowrap">
+              <i class="fa-solid fa-plus mr-1"></i> <span id="label-add-customer">Thêm Đối Tác</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 flex flex-wrap items-center gap-3 text-xs">
+          <span class="font-bold text-slate-500">Lọc theo:</span>
+          <select id="cust-filter-sbu" onchange="loadCustomers()" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none font-bold text-slate-700">
+            <option value="ALL">Tất cả 5 Khối SBU</option>
+            <option value="SBU1">SBU 1 - Nền móng và Hầm</option>
+            <option value="SBU2">SBU 2 - Năng lượng và công nghiệp</option>
+            <option value="SBU3">SBU 3 - Metro và ngầm đô thị</option>
+            <option value="SBU4">SBU 4 - Hạ tầng tập trung và đường sắt cao tốc</option>
+            <option value="SBU5">SBU 5 - Cảng biển và biến đổi khí hậu</option>
+          </select>
+
+          <select id="cust-filter-tier" onchange="loadCustomers()" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none font-semibold text-slate-700">
+            <option value="">Tất cả hạng quan hệ</option>
+            <option value="STRATEGIC_VIP">⭐ Đối tác Chiến lược VIP</option>
+            <option value="CLOSE_PARTNER">Khách hàng thân thiết</option>
+            <option value="PROSPECT">Đối tác tiềm năng</option>
+          </select>
+
+          <div id="cust-permission-hint" class="ml-auto text-slate-400 text-[11px] italic">
+            <!-- Contextual note about user privileges -->
+          </div>
+        </div>
+
+        <!-- Customer List Table -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                <tr>
+                  <th class="p-3.5">Mã & Đối Tác / Chủ Đầu Tư</th>
+                  <th class="p-3.5">Khối SBU</th>
+                  <th class="p-3.5">Lãnh Đạo Then Chốt (Key Person)</th>
+                  <th class="p-3.5">Dự Án / Giá Trị Hợp Đồng</th>
+                  <th class="p-3.5">Sinh Nhật / Ngày Thành Lập</th>
+                  <th class="p-3.5">Mức Thân Thiết</th>
+                  <th class="p-3.5 text-right">Quyền & Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="customers-table-body" class="divide-y divide-slate-100">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 3: BIDDING PIPELINE ==================== -->
+      <section id="tab-pipeline" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-black text-slate-900">Phễu Cơ Hội & Hồ Sơ Dự Thầu (Bidding Pipeline)</h2>
+            <p class="text-slate-500 text-xs mt-1">Quy trình từ tiếp cận thông tin $\to$ khảo sát đánh giá $\to$ lập hồ sơ thầu $\to$ thương thảo $\to$ trúng thầu</p>
+          </div>
+          <button onclick="openNewBidModal()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition shadow">
+            <i class="fa-solid fa-plus mr-1"></i> Thêm Gói Thầu Mới
+          </button>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="overflow-x-auto pb-6">
+          <div id="pipeline-board" class="flex gap-4 min-w-max">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 4: PROJECTS & CASHFLOW ==================== -->
+      <section id="tab-projects" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-black text-slate-900">Theo Dõi Dự Án & Dòng Tiền Hợp Đồng (Executive Tracking)</h2>
+            <p class="text-slate-500 text-xs mt-1">Quản lý tổng quan tiến độ %, tình trạng sức khỏe dự án và các đợt giải ngân hợp đồng</p>
+          </div>
+          <button id="btn-add-project" onclick="openNewProjectModal()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-bold transition shadow">
+            <i class="fa-solid fa-folder-plus mr-1"></i> Thêm Dự Án Theo Dõi
+          </button>
+        </div>
+
+        <div id="projects-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Rendered via JS -->
+        </div>
+      </section>
+
+      <!-- ==================== TAB 5: EXECUTIVE CARE & AUTOMATION ==================== -->
+      <section id="tab-care" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-black text-slate-900">Chăm Sóc Khách Hàng & Ngoại Giao Lãnh Đạo</h2>
+            <p class="text-slate-500 text-xs mt-1">Lịch gặp gỡ tiếp khách, tiệc tri ân, quà tặng lễ tết và gửi tin nhắn Zalo ZNS / SMS trang trọng</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="triggerAutomatedScan()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1.5">
+              <i class="fa-solid fa-bolt text-yellow-300"></i> Quét Ngoại Giao Tự Động
+            </button>
+            <button onclick="openNewCareModal()" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1.5">
+              <i class="fa-solid fa-calendar-plus"></i> Ghi Nhật Ký Tiếp Khách
+            </button>
+          </div>
+        </div>
+
+        <!-- 2 Columns: Composer + Zalo Phone Mockup -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Left: Message Composer (7 cols) -->
+          <div class="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <h3 class="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-paper-plane text-sky-500"></i> Soạn Tin Nhắn Ngoại Giao Gửi Lãnh Đạo Đối Tác
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Chọn Đối Tác Nhận:</label>
+                <select id="msg-customer-select" onchange="onMessageCustomerChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none">
+                  <!-- Populated via JS -->
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Dự Án Trọng Điểm (Nếu có):</label>
+                <select id="msg-project-select" onchange="applyTemplateToComposer()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-amber-400 focus:outline-none">
+                  <!-- Populated via JS -->
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Kênh Gửi:</label>
+                <div class="flex gap-2">
+                  <label class="flex-1 flex items-center justify-center gap-1.5 p-2 bg-blue-50 border border-blue-200 rounded-xl cursor-pointer text-blue-800 font-bold">
+                    <input type="radio" name="msg-channel" value="ZALO_ZNS" checked onchange="updateLivePreview()">
+                    <i class="fa-solid fa-comment-dots text-blue-600"></i> Zalo ZNS
+                  </label>
+                  <label class="flex-1 flex items-center justify-center gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer text-slate-700 font-bold">
+                    <input type="radio" name="msg-channel" value="SMS" onchange="updateLivePreview()">
+                    <i class="fa-solid fa-sms text-amber-600"></i> SMS
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Mẫu Kịch Bản Trang Trọng:</label>
+                <select id="msg-template-select" onchange="applyTemplateToComposer()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold focus:ring-2 focus:ring-amber-400 focus:outline-none">
+                  <option value="CHUC_MUNG_SINH_NHAT">1. Chúc mừng Sinh nhật Lãnh đạo cấp cao (Chủ tịch/TGĐ)</option>
+                  <option value="THANH_LAP_DOI_TAC">2. Chúc mừng Ngày thành lập / Truyền thống Tập đoàn</option>
+                  <option value="TIEN_DO_LANH_DAO">3. Báo cáo Tiến độ Điều hành vĩ mô gửi Ban QLDA/CĐT</option>
+                  <option value="THONG_BAO_NGHIEM_THU">4. Thông báo Nghiệm thu mốc kỹ thuật & Giải ngân</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="text-xs">
+              <label class="block font-bold text-slate-700 mb-1">Tiêu Đề Thông Điệp:</label>
+              <input type="text" id="msg-title-input" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-900 focus:outline-none" oninput="updateLivePreview()">
+            </div>
+
+            <div class="text-xs">
+              <label class="block font-bold text-slate-700 mb-1">Nội Dung Tin Nhắn:</label>
+              <textarea id="msg-body-input" rows="4" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-400" oninput="updateLivePreview()"></textarea>
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+              <div class="text-xs text-slate-500">
+                Gửi tới SĐT: <span id="msg-recipient-display" class="font-bold text-slate-900">--</span>
+              </div>
+              <button onclick="submitSendMessage()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-2">
+                <i class="fa-solid fa-paper-plane"></i> Gửi Tin Nhắn Ngay
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Live Smartphone Zalo Simulator (5 cols) -->
+          <div class="lg:col-span-5 flex flex-col items-center">
+            <div class="text-xs font-bold text-slate-500 mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-eye text-blue-500"></i> Xem Trước Tin Nhắn Trên Zalo / Điện Thoại Khách Hàng
+            </div>
+
+            <div class="phone-mockup w-72 sm:w-80 h-[500px] flex flex-col">
+              <!-- Phone Status Bar -->
+              <div class="bg-slate-900 text-white px-5 py-2 flex items-center justify-between text-[11px] font-semibold">
+                <span>09:41</span>
+                <div class="flex items-center gap-1.5">
+                  <i class="fa-solid fa-signal text-[10px]"></i>
+                  <i class="fa-solid fa-wifi text-[10px]"></i>
+                  <i class="fa-solid fa-battery-full text-[10px]"></i>
+                </div>
+              </div>
+
+              <!-- Zalo Header -->
+              <div id="phone-app-header" class="bg-blue-600 text-white p-3 flex items-center gap-2.5 shadow-sm">
+                <div class="w-7 h-7 rounded-full bg-white text-blue-600 flex items-center justify-center font-bold text-xs">
+                  <i class="fa-solid fa-landmark"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-bold text-xs truncate">Tập Đoàn Xây Dựng</div>
+                  <div class="text-[10px] text-blue-100 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Zalo Official Account Đã Xác Thực
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chat Message Bubble -->
+              <div class="flex-1 bg-slate-100 p-3 overflow-y-auto space-y-3 flex flex-col justify-end text-xs">
+                <div class="text-center text-[10px] text-slate-400">Hôm nay 09:41</div>
+
+                <div class="zalo-bubble p-3 shadow-sm space-y-2">
+                  <div class="font-bold text-blue-900 text-xs flex items-center gap-1.5">
+                    <i class="fa-solid fa-crown text-amber-500"></i>
+                    <span id="preview-msg-title">Chúc mừng Sinh nhật Lãnh đạo</span>
+                  </div>
+                  <p id="preview-msg-body" class="text-slate-700 text-xs leading-relaxed">
+                    Kính gửi Ông Phan Trọng Đạt...
+                  </p>
+                  <div class="pt-2 border-t border-blue-200/60 flex items-center justify-between text-[10px] text-slate-500">
+                    <span>Construct CRM Executive</span>
+                    <span class="text-blue-600 font-bold">Chi tiết &gt;</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-2.5 bg-white border-t border-slate-200 text-center text-[10px] text-slate-400">
+                Kênh liên lạc chính thức từ Ban Lãnh Đạo
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Recent Care & Networking Diary -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-black text-slate-900 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-handshake text-emerald-600"></i> Nhật Ký Hoạt Động Ngoại Giao & Tiếp Khách Cấp Cao
+            </h3>
+            <button onclick="loadCareActivities()" class="text-xs text-blue-600 font-bold hover:underline">Làm mới</button>
+          </div>
+
+          <div id="care-activities-container" class="space-y-3">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ==================== TAB 6: ACCOUNT MANAGEMENT (ADMIN ONLY) ==================== -->
+      <section id="tab-users" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-users-gear text-indigo-600"></i> Quản Lý Tài Khoản & Phân Quyền SBU
+            </h2>
+            <p class="text-slate-500 text-xs mt-1">Dành riêng cho Ban Lãnh Đạo (Admin) để tạo mới, chỉnh sửa và phân quyền phụ trách cho các GĐKD 5 SBU</p>
+          </div>
+          <button onclick="openNewUserModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-user-plus"></i> Tạo Tài Khoản Mới
+          </button>
+        </div>
+
+        <!-- Account Summary Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <div class="text-[10px] uppercase font-bold text-slate-400">Tổng Số Tài Khoản</div>
+              <div id="stat-user-count" class="text-xl font-black text-slate-900 mt-1">6</div>
+              <p class="text-[11px] text-slate-500">Hoạt động trong hệ thống</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-base font-bold">
+              <i class="fa-solid fa-users"></i>
+            </div>
+          </div>
+
+          <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <div class="text-[10px] uppercase font-bold text-slate-400">Ban Lãnh Đạo (Admin)</div>
+              <div class="text-xl font-black text-amber-600 mt-1">1</div>
+              <p class="text-[11px] text-slate-500">Toàn quyền Tạo, Sửa, Xóa 5 SBU</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-base font-bold">
+              <i class="fa-solid fa-crown"></i>
+            </div>
+          </div>
+
+          <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <div class="text-[10px] uppercase font-bold text-slate-400">Giám Đốc KD (Members)</div>
+              <div class="text-xl font-black text-blue-600 mt-1">5</div>
+              <p class="text-[11px] text-slate-500">Quyền Tạo, Sửa SBU phụ trách</p>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-base font-bold">
+              <i class="fa-solid fa-user-tie"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider">
+                <tr>
+                  <th class="p-3.5">Họ Tên & Tên Đăng Nhập</th>
+                  <th class="p-3.5">Vai Trò Hệ Thống</th>
+                  <th class="p-3.5">Khối SBU Phụ Trách</th>
+                  <th class="p-3.5">Chức Danh / Vị Trí</th>
+                  <th class="p-3.5">Liên Hệ (Email / SĐT)</th>
+                  <th class="p-3.5 text-right">Quyền & Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body" class="divide-y divide-slate-100">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+  </div> <!-- /#app-root -->
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Modal 1: Customer 360 Detail View -->
+  <div id="modal-customer-detail" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <span id="view-cust-code" class="text-xs font-bold text-amber-600 uppercase">--</span>
+          <h3 id="view-cust-name" class="font-black text-slate-900 text-lg">Chi Tiết Hồ Sơ Khách Hàng</h3>
+        </div>
+        <button onclick="closeModal('modal-customer-detail')" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+      </div>
+
+      <div id="customer-detail-content" class="space-y-6 text-xs">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: New / Edit Customer with Real-time Duplicate Detection & Reuse -->
+  <div id="modal-customer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 id="modal-customer-title" class="font-black text-slate-900 text-base">Thêm Đối Tác / Chủ Đầu Tư Chiến Lược</h3>
+        <button onclick="closeModal('modal-customer')" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+      </div>
+
+      <!-- Real-time Duplicate Detection Alert Banner -->
+      <div id="duplicate-warning-banner" class="hidden p-3.5 bg-amber-50 border border-amber-300 rounded-xl text-xs space-y-2 transition">
+        <div class="font-extrabold text-amber-900 flex items-center gap-1.5">
+          <i class="fa-solid fa-lightbulb text-amber-500 text-sm"></i>
+          <span>Phát hiện đối tác đã có trong hệ sinh thái dữ liệu của công ty!</span>
+        </div>
+        <div id="duplicate-matched-info" class="text-slate-700 text-xs bg-white p-2.5 rounded-lg border border-amber-200">
+          <!-- Filled dynamically -->
+        </div>
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-[10px] text-amber-800">Thông tin được tự động lưu trữ và có thể sử dụng lại cho SBU của bạn:</span>
+          <button type="button" onclick="reuseMatchedCustomer()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-lg text-xs shadow-sm flex items-center gap-1">
+            <i class="fa-solid fa-recycle"></i> Sử Dụng Lại Dữ Liệu Này
+          </button>
+        </div>
+      </div>
+
+      <form id="form-customer" onsubmit="handleCustomerSubmit(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="cust-id">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Tên Đối tác / Chủ đầu tư *</label>
+            <input type="text" id="cust-name" required oninput="triggerDuplicateScan()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold" placeholder="VD: Tập đoàn Vingroup, Masterise Homes...">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Thuộc Khối SBU *</label>
+            <select id="cust-sbu" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold">
+              <option value="SBU1">SBU 1 - Nền móng và Hầm</option>
+              <option value="SBU2">SBU 2 - Xây dựng Năng lượng và công nghiệp</option>
+              <option value="SBU3">SBU 3 - Metro và ngầm đô thị</option>
+              <option value="SBU4">SBU 4 - Hạ tầng tập trung và đường sắt cao tốc</option>
+              <option value="SBU5">SBU 5 - Cảng biển và biến đổi khí hậu</option>
+            </select>
+            <p id="cust-sbu-hint" class="text-[10px] text-slate-400 mt-0.5"></p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Mã số thuế (MST) *</label>
+            <input type="text" id="cust-tax" oninput="triggerDuplicateScan()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono font-bold" placeholder="VD: 0312567890">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Hạng quan hệ</label>
+            <select id="cust-tier" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold">
+              <option value="STRATEGIC_VIP">⭐ Đối tác Chiến lược VIP</option>
+              <option value="CLOSE_PARTNER">Khách hàng thân thiết</option>
+              <option value="PROSPECT">Đối tác tiềm năng</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Loại hình</label>
+            <select id="cust-segment" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+              <option value="B2B">B2B (Tập đoàn tư nhân)</option>
+              <option value="B2G">B2G (Nhà nước / Ban QLDA)</option>
+              <option value="FDI">FDI (Đầu tư nước ngoài)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Địa chỉ trụ sở chính</label>
+          <input type="text" id="cust-headquarters" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="Địa chỉ trụ sở đối tác...">
+        </div>
+
+        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+          <div class="font-bold text-slate-800">Thông tin Lãnh đạo cấp cao (Chủ tịch / TGĐ / Trưởng ban QLDA):</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium text-slate-600 mb-1">Họ tên Lãnh đạo then chốt *</label>
+              <input type="text" id="cust-decision-maker" required class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2" placeholder="VD: Ông Phan Trọng Đạt">
+            </div>
+            <div>
+              <label class="block font-medium text-slate-600 mb-1">Chức vụ</label>
+              <input type="text" id="cust-decision-role" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2" placeholder="VD: Phó Tổng Giám Đốc">
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-medium text-slate-600 mb-1">Số điện thoại trực tiếp</label>
+              <input type="text" id="cust-decision-phone" oninput="triggerDuplicateScan()" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 font-mono" placeholder="VD: 0908112233">
+            </div>
+            <div>
+              <label class="block font-medium text-slate-600 mb-1">Ngày sinh nhật (để chúc mừng)</label>
+              <input type="date" id="cust-decision-bday" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2">
+            </div>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-600 mb-1">Ngày thành lập / Ngày truyền thống DN</label>
+            <input type="date" id="cust-anniversary" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Ghi chú chiến lược & Quan hệ</label>
+          <textarea id="cust-notes" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" placeholder="Ghi chú về định hướng hợp tác, sở thích ngoại giao..."></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modal-customer')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Hủy</button>
+          <button type="submit" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl font-bold">Lưu Thông Tin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: New / Edit User Account (Admin Only) -->
+  <div id="modal-user" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 id="modal-user-title" class="font-black text-slate-900 text-base">Tạo Tài Khoản Người Dùng Mới</h3>
+        <button onclick="closeModal('modal-user')" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+      </div>
+
+      <form id="form-user" onsubmit="handleUserSubmit(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="user-id">
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Tên đăng nhập (Username) *</label>
+            <input type="text" id="user-username" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono font-bold" placeholder="VD: gdkd_sbu6">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Họ và tên *</label>
+            <input type="text" id="user-fullname" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold" placeholder="VD: KS. Nguyễn Văn B">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Vai trò hệ thống *</label>
+            <select id="user-role" onchange="onUserRoleChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold">
+              <option value="SBU_DIRECTOR">💼 Giám Đốc KD SBU (Member)</option>
+              <option value="ADMIN">👑 Ban Lãnh Đạo (Admin Toàn Quyền)</option>
+              <option value="COLLABORATOR">🤝 Cộng Tác Viên (CTV)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Khối SBU phụ trách *</label>
+            <select id="user-sbu" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold">
+              <option value="SBU1">SBU 1 - Nền móng và Hầm</option>
+              <option value="SBU2">SBU 2 - Năng lượng và công nghiệp</option>
+              <option value="SBU3">SBU 3 - Metro và ngầm đô thị</option>
+              <option value="SBU4">SBU 4 - Hạ tầng & ĐS cao tốc</option>
+              <option value="SBU5">SBU 5 - Cảng biển & BĐKH</option>
+              <option value="ALL">Toàn Bộ Tập Đoàn (Admin & CTV)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Chức danh / Vị trí *</label>
+            <input type="text" id="user-title" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="VD: Giám Đốc Kinh Doanh SBU 1">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Mật khẩu đăng nhập</label>
+            <input type="text" id="user-password" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono" placeholder="Mặc định: 123456">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Email công vụ</label>
+            <input type="email" id="user-email" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="VD: name@xaydung-corp.vn">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Số điện thoại</label>
+            <input type="text" id="user-phone" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="VD: 0912345678">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modal-user')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Hủy</button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold">Lưu Tài Khoản</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 4: New Bid -->
+  <div id="modal-bid" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="font-black text-slate-900 text-base">Thêm Cơ Hội & Hồ Sơ Dự Thầu</h3>
+        <button onclick="closeModal('modal-bid')" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+      </div>
+
+      <form id="form-bid" onsubmit="handleBidSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Chủ đầu tư / Đối tác *</label>
+          <select id="bid-customer" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Thuộc Khối SBU *</label>
+          <select id="bid-sbu" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold">
+            <option value="SBU1">SBU 1 - Nền móng và Hầm</option>
+            <option value="SBU2">SBU 2 - Xây dựng Năng lượng và công nghiệp</option>
+            <option value="SBU3">SBU 3 - Metro và ngầm đô thị</option>
+            <option value="SBU4">SBU 4 - Hạ tầng tập trung và đường sắt cao tốc</option>
+            <option value="SBU5">SBU 5 - Cảng biển và biến đổi khí hậu</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Tên gói thầu / Dự án chào giá *</label>
+          <input type="text" id="bid-title" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="VD: Gói thầu thi công cọc Barrette...">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Ước tính giá trị (VNĐ)</label>
+            <input type="number" id="bid-val" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold" placeholder="VD: 500000000000">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Giai đoạn ban đầu</label>
+            <select id="bid-stage" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold">
+              <option value="INFORMATION">1. Tiếp cận thông tin sơ bộ</option>
+              <option value="EVALUATION">2. Khảo sát & Đánh giá</option>
+              <option value="TENDER_PREP">3. Lập hồ sơ thầu / Báo giá</option>
+              <option value="NEGOTIATION">4. Thương thảo hợp đồng</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Xác suất trúng thầu (%)</label>
+            <input type="number" id="bid-winrate" value="60" min="0" max="100" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Hạn nộp thầu</label>
+            <input type="date" id="bid-deadline" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modal-bid')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Hủy</button>
+          <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold">Lưu Gói Thầu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 5: New Project -->
+  <div id="modal-project" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 id="modal-project-title" class="font-black text-slate-900 text-base">Thêm Dự Án Theo Dõi Mới</h3>
+        <button onclick="closeModal('modal-project')" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+      </div>
+
+      <form id="form-project" onsubmit="handleProjectSubmit(event)" class="space-y-3.5 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Mã dự án *</label>
+            <input type="text" id="proj-code" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono font-bold" placeholder="VD: DA-SBU1-02">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Thuộc Khối SBU *</label>
+            <select id="proj-sbu" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold">
+              <option value="SBU1">SBU 1 - Nền móng và Hầm</option>
+              <option value="SBU2">SBU 2 - Năng lượng và công nghiệp</option>
+              <option value="SBU3">SBU 3 - Metro và ngầm đô thị</option>
+              <option value="SBU4">SBU 4 - Hạ tầng tập trung và đường sắt cao tốc</option>
+              <option value="SBU5">SBU 5 - Cảng biển và biến đổi khí hậu</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Chủ đầu tư / Đối tác *</label>
+          <select id="proj-customer" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Tên dự án / Công trình *</label>
+          <input type="text" id="proj-name" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold" placeholder="VD: Thi công tầng hầm B3...">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Giá trị hợp đồng (VNĐ) *</label>
+            <input type="number" id="proj-val" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold" placeholder="VD: 450000000000">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Số hợp đồng</label>
+            <input type="text" id="proj-contract" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Giám đốc KD phụ trách</label>
+          <input type="text" id="proj-director" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modal-project')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Hủy</button>
+          <button type="submit" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl font-bold">Lưu Dự Án</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 6: New Executive Care Log -->
+  <div id="modal-care" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="font-black text-slate-900 text-base">Ghi Nhận Hoạt Động Ngoại Giao & Tiếp Khách</h3>
+        <button onclick="closeModal('modal-care')" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+      </div>
+
+      <form id="form-care" onsubmit="handleCareSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Đối tác tiếp đón *</label>
+          <select id="care-customer" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Hình thức ngoại giao</label>
+            <select id="care-type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold">
+              <option value="DINNER_NETWORKING">Bữa tối thân mật / Giao lưu</option>
+              <option value="EXECUTIVE_MEETING">Họp chiến lược cấp cao</option>
+              <option value="GIFT_DELIVERY">Gửi quà tri ân / Chúc mừng</option>
+              <option value="EVENT_INVITATION">Mời dự sự kiện / Lễ khởi công</option>
+              <option value="CALL_DISCUSS">Trao đổi điện thoại ngoại giao</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Ngày diễn ra</label>
+            <input type="date" id="care-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Tiêu đề buổi gặp *</label>
+          <input type="text" id="care-title" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="VD: Bữa tối thân mật với Phó TGĐ Masterise Homes...">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Lãnh đạo tham dự phía ta *</label>
+          <input type="text" id="care-leader" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2" placeholder="VD: Chủ Tịch HĐQT & GĐKD SBU1">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nội dung trao đổi & Kết quả cam kết</label>
+          <textarea id="care-content" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3" placeholder="Ghi nhận các điểm thống nhất, nguyên tắc hợp tác các dự án tới..."></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modal-care')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold">Hủy</button>
+          <button type="submit" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold">Lưu Hoạt Động</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Application Logic -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

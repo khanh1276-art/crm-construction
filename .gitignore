@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Database
+# Note: SQLite DB can be kept or auto-seeded on first launch
+*.db-journal
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Android build outputs & local properties (if within repo)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/*.iml

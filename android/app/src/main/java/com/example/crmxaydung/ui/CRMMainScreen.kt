@@ -13,7 +13,7 @@ import com.example.crmxaydung.data.ApiClient
 import com.example.crmxaydung.data.UserSession
 
 enum class NavTab {
-    DASHBOARD, CUSTOMERS, PROJECTS, CARE
+    DASHBOARD, CUSTOMERS, PROJECTS, CARE, ACCOUNTS
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,8 +54,8 @@ fun CRMMainScreen(
                 NavigationBarItem(
                     selected = (currentTab == NavTab.DASHBOARD),
                     onClick = { currentTab = NavTab.DASHBOARD },
-                    icon = { Text("📊", fontSize = 18.sp) },
-                    label = { Text("Tổng Quan", fontSize = 11.sp) },
+                    icon = { Text("📊", fontSize = 16.sp) },
+                    label = { Text("Tổng Quan", fontSize = 10.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedTextColor = Color(0xFF38BDF8),
                         indicatorColor = Color(0xFF2563EB),
@@ -65,8 +65,8 @@ fun CRMMainScreen(
                 NavigationBarItem(
                     selected = (currentTab == NavTab.CUSTOMERS),
                     onClick = { currentTab = NavTab.CUSTOMERS },
-                    icon = { Text("🏢", fontSize = 18.sp) },
-                    label = { Text("Khách Hàng", fontSize = 11.sp) },
+                    icon = { Text("🏢", fontSize = 16.sp) },
+                    label = { Text("Khách Hàng", fontSize = 10.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedTextColor = Color(0xFF38BDF8),
                         indicatorColor = Color(0xFF2563EB),
@@ -76,8 +76,8 @@ fun CRMMainScreen(
                 NavigationBarItem(
                     selected = (currentTab == NavTab.PROJECTS),
                     onClick = { currentTab = NavTab.PROJECTS },
-                    icon = { Text("🏗️", fontSize = 18.sp) },
-                    label = { Text("Dự Án", fontSize = 11.sp) },
+                    icon = { Text("🏗️", fontSize = 16.sp) },
+                    label = { Text("Dự Án", fontSize = 10.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedTextColor = Color(0xFF38BDF8),
                         indicatorColor = Color(0xFF2563EB),
@@ -87,8 +87,19 @@ fun CRMMainScreen(
                 NavigationBarItem(
                     selected = (currentTab == NavTab.CARE),
                     onClick = { currentTab = NavTab.CARE },
-                    icon = { Text("🤝", fontSize = 18.sp) },
-                    label = { Text("Chăm Sóc", fontSize = 11.sp) },
+                    icon = { Text("🤝", fontSize = 16.sp) },
+                    label = { Text("Chăm Sóc", fontSize = 10.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedTextColor = Color(0xFF38BDF8),
+                        indicatorColor = Color(0xFF2563EB),
+                        unselectedTextColor = Color.Gray
+                    )
+                )
+                NavigationBarItem(
+                    selected = (currentTab == NavTab.ACCOUNTS),
+                    onClick = { currentTab = NavTab.ACCOUNTS },
+                    icon = { Text("👥", fontSize = 16.sp) },
+                    label = { Text("Tài Khoản", fontSize = 10.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedTextColor = Color(0xFF38BDF8),
                         indicatorColor = Color(0xFF2563EB),
@@ -109,6 +120,7 @@ fun CRMMainScreen(
                 NavTab.CUSTOMERS -> CustomerScreen(user = user)
                 NavTab.PROJECTS -> ProjectScreen(user = user)
                 NavTab.CARE -> CareScreen(user = user)
+                NavTab.ACCOUNTS -> UserManagementScreen(currentUser = user)
             }
         }
     }

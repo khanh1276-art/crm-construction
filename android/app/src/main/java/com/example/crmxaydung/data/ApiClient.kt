@@ -19,22 +19,30 @@ object ApiClient {
 
     var currentUser: UserSession? = null
 
+    private fun openConnection(endpoint: String, method: String = "GET"): HttpURLConnection {
+        val cleanUrl = if (endpoint.startsWith("http")) endpoint else "$baseUrl$endpoint"
+        val conn = (URL(cleanUrl).openConnection() as HttpURLConnection).apply {
+            requestMethod = method
+            setRequestProperty("Accept", "application/json")
+            // Crucial: Pass Role and SBU headers for proper data isolation and sync
+            setRequestProperty("X-User-Role", currentUser?.role ?: "ADMIN")
+            setRequestProperty("X-User-SBU", currentUser?.sbu ?: "ALL")
+            connectTimeout = 45000
+            readTimeout = 45000
+        }
+        return conn
+    }
+
     suspend fun checkHealth(): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val url = URL("$baseUrl/api/health")
-            val conn = (url.openConnection() as HttpURLConnection).apply {
-                requestMethod = "GET"
-                setRequestProperty("Accept", "application/json")
-                connectTimeout = 45000
-                readTimeout = 45000
-            }
-            val responseCode = conn.responseCode
-            if (responseCode == 200) {
+            val conn = openConnection("/api/health")
+            val code = conn.responseCode
+            if (code == 200) {
                 Result.success("Kết nối Render thành công (200 OK)")
-            } else if (responseCode == 503) {
+            } else if (code == 503) {
                 Result.failure(Exception("Máy chủ Render đang thức dậy (Cold start). Vui lòng đợi 30 giây rồi thử lại."))
             } else {
-                Result.failure(Exception("Mã phản hồi từ máy chủ: $responseCode"))
+                Result.failure(Exception("Mã phản hồi từ máy chủ: $code"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -43,14 +51,9 @@ object ApiClient {
 
     suspend fun login(username: String, password: String): Result<UserSession> = withContext(Dispatchers.IO) {
         try {
-            val url = URL("$baseUrl/api/users/login")
-            val conn = (url.openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
+            val conn = openConnection("/api/users/login", "POST").apply {
                 setRequestProperty("Content-Type", "application/json; utf-8")
-                setRequestProperty("Accept", "application/json")
                 doOutput = true
-                connectTimeout = 45000
-                readTimeout = 45000
             }
 
             val body = JSONObject().apply {
@@ -73,6 +76,8 @@ object ApiClient {
                     role = userObj.getString("role"),
                     sbu = userObj.getString("sbu"),
                     title = userObj.optString("title", ""),
+                    email = userObj.optString("email", ""),
+                    phone = userObj.optString("phone", ""),
                     token = json.optString("token", "")
                 )
                 currentUser = session
@@ -92,26 +97,28 @@ object ApiClient {
         }
     }
 
+    // --- Dashboard Metrics ---
     suspend fun fetchDashboardStats(sbu: String = "ALL"): Result<DashboardStats> = withContext(Dispatchers.IO) {
         try {
-            val urlStr = if (sbu == "ALL") "$baseUrl/api/dashboard/stats" else "$baseUrl/api/dashboard/stats?sbu=$sbu"
-            val conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
-                requestMethod = "GET"
-                setRequestProperty("Accept", "application/json")
-                connectTimeout = 45000
-                readTimeout = 45000
-            }
+            val endpoint = if (sbu == "ALL") "/api/dashboard/metrics" else "/api/dashboard/metrics?sbu=$sbu"
+            val conn = openConnection(endpoint)
             if (conn.responseCode == 200) {
                 val responseText = BufferedReader(InputStreamReader(conn.inputStream)).readText()
                 val json = JSONObject(responseText)
-                val summary = json.optJSONObject("summary") ?: JSONObject()
+                val overview = json.optJSONObject("overview") ?: JSONObject()
+
+                val contractVal = overview.optDouble("total_contract_value", 0.0)
+                val paidVal = overview.optDouble("total_paid_amount", 0.0)
+                val unpaidVal = overview.optDouble("unpaid_balance", 0.0)
+
                 val stats = DashboardStats(
-                    totalCustomers = summary.optInt("total_customers", 0),
-                    strategicVipCount = summary.optInt("strategic_vip_count", 0),
-                    totalProjects = summary.optInt("total_projects", 0),
-                    totalContractBillion = summary.optDouble("total_contract_value", 0.0) / 1_000_000_000.0,
-                    totalCollectedBillion = summary.optDouble("total_collected", 0.0) / 1_000_000_000.0,
-                    avgProgress = summary.optDouble("overall_progress_pct", 0.0),
+                    totalCustomers = overview.optInt("total_customers", 0),
+                    strategicVipCount = overview.optInt("active_bids_count", 0),
+                    totalProjects = overview.optInt("total_projects", 0),
+                    totalContractBillion = contractVal / 1_000_000_000.0,
+                    totalCollectedBillion = paidVal / 1_000_000_000.0,
+                    unpaidBalanceBillion = unpaidVal / 1_000_000_000.0,
+                    avgProgress = if (contractVal > 0) (paidVal / contractVal * 100.0) else 0.0,
                     sbuFilter = sbu
                 )
                 Result.success(stats)
@@ -123,15 +130,11 @@ object ApiClient {
         }
     }
 
+    // --- Customers ---
     suspend fun fetchCustomers(sbu: String = "ALL"): Result<List<CustomerItem>> = withContext(Dispatchers.IO) {
         try {
-            val urlStr = if (sbu == "ALL") "$baseUrl/api/customers" else "$baseUrl/api/customers?sbu=$sbu"
-            val conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
-                requestMethod = "GET"
-                setRequestProperty("Accept", "application/json")
-                connectTimeout = 45000
-                readTimeout = 45000
-            }
+            val endpoint = if (sbu == "ALL") "/api/customers" else "/api/customers?sbu=$sbu"
+            val conn = openConnection(endpoint)
             if (conn.responseCode == 200) {
                 val responseText = BufferedReader(InputStreamReader(conn.inputStream)).readText()
                 val arr = JSONArray(responseText)
@@ -145,12 +148,21 @@ object ApiClient {
                             name = obj.getString("name"),
                             sbu = obj.optString("sbu", ""),
                             tier = obj.optString("tier", "STRATEGIC_VIP"),
+                            segment = obj.optString("segment", "B2B"),
+                            taxCode = obj.optString("tax_code", ""),
                             phone = obj.optString("phone", ""),
                             email = obj.optString("email", ""),
+                            headquarters = obj.optString("headquarters", ""),
                             keyDecisionMaker = obj.optString("key_decision_maker", ""),
                             decisionMakerRole = obj.optString("decision_maker_role", ""),
+                            decisionMakerPhone = obj.optString("decision_maker_phone", ""),
+                            decisionMakerBirthday = obj.optString("decision_maker_birthday", ""),
+                            foundingAnniversary = obj.optString("founding_anniversary", ""),
                             relationshipScore = obj.optInt("relationship_score", 5),
-                            strategicNotes = obj.optString("strategic_notes", "")
+                            relationshipStatus = obj.optString("relationship_status", "EXCELLENT"),
+                            strategicNotes = obj.optString("strategic_notes", ""),
+                            projectCount = obj.optInt("project_count", 0),
+                            totalContractValue = obj.optDouble("total_contract_value", 0.0)
                         )
                     )
                 }
@@ -163,64 +175,86 @@ object ApiClient {
         }
     }
 
-    suspend fun createCustomer(name: String, sbu: String, tier: String, keyDecisionMaker: String, phone: String): Result<Boolean> = withContext(Dispatchers.IO) {
+    suspend fun createCustomer(
+        name: String,
+        sbu: String,
+        tier: String,
+        keyDecisionMaker: String,
+        role: String,
+        phone: String,
+        email: String,
+        taxCode: String,
+        headquarters: String,
+        birthday: String,
+        anniversary: String,
+        notes: String
+    ): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
-            val code = "KH-" + sbu + "-" + (System.currentTimeMillis() % 10000)
             val json = JSONObject().apply {
                 put("name", name)
-                put("code", code)
                 put("sbu", sbu)
                 put("tier", tier)
                 put("key_decision_maker", keyDecisionMaker)
+                put("decision_maker_role", role.ifEmpty { "Chủ tịch / Tổng Giám Đốc" })
+                put("decision_maker_phone", phone)
                 put("phone", phone)
-                put("decision_maker_role", "Chủ tịch / Tổng Giám Đốc")
+                put("email", email)
+                put("tax_code", taxCode)
+                put("headquarters", headquarters)
+                put("decision_maker_birthday", birthday)
+                put("founding_anniversary", anniversary)
+                put("strategic_notes", notes)
                 put("relationship_score", 5)
             }
-            val conn = (URL("$baseUrl/api/customers").openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
+            val conn = openConnection("/api/customers", "POST").apply {
                 setRequestProperty("Content-Type", "application/json; utf-8")
-                setRequestProperty("Accept", "application/json")
                 doOutput = true
-                connectTimeout = 45000
-                readTimeout = 45000
             }
             OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
             if (conn.responseCode in 200..201) {
                 Result.success(true)
             } else {
-                Result.failure(Exception("Lỗi tạo khách hàng: ${conn.responseCode}"))
+                val err = BufferedReader(InputStreamReader(conn.errorStream ?: conn.inputStream)).readText()
+                Result.failure(Exception("Lỗi tạo khách hàng: $err"))
             }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
+    // --- Projects ---
     suspend fun fetchProjects(sbu: String = "ALL"): Result<List<ProjectItem>> = withContext(Dispatchers.IO) {
         try {
-            val urlStr = if (sbu == "ALL") "$baseUrl/api/projects" else "$baseUrl/api/projects?sbu=$sbu"
-            val conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
-                requestMethod = "GET"
-                setRequestProperty("Accept", "application/json")
-                connectTimeout = 45000
-                readTimeout = 45000
-            }
+            val endpoint = if (sbu == "ALL") "/api/projects" else "/api/projects?sbu=$sbu"
+            val conn = openConnection(endpoint)
             if (conn.responseCode == 200) {
                 val responseText = BufferedReader(InputStreamReader(conn.inputStream)).readText()
                 val arr = JSONArray(responseText)
                 val list = mutableListOf<ProjectItem>()
                 for (i in 0 until arr.length()) {
                     val obj = arr.getJSONObject(i)
+                    val cVal = obj.optDouble("contract_value", 0.0)
+                    val pVal = obj.optDouble("paid_amount", 0.0)
                     list.add(
                         ProjectItem(
                             id = obj.getInt("id"),
                             code = obj.optString("code", ""),
                             name = obj.getString("name"),
                             sbu = obj.optString("sbu", ""),
+                            customerId = obj.optInt("customer_id", 0),
                             customerName = obj.optString("customer_name", "Chủ đầu tư"),
-                            contractValueBillion = obj.optDouble("contract_value_vnd", 0.0) / 1_000_000_000.0,
-                            progressPercent = obj.optDouble("progress_pct", 0.0),
-                            collectedAmountBillion = obj.optDouble("collected_amount_vnd", 0.0) / 1_000_000_000.0,
-                            status = obj.optString("status", "IN_PROGRESS")
+                            contractNumber = obj.optString("contract_number", ""),
+                            contractValueBillion = cVal / 1_000_000_000.0,
+                            progressPercent = obj.optDouble("progress_percent", 0.0),
+                            collectedAmountBillion = pVal / 1_000_000_000.0,
+                            unpaidBillion = (cVal - pVal) / 1_000_000_000.0,
+                            projectHealth = obj.optString("project_health", "GOOD"),
+                            projectDirector = obj.optString("project_director", ""),
+                            summaryScope = obj.optString("summary_scope", ""),
+                            startDate = obj.optString("start_date", ""),
+                            expectedEndDate = obj.optString("expected_end_date", ""),
+                            keyDecisionMaker = obj.optString("key_decision_maker", ""),
+                            decisionMakerPhone = obj.optString("decision_maker_phone", "")
                         )
                     )
                 }
@@ -233,15 +267,108 @@ object ApiClient {
         }
     }
 
+    suspend fun fetchProjectDetail(projectId: Int): Result<ProjectItem> = withContext(Dispatchers.IO) {
+        try {
+            val conn = openConnection("/api/projects/$projectId")
+            if (conn.responseCode == 200) {
+                val responseText = BufferedReader(InputStreamReader(conn.inputStream)).readText()
+                val obj = JSONObject(responseText)
+                val cVal = obj.optDouble("contract_value", 0.0)
+                val pVal = obj.optDouble("paid_amount", 0.0)
+
+                val milestonesArr = obj.optJSONArray("milestones") ?: JSONArray()
+                val mList = mutableListOf<MilestoneItem>()
+                for (i in 0 until milestonesArr.length()) {
+                    val mObj = milestonesArr.getJSONObject(i)
+                    mList.add(
+                        MilestoneItem(
+                            id = mObj.getInt("id"),
+                            projectId = mObj.optInt("project_id", projectId),
+                            title = mObj.getString("title"),
+                            dueDate = mObj.optString("due_date", ""),
+                            percentage = mObj.optDouble("percentage", 0.0),
+                            amount = mObj.optDouble("amount", 0.0),
+                            paymentStatus = mObj.optString("payment_status", "PENDING"),
+                            notes = mObj.optString("notes", "")
+                        )
+                    )
+                }
+
+                val item = ProjectItem(
+                    id = obj.getInt("id"),
+                    code = obj.optString("code", ""),
+                    name = obj.getString("name"),
+                    sbu = obj.optString("sbu", ""),
+                    customerId = obj.optInt("customer_id", 0),
+                    customerName = obj.optString("customer_name", "Chủ đầu tư"),
+                    contractNumber = obj.optString("contract_number", ""),
+                    contractValueBillion = cVal / 1_000_000_000.0,
+                    progressPercent = obj.optDouble("progress_percent", 0.0),
+                    collectedAmountBillion = pVal / 1_000_000_000.0,
+                    unpaidBillion = (cVal - pVal) / 1_000_000_000.0,
+                    projectHealth = obj.optString("project_health", "GOOD"),
+                    projectDirector = obj.optString("project_director", ""),
+                    summaryScope = obj.optString("summary_scope", ""),
+                    startDate = obj.optString("start_date", ""),
+                    expectedEndDate = obj.optString("expected_end_date", ""),
+                    keyDecisionMaker = obj.optString("key_decision_maker", ""),
+                    decisionMakerPhone = obj.optString("decision_maker_phone", ""),
+                    headquarters = obj.optString("headquarters", ""),
+                    milestones = mList
+                )
+                Result.success(item)
+            } else {
+                Result.failure(Exception("Lỗi xem chi tiết dự án: ${conn.responseCode}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun createProject(
+        name: String,
+        sbu: String,
+        customerId: Int,
+        contractValueVnd: Double,
+        progressPercent: Double,
+        contractNumber: String,
+        projectDirector: String,
+        summaryScope: String
+    ): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val json = JSONObject().apply {
+                put("name", name)
+                put("sbu", sbu)
+                put("customer_id", customerId)
+                put("contract_value", contractValueVnd)
+                put("paid_amount", 0.0)
+                put("progress_percent", progressPercent)
+                put("contract_number", contractNumber)
+                put("project_director", projectDirector)
+                put("summary_scope", summaryScope)
+                put("project_health", "GOOD")
+            }
+            val conn = openConnection("/api/projects", "POST").apply {
+                setRequestProperty("Content-Type", "application/json; utf-8")
+                doOutput = true
+            }
+            OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
+            if (conn.responseCode in 200..201) {
+                Result.success(true)
+            } else {
+                val err = BufferedReader(InputStreamReader(conn.errorStream ?: conn.inputStream)).readText()
+                Result.failure(Exception("Lỗi tạo dự án: $err"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // --- Care Activities ---
     suspend fun fetchCareActivities(sbu: String = "ALL"): Result<List<CareActivityItem>> = withContext(Dispatchers.IO) {
         try {
-            val urlStr = if (sbu == "ALL") "$baseUrl/api/care-activities" else "$baseUrl/api/care-activities?sbu=$sbu"
-            val conn = (URL(urlStr).openConnection() as HttpURLConnection).apply {
-                requestMethod = "GET"
-                setRequestProperty("Accept", "application/json")
-                connectTimeout = 45000
-                readTimeout = 45000
-            }
+            val endpoint = if (sbu == "ALL") "/api/care-activities" else "/api/care-activities?sbu=$sbu"
+            val conn = openConnection(endpoint)
             if (conn.responseCode == 200) {
                 val responseText = BufferedReader(InputStreamReader(conn.inputStream)).readText()
                 val arr = JSONArray(responseText)
@@ -251,10 +378,12 @@ object ApiClient {
                     list.add(
                         CareActivityItem(
                             id = obj.getInt("id"),
+                            customerId = obj.optInt("customer_id", 0),
                             customerName = obj.optString("customer_name", "Khách hàng"),
                             sbu = obj.optString("sbu", ""),
                             activityType = obj.optString("activity_type", "EXECUTIVE_MEETING"),
                             title = obj.getString("title"),
+                            content = obj.optString("content", ""),
                             occurredAt = obj.optString("occurred_at", ""),
                             leaderInCharge = obj.optString("leader_in_charge", ""),
                             outcomeStatus = obj.optString("outcome_status", "SUCCESS")
@@ -264,6 +393,126 @@ object ApiClient {
                 Result.success(list)
             } else {
                 Result.failure(Exception("Lỗi tải chăm sóc VIP: ${conn.responseCode}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun logCareActivity(
+        customerId: Int,
+        sbu: String,
+        activityType: String,
+        title: String,
+        content: String,
+        leaderInCharge: String
+    ): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val json = JSONObject().apply {
+                put("customer_id", customerId)
+                put("sbu", sbu)
+                put("activity_type", activityType)
+                put("title", title)
+                put("content", content)
+                put("leader_in_charge", leaderInCharge)
+                put("outcome_status", "SUCCESS")
+            }
+            val conn = openConnection("/api/care-activities", "POST").apply {
+                setRequestProperty("Content-Type", "application/json; utf-8")
+                doOutput = true
+            }
+            OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
+            if (conn.responseCode in 200..201) {
+                Result.success(true)
+            } else {
+                val err = BufferedReader(InputStreamReader(conn.errorStream ?: conn.inputStream)).readText()
+                Result.failure(Exception("Lỗi ghi nhật ký: $err"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // --- Users & Account Management ---
+    suspend fun fetchUsers(): Result<List<UserItem>> = withContext(Dispatchers.IO) {
+        try {
+            val conn = openConnection("/api/users")
+            if (conn.responseCode == 200) {
+                val responseText = BufferedReader(InputStreamReader(conn.inputStream)).readText()
+                val arr = JSONArray(responseText)
+                val list = mutableListOf<UserItem>()
+                for (i in 0 until arr.length()) {
+                    val obj = arr.getJSONObject(i)
+                    list.add(
+                        UserItem(
+                            id = obj.getInt("id"),
+                            username = obj.getString("username"),
+                            fullName = obj.getString("full_name"),
+                            role = obj.getString("role"),
+                            sbu = obj.getString("sbu"),
+                            sbuName = obj.optString("sbu_name", ""),
+                            title = obj.optString("title", ""),
+                            email = obj.optString("email", ""),
+                            phone = obj.optString("phone", "")
+                        )
+                    )
+                }
+                Result.success(list)
+            } else {
+                Result.failure(Exception("Lỗi tải danh sách tài khoản: ${conn.responseCode}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun createUser(
+        username: String,
+        password: String,
+        fullName: String,
+        role: String,
+        sbu: String,
+        title: String,
+        email: String,
+        phone: String
+    ): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val json = JSONObject().apply {
+                put("username", username)
+                put("password", password.ifEmpty { "123456" })
+                put("full_name", fullName)
+                put("role", role)
+                put("sbu", sbu)
+                put("title", title)
+                put("email", email)
+                put("phone", phone)
+            }
+            val conn = openConnection("/api/users", "POST").apply {
+                setRequestProperty("Content-Type", "application/json; utf-8")
+                doOutput = true
+            }
+            OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
+            if (conn.responseCode in 200..201) {
+                Result.success(true)
+            } else {
+                val err = BufferedReader(InputStreamReader(conn.errorStream ?: conn.inputStream)).readText()
+                val errMsg = try { JSONObject(err).optString("detail", err) } catch (_: Exception) { err }
+                Result.failure(Exception(errMsg))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteUser(userId: Int): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val conn = openConnection("/api/users/$userId", "DELETE")
+            if (conn.responseCode in 200..204) {
+                Result.success(true)
+            } else {
+                val err = BufferedReader(InputStreamReader(conn.errorStream ?: conn.inputStream)).readText()
+                val errMsg = try { JSONObject(err).optString("detail", err) } catch (_: Exception) { err }
+                Result.failure(Exception(errMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)

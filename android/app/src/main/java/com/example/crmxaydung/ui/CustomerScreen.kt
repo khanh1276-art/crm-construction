@@ -1,16 +1,21 @@
 package com.example.crmxaydung.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -18,6 +23,7 @@ import com.example.crmxaydung.data.ApiClient
 import com.example.crmxaydung.data.CustomerItem
 import com.example.crmxaydung.data.UserSession
 import kotlinx.coroutines.launch
+import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,6 +34,7 @@ fun CustomerScreen(user: UserSession) {
     var isLoading by remember { mutableStateOf(true) }
     var showAddDialog by remember { mutableStateOf(false) }
     var selectedCustomer by remember { mutableStateOf<CustomerItem?>(null) }
+    var careCustomer by remember { mutableStateOf<CustomerItem?>(null) }
 
     fun loadCustomers() {
         isLoading = true
@@ -46,13 +53,16 @@ fun CustomerScreen(user: UserSession) {
         searchQuery.isBlank() ||
                 it.name.contains(searchQuery, ignoreCase = true) ||
                 it.code.contains(searchQuery, ignoreCase = true) ||
-                it.keyDecisionMaker.contains(searchQuery, ignoreCase = true)
+                it.keyDecisionMaker.contains(searchQuery, ignoreCase = true) ||
+                it.phone.contains(searchQuery) ||
+                it.decisionMakerPhone.contains(searchQuery)
     }
+
+    val df = DecimalFormat("#,##0.0")
 
     Scaffold(
         containerColor = Color(0xFF0F172A),
         floatingActionButton = {
-            // Collaborators and SBU Directors can add customers
             FloatingActionButton(
                 onClick = { showAddDialog = true },
                 containerColor = Color(0xFF2563EB),
@@ -92,7 +102,7 @@ fun CustomerScreen(user: UserSession) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Tổng: ${filteredList.size} Doanh nghiệp / CĐT",
+                    text = "Tổng: ${filteredList.size} Khách hàng / CĐT",
                     color = Color(0xFF94A3B8),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium
@@ -118,11 +128,39 @@ fun CustomerScreen(user: UserSession) {
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(filteredList) { cust ->
-                        CustomerCard(cust = cust, onClick = { selectedCustomer = cust })
+                        CustomerCard(
+                            cust = cust,
+                            onClick = { selectedCustomer = cust }
+                        )
                     }
                 }
             }
         }
+    }
+
+    // Customer Personal Profile Detail Dialog
+    selectedCustomer?.let { cust ->
+        CustomerDetailDialog(
+            cust = cust,
+            df = df,
+            onDismiss = { selectedCustomer = null },
+            onLogCare = {
+                careCustomer = cust
+            }
+        )
+    }
+
+    // Log Care Activity Dialog
+    careCustomer?.let { cust ->
+        LogCareDialog(
+            customer = cust,
+            currentUser = user,
+            onDismiss = { careCustomer = null },
+            onLogged = {
+                careCustomer = null
+                loadCustomers()
+            }
+        )
     }
 
     // Add Customer Dialog
@@ -134,38 +172,6 @@ fun CustomerScreen(user: UserSession) {
                 showAddDialog = false
                 loadCustomers()
             }
-        )
-    }
-
-    // Customer Detail Dialog
-    selectedCustomer?.let { cust ->
-        AlertDialog(
-            onDismissRequest = { selectedCustomer = null },
-            title = { Text(cust.name, fontWeight = FontWeight.Bold, color = Color.White) },
-            text = {
-                Column {
-                    Text("Mã khách hàng: ${cust.code}", color = Color(0xFF94A3B8), fontSize = 13.sp)
-                    Text("Phân hệ: ${cust.sbu} | Phân khúc: ${cust.tier}", color = Color(0xFF38BDF8), fontSize = 13.sp)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Người quyết định: ${cust.keyDecisionMaker}", fontWeight = FontWeight.Bold, color = Color.White)
-                    Text("Chức danh: ${cust.decisionMakerRole}", color = Color.LightGray)
-                    Text("Số điện thoại: ${cust.phone.ifEmpty { "Chưa cập nhật" }}", color = Color.LightGray)
-                    Text("Email: ${cust.email.ifEmpty { "Chưa cập nhật" }}", color = Color.LightGray)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Điểm quan hệ: ${"⭐".repeat(cust.relationshipScore.coerceIn(1, 5))}", color = Color(0xFFFBBF24))
-                    if (cust.strategicNotes.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Ghi chú chiến lược:", fontWeight = FontWeight.Bold, color = Color(0xFFE2E8F0))
-                        Text(cust.strategicNotes, color = Color(0xFF94A3B8), fontSize = 12.sp)
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { selectedCustomer = null }) {
-                    Text("Đóng", color = Color(0xFF38BDF8))
-                }
-            },
-            containerColor = Color(0xFF1E293B)
         )
     }
 }
@@ -217,10 +223,203 @@ fun CustomerCard(cust: CustomerItem, onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Mã: ${cust.code} | Khối: ${cust.sbu}", color = Color(0xFF64748B), fontSize = 11.sp)
-                Text(cust.phone, color = Color(0xFF38BDF8), fontSize = 11.sp)
+                Text(cust.phone.ifEmpty { cust.decisionMakerPhone }, color = Color(0xFF38BDF8), fontSize = 11.sp)
             }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("👉 Chạm để theo dõi chi tiết hồ sơ cá nhân", color = Color(0xFF64748B), fontSize = 10.sp)
         }
     }
+}
+
+@Composable
+fun CustomerDetailDialog(
+    cust: CustomerItem,
+    df: DecimalFormat,
+    onDismiss: () -> Unit,
+    onLogCare: () -> Unit
+) {
+    val context = LocalContext.current
+    val contactPhone = cust.decisionMakerPhone.ifEmpty { cust.phone }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text(cust.name, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
+                Text("Mã KH: ${cust.code} | Khối: ${cust.sbu} | Cấp: ${cust.tier}", color = Color(0xFF38BDF8), fontSize = 12.sp)
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Section: Personal Decision Maker Card
+                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)), shape = RoundedCornerShape(10.dp)) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("👤 Hồ Sơ Cá Nhân Người Quyết Định", fontWeight = FontWeight.Bold, color = Color(0xFFE2E8F0), fontSize = 13.sp)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("Họ và tên: ${cust.keyDecisionMaker}", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 14.sp)
+                        Text("Chức danh: ${cust.decisionMakerRole}", color = Color(0xFF94A3B8), fontSize = 12.sp)
+                        if (contactPhone.isNotBlank()) {
+                            Text("SĐT trực tiếp: $contactPhone", color = Color(0xFF38BDF8), fontSize = 12.sp)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$contactPhone"))
+                                        context.startActivity(intent)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("📞 Gọi Điện", fontSize = 12.sp)
+                                }
+                                Button(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("sms:$contactPhone"))
+                                        context.startActivity(intent)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("💬 Nhắn SMS", fontSize = 12.sp)
+                                }
+                            }
+                        }
+                        if (cust.decisionMakerBirthday.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text("🎂 Sinh nhật: ${cust.decisionMakerBirthday}", color = Color(0xFFFBBF24), fontSize = 12.sp)
+                        }
+                    }
+                }
+
+                // Section: Corporate & Diplomatic Details
+                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)), shape = RoundedCornerShape(10.dp)) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("🏢 Thông Tin Doanh Nghiệp & Ngoại Giao", fontWeight = FontWeight.Bold, color = Color(0xFFE2E8F0), fontSize = 13.sp)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        if (cust.headquarters.isNotBlank()) {
+                            Text("Trụ sở: ${cust.headquarters}", color = Color(0xFF94A3B8), fontSize = 12.sp)
+                        }
+                        if (cust.taxCode.isNotBlank()) {
+                            Text("Mã số thuế: ${cust.taxCode}", color = Color(0xFF94A3B8), fontSize = 12.sp)
+                        }
+                        if (cust.foundingAnniversary.isNotBlank()) {
+                            Text("🏛️ Ngày thành lập: ${cust.foundingAnniversary}", color = Color(0xFF38BDF8), fontSize = 12.sp)
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Điểm quan hệ: ${"⭐".repeat(cust.relationshipScore.coerceIn(1, 5))} (${cust.relationshipStatus})", color = Color(0xFFFBBF24), fontSize = 12.sp)
+                    }
+                }
+
+                // Section: Projects & Strategic Notes
+                if (cust.strategicNotes.isNotBlank()) {
+                    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A)), shape = RoundedCornerShape(10.dp)) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text("📝 Ghi Chú Chiến Lược Cá Nhân", fontWeight = FontWeight.Bold, color = Color(0xFFE2E8F0), fontSize = 13.sp)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(cust.strategicNotes, color = Color(0xFF94A3B8), fontSize = 12.sp)
+                        }
+                    }
+                }
+
+                // Action to log VIP care
+                Button(
+                    onClick = onLogCare,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C3AED)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("🤝 Ghi Nhận Chăm Sóc VIP")
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Đóng", color = Color(0xFF38BDF8)) }
+        },
+        containerColor = Color(0xFF1E293B)
+    )
+}
+
+@Composable
+fun LogCareDialog(
+    customer: CustomerItem,
+    currentUser: UserSession,
+    onDismiss: () -> Unit,
+    onLogged: () -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var content by remember { mutableStateOf("") }
+    var activityType by remember { mutableStateOf("EXECUTIVE_MEETING") }
+    var isSaving by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    val types = listOf(
+        "EXECUTIVE_MEETING" to "Họp Cấp Cao",
+        "DINNER_NETWORKING" to "Tiệc Ngoại Giao",
+        "GIFT_DELIVERY" to "Tặng Quà",
+        "CALL_DISCUSS" to "Điện Đàm"
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Ghi Nhật Ký Chăm Sóc VIP", color = Color.White, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Khách hàng: ${customer.name}", color = Color(0xFF38BDF8), fontSize = 13.sp)
+                Text("Đại diện: ${customer.keyDecisionMaker}", color = Color.White, fontSize = 12.sp)
+
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Tiêu đề sự kiện chăm sóc") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                )
+
+                OutlinedTextField(
+                    value = content,
+                    onValueChange = { content = it },
+                    label = { Text("Nội dung chi tiết trao đổi") },
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (title.isNotBlank()) {
+                        isSaving = true
+                        scope.launch {
+                            val res = ApiClient.logCareActivity(
+                                customerId = customer.id,
+                                sbu = customer.sbu,
+                                activityType = activityType,
+                                title = title.trim(),
+                                content = content.trim(),
+                                leaderInCharge = currentUser.fullName
+                            )
+                            isSaving = false
+                            if (res.isSuccess) {
+                                onLogged()
+                            }
+                        }
+                    }
+                },
+                enabled = !isSaving && title.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+            ) {
+                if (isSaving) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
+                else Text("Lưu Nhật Ký")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Hủy", color = Color.Gray) }
+        },
+        containerColor = Color(0xFF1E293B)
+    )
 }
 
 @Composable
@@ -232,53 +431,118 @@ fun AddCustomerDialog(
     var name by remember { mutableStateOf("") }
     var sbu by remember { mutableStateOf(defaultSbu) }
     var keyPerson by remember { mutableStateOf("") }
+    var role by remember { mutableStateOf("Chủ tịch / Tổng Giám Đốc") }
     var phone by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var taxCode by remember { mutableStateOf("") }
+    var headquarters by remember { mutableStateOf("") }
+    var birthday by remember { mutableStateOf("") }
+    var anniversary by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
     var isSaving by remember { mutableStateOf(false) }
+    var errText by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Thêm Khách Hàng / CĐT Mới", color = Color.White, fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Tên Doanh nghiệp / Chủ đầu tư") },
+                    label = { Text("Tên Doanh nghiệp / CĐT (*)") },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
                 )
                 OutlinedTextField(
                     value = keyPerson,
                     onValueChange = { keyPerson = it },
-                    label = { Text("Người quyết định (Chủ tịch / TGĐ)") },
+                    label = { Text("Người quyết định cá nhân (*)") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                )
+                OutlinedTextField(
+                    value = role,
+                    onValueChange = { role = it },
+                    label = { Text("Chức vụ") },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
                 )
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
-                    label = { Text("Số điện thoại liên hệ") },
+                    label = { Text("Số điện thoại cá nhân (*)") },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
                 )
+                OutlinedTextField(
+                    value = headquarters,
+                    onValueChange = { headquarters = it },
+                    label = { Text("Trụ sở chính") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                )
+                OutlinedTextField(
+                    value = birthday,
+                    onValueChange = { birthday = it },
+                    label = { Text("Sinh nhật (YYYY-MM-DD)") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                )
+                OutlinedTextField(
+                    value = anniversary,
+                    onValueChange = { anniversary = it },
+                    label = { Text("Ngày thành lập (YYYY-MM-DD)") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                )
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("Ghi chú chiến lược cá nhân") },
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                )
+
+                errText?.let {
+                    Text(it, color = Color(0xFFF87171), fontSize = 12.sp)
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    if (name.isNotBlank()) {
+                    if (name.isNotBlank() && keyPerson.isNotBlank()) {
                         isSaving = true
+                        errText = null
                         scope.launch {
-                            val res = ApiClient.createCustomer(name.trim(), sbu, "STRATEGIC_VIP", keyPerson.trim(), phone.trim())
+                            val res = ApiClient.createCustomer(
+                                name = name.trim(),
+                                sbu = sbu,
+                                tier = "STRATEGIC_VIP",
+                                keyDecisionMaker = keyPerson.trim(),
+                                role = role.trim(),
+                                phone = phone.trim(),
+                                email = email.trim(),
+                                taxCode = taxCode.trim(),
+                                headquarters = headquarters.trim(),
+                                birthday = birthday.trim(),
+                                anniversary = anniversary.trim(),
+                                notes = notes.trim()
+                            )
                             isSaving = false
                             if (res.isSuccess) {
                                 onAdded()
+                            } else {
+                                errText = res.exceptionOrNull()?.message ?: "Lỗi tạo khách hàng"
                             }
                         }
                     }
                 },
-                enabled = !isSaving && name.isNotBlank(),
+                enabled = !isSaving && name.isNotBlank() && keyPerson.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
             ) {
                 if (isSaving) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))

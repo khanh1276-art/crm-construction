@@ -23,7 +23,7 @@ SBU_NAMES = {
 def list_users():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, username, full_name, role, sbu, title, email, phone, avatar_icon, password FROM users ORDER BY id ASC")
+    cursor.execute("SELECT id, username, full_name, role, sbu, title, email, phone, avatar_icon FROM users ORDER BY id ASC")
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
 
@@ -116,7 +116,7 @@ def update_user(
     cursor.execute("""
     UPDATE users SET
         full_name = COALESCE(?, full_name),
-        password = COALESCE(?, password),
+        password = CASE WHEN ? IS NOT NULL AND ? != '' THEN ? ELSE password END,
         role = COALESCE(?, role),
         sbu = COALESCE(?, sbu),
         title = COALESCE(?, title),
@@ -125,7 +125,9 @@ def update_user(
         avatar_icon = COALESCE(?, avatar_icon)
     WHERE id = ?
     """, (
-        data.full_name, data.password, data.role, data.sbu, data.title,
+        data.full_name,
+        data.password, data.password, data.password,
+        data.role, data.sbu, data.title,
         data.email, data.phone, data.avatar_icon, user_id
     ))
     conn.commit()

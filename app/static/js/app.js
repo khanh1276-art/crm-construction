@@ -404,7 +404,6 @@ function renderUsersTable() {
             <i class="fa-solid ${u.avatar_icon || 'fa-user-tie'} text-slate-500"></i>
             <span>${u.full_name}</span>
           </div>
-          <div class="text-[11px] text-slate-400 font-mono">@${u.username} • MK: ${u.password || '123456'}</div>
         </td>
         <td class="p-3.5">
           ${roleBadge}
@@ -439,7 +438,10 @@ function openNewUserModal() {
   document.getElementById('user-id').value = "";
   document.getElementById('user-username').disabled = false;
   const passEl = document.getElementById('user-password');
-  if (passEl) passEl.value = "123456";
+  if (passEl) {
+    passEl.value = "";
+    passEl.placeholder = "Nhập mật khẩu (tối thiểu 6 ký tự)";
+  }
   document.getElementById('modal-user-title').innerText = "Tạo Tài Khoản Người Dùng Mới";
   openModal('modal-user');
 }
@@ -452,7 +454,10 @@ function openEditUserModal(userId) {
   document.getElementById('user-username').value = u.username;
   document.getElementById('user-username').disabled = true;
   const passEl = document.getElementById('user-password');
-  if (passEl) passEl.value = u.password || '123456';
+  if (passEl) {
+    passEl.value = "";
+    passEl.placeholder = "Để trống nếu không đổi mật khẩu";
+  }
   document.getElementById('user-fullname').value = u.full_name;
   document.getElementById('user-role').value = u.role;
   document.getElementById('user-sbu').value = u.sbu;
@@ -460,7 +465,7 @@ function openEditUserModal(userId) {
   document.getElementById('user-email').value = u.email || '';
   document.getElementById('user-phone').value = u.phone || '';
 
-  document.getElementById('modal-user-title').innerText = `Chỉnh Sửa Tài Khoản: @${u.username}`;
+  document.getElementById('modal-user-title').innerText = `Chỉnh Sửa Tài Khoản: ${u.full_name}`;
   openModal('modal-user');
 }
 
@@ -480,15 +485,21 @@ async function handleUserSubmit(e) {
   const isEdit = Boolean(userId);
 
   const payload = {
-    username: document.getElementById('user-username').value,
-    password: document.getElementById('user-password') ? document.getElementById('user-password').value : '123456',
-    full_name: document.getElementById('user-fullname').value,
+    username: document.getElementById('user-username').value.trim(),
+    full_name: document.getElementById('user-fullname').value.trim(),
     role: document.getElementById('user-role').value,
     sbu: document.getElementById('user-sbu').value,
-    title: document.getElementById('user-title').value,
-    email: document.getElementById('user-email').value,
-    phone: document.getElementById('user-phone').value
+    title: document.getElementById('user-title').value.trim(),
+    email: document.getElementById('user-email').value.trim(),
+    phone: document.getElementById('user-phone').value.trim()
   };
+
+  const passVal = document.getElementById('user-password')?.value?.trim();
+  if (passVal) {
+    payload.password = passVal;
+  } else if (!isEdit) {
+    payload.password = '123456';
+  }
 
   try {
     const url = isEdit ? `/api/users/${userId}` : '/api/users';

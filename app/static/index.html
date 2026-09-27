@@ -50,7 +50,7 @@
               autocomplete="username" 
               class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"
               placeholder="Username/Email"
-              value="admin"
+              value=""
             >
           </div>
 
@@ -65,7 +65,7 @@
                 autocomplete="current-password" 
                 class="w-full px-3.5 py-2.5 pr-10 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"
                 placeholder="Password" 
-                value="123456"
+                value=""
               >
               <button 
                 type="button" 
@@ -83,7 +83,7 @@
               <input type="checkbox" id="remember-me" checked class="w-4 h-4 rounded border-slate-300 text-[#EA5713] focus:ring-[#EA5713]">
               <span>Remember Me</span>
             </label>
-            <a href="javascript:void(0)" onclick="alert('Vui lòng liên hệ Quản trị viên (Admin) hoặc sử dụng mật khẩu mặc định: 123456')" class="text-blue-700 hover:text-blue-800 hover:underline font-medium">
+            <a href="javascript:void(0)" onclick="alert('Vui lòng liên hệ Quản trị viên (Admin) để được cấp lại mật khẩu.')" class="text-blue-700 hover:text-blue-800 hover:underline font-medium">
               Forgot Password
             </a>
           </div>
@@ -113,52 +113,6 @@
             <a href="/static/crm-xaydung.apk" download="FECON-CRM.apk" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-lg shadow transition flex items-center gap-1.5">
               <i class="fa-solid fa-download"></i> Tải APK
             </a>
-          </div>
-
-          <!-- Demo Accounts Helper Toggle -->
-          <div>
-            <button type="button" onclick="toggleAccountsHelper()" class="w-full text-center text-[11px] text-slate-500 hover:text-blue-600 font-medium py-1 flex items-center justify-center gap-1.5">
-              <i class="fa-solid fa-circle-info text-blue-500"></i> Danh mục tài khoản mẫu (Demo)
-              <i id="helper-chevron" class="fa-solid fa-chevron-down text-[9px] transition-transform"></i>
-            </button>
-
-            <div id="accounts-helper-box" class="hidden mt-2 p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] space-y-2 text-left">
-              <div class="text-slate-500 italic text-[10px]">
-                * Mật khẩu mặc định hệ thống: <span class="font-mono font-bold text-amber-600">123456</span>
-              </div>
-              <div class="space-y-1">
-                <div class="font-bold text-slate-800 text-[10px] uppercase">👑 Ban Lãnh Đạo (Admin):</div>
-                <div onclick="fillLoginCredentials('admin')" class="flex items-center justify-between bg-white p-1.5 rounded border border-slate-200 cursor-pointer hover:border-amber-400 transition">
-                  <span class="font-mono font-bold text-amber-700">admin</span>
-                  <span class="text-slate-500 text-[10px]">Chủ Tịch & TGĐ</span>
-                </div>
-              </div>
-              <div class="space-y-1">
-                <div class="font-bold text-slate-800 text-[10px] uppercase">💼 GĐKD 5 SBU:</div>
-                <div class="grid grid-cols-2 gap-1 text-[10px]">
-                  <div onclick="fillLoginCredentials('gdkd_sbu1')" class="bg-white p-1 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400">
-                    <span class="font-mono font-bold text-blue-700">gdkd_sbu1</span>
-                    <span class="text-slate-500">SBU 1</span>
-                  </div>
-                  <div onclick="fillLoginCredentials('gdkd_sbu2')" class="bg-white p-1 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400">
-                    <span class="font-mono font-bold text-blue-700">gdkd_sbu2</span>
-                    <span class="text-slate-500">SBU 2</span>
-                  </div>
-                  <div onclick="fillLoginCredentials('gdkd_sbu3')" class="bg-white p-1 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400">
-                    <span class="font-mono font-bold text-blue-700">gdkd_sbu3</span>
-                    <span class="text-slate-500">SBU 3</span>
-                  </div>
-                  <div onclick="fillLoginCredentials('gdkd_sbu4')" class="bg-white p-1 rounded border border-slate-200 flex justify-between cursor-pointer hover:border-blue-400">
-                    <span class="font-mono font-bold text-blue-700">gdkd_sbu4</span>
-                    <span class="text-slate-500">SBU 4</span>
-                  </div>
-                  <div onclick="fillLoginCredentials('gdkd_sbu5')" class="bg-white p-1 rounded border border-slate-200 flex justify-between col-span-2 cursor-pointer hover:border-blue-400">
-                    <span class="font-mono font-bold text-blue-700">gdkd_sbu5</span>
-                    <span class="text-slate-500">SBU 5</span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 

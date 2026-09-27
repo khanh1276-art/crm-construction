@@ -30,8 +30,6 @@ import com.example.crmxaydung.data.ApiClient
 import com.example.crmxaydung.data.UserSession
 import kotlinx.coroutines.launch
 
-data class DemoUser(val username: String, val name: String, val sbu: String, val role: String)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
@@ -50,13 +48,12 @@ fun LoginScreen(
         ApiClient.baseUrl = serverUrl
     }
 
-    var username by remember { mutableStateOf("admin") }
-    var password by remember { mutableStateOf("123456") }
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(true) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var showDemoHelper by remember { mutableStateOf(false) }
     var showServerSettings by remember { mutableStateOf(false) }
     var isCheckingHealth by remember { mutableStateOf(false) }
     var healthMessage by remember { mutableStateOf<String?>(null) }
@@ -64,16 +61,6 @@ fun LoginScreen(
 
     val deepNavyBlue = Color(0xFF0A3583)
     val feconOrange = Color(0xFFEA5713)
-
-    val demoUsers = listOf(
-        DemoUser("admin", "Chủ Tịch & TGĐ", "ALL", "Ban Lãnh Đạo"),
-        DemoUser("gdkd_sbu1", "KS. Đỗ Hoàng Long", "SBU1", "Nền móng & Hầm"),
-        DemoUser("gdkd_sbu2", "ThS. Nguyễn Quốc Thái", "SBU2", "Năng lượng"),
-        DemoUser("gdkd_sbu3", "KS. Vũ Trọng Khôi", "SBU3", "Metro đô thị"),
-        DemoUser("gdkd_sbu4", "ThS. Lê Thành Trung", "SBU4", "ĐS cao tốc"),
-        DemoUser("gdkd_sbu5", "KS. Trần Đình Bách", "SBU5", "Cảng biển"),
-        DemoUser("ctv_hanoi", "CTV Nguyễn Văn Hùng", "SBU1", "Cộng tác viên")
-    )
 
     Box(
         modifier = Modifier
@@ -228,7 +215,7 @@ fun LoginScreen(
                                 color = Color(0xFF1D4ED8),
                                 fontWeight = FontWeight.Medium,
                                 modifier = Modifier.clickable {
-                                    errorMessage = "Mật khẩu mặc định hệ thống cấp: 123456"
+                                    errorMessage = "Vui lòng liên hệ Quản trị viên (Admin) để được cấp lại mật khẩu."
                                 }
                             )
                         }
@@ -288,52 +275,6 @@ fun LoginScreen(
                         }
 
                         Spacer(modifier = Modifier.height(14.dp))
-
-                        // Quick Demo Accounts Toggle
-                        TextButton(
-                            onClick = { showDemoHelper = !showDemoHelper },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = if (showDemoHelper) "Ẩn danh mục tài khoản mẫu ▲" else "ℹ️ Danh mục tài khoản mẫu (Demo) ▼",
-                                color = Color(0xFF2563EB),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-
-                        if (showDemoHelper) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color(0xFFF8FAFC), RoundedCornerShape(10.dp))
-                                    .padding(10.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Text("Mật khẩu: 123456 (Chạm để tự điền):", fontSize = 10.sp, color = Color.Gray)
-                                demoUsers.forEach { u ->
-                                    Surface(
-                                        color = Color.White,
-                                        shape = RoundedCornerShape(6.dp),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                username = u.username
-                                                password = "123456"
-                                            }
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(u.username, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = feconOrange)
-                                            Text("${u.name} • ${u.role}", fontSize = 10.sp, color = Color.DarkGray)
-                                        }
-                                    }
-                                }
-                            }
-                        }
 
                         // Server Settings Toggle (Compact)
                         TextButton(

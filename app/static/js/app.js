@@ -186,30 +186,12 @@ async function handleScreenLogin(e) {
 function handleLogout() {
   localStorage.removeItem('crm_auth_user');
   currentUser = null;
+  const userEl = document.getElementById('screen-login-username');
   const passEl = document.getElementById('screen-login-password');
-  if (passEl) passEl.value = '123456';
+  if (userEl) userEl.value = '';
+  if (passEl) passEl.value = '';
   showLoginScreen();
   showToast("Đã đăng xuất khỏi hệ thống!");
-}
-
-function toggleAccountsHelper() {
-  const box = document.getElementById('accounts-helper-box');
-  const chevron = document.getElementById('helper-chevron');
-  if (!box) return;
-  const isHidden = box.classList.toggle('hidden');
-  if (chevron) {
-    chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
-  }
-}
-
-function fillLoginCredentials(username) {
-  const uInput = document.getElementById('screen-login-username');
-  const pInput = document.getElementById('screen-login-password');
-  if (uInput) uInput.value = username;
-  if (pInput) {
-    pInput.value = '123456';
-    pInput.focus();
-  }
 }
 
 function togglePasswordVisibility(inputId) {

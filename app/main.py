@@ -50,6 +50,10 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 def get_executive_portal():
     return FileResponse(str(STATIC_DIR / "index.html"))
 
+@app.get("/manifest.json")
+def get_manifest():
+    return FileResponse(str(STATIC_DIR / "manifest.json"), media_type="application/json")
+
 import os
 from app.database import DB_PATH
 

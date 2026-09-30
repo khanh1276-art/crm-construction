@@ -254,16 +254,22 @@ function applyUserRoleState() {
   }
 
   const pillsBar = document.getElementById('sbu-pills-bar');
+  const mobSbuBar = document.getElementById('mobile-sbu-bar');
   const bannerBadge = document.getElementById('banner-role-badge');
   const dashTitle = document.getElementById('dashboard-title');
   const dashSub = document.getElementById('dashboard-subtitle');
   const sbuBadge = document.getElementById('sidebar-sbu-name');
   const navUsers = document.getElementById('nav-users');
+  const mobNavUsers = document.getElementById('mob-nav-users');
+  const mobBottomNav = document.getElementById('mobile-bottom-nav-grid');
 
   if (currentUser.role === 'ADMIN') {
     // Leadership (Admin)
     if (pillsBar) pillsBar.classList.remove('hidden');
+    if (mobSbuBar) mobSbuBar.classList.remove('hidden');
     if (navUsers) navUsers.classList.remove('hidden');
+    if (mobNavUsers) mobNavUsers.classList.remove('hidden');
+    if (mobBottomNav) mobBottomNav.className = 'grid grid-cols-6 h-16 items-center px-1 text-center';
     currentSBU = "ALL";
     if (bannerBadge) bannerBadge.innerText = "Cổng Điều Hành Ban Lãnh Đạo (Admin)";
     if (dashTitle) dashTitle.innerText = "Báo Cáo Điều Hành Khách Hàng & Kinh Doanh";
@@ -273,7 +279,10 @@ function applyUserRoleState() {
     // Collaborator (CTV)
     currentSBU = currentUser.sbu;
     if (pillsBar) pillsBar.classList.toggle('hidden', currentUser.sbu !== 'ALL');
+    if (mobSbuBar) mobSbuBar.classList.toggle('hidden', currentUser.sbu !== 'ALL');
     if (navUsers) navUsers.classList.add('hidden');
+    if (mobNavUsers) mobNavUsers.classList.add('hidden');
+    if (mobBottomNav) mobBottomNav.className = 'grid grid-cols-5 h-16 items-center px-1 text-center';
     if (currentTab === 'users') switchTab('dashboard');
 
     if (bannerBadge) bannerBadge.innerText = "Cổng Kết Nối Dành Cho Cộng Tác Viên (CTV)";
@@ -284,7 +293,10 @@ function applyUserRoleState() {
     // SBU Director (Member)
     currentSBU = currentUser.sbu;
     if (pillsBar) pillsBar.classList.add('hidden');
+    if (mobSbuBar) mobSbuBar.classList.add('hidden');
     if (navUsers) navUsers.classList.add('hidden');
+    if (mobNavUsers) mobNavUsers.classList.add('hidden');
+    if (mobBottomNav) mobBottomNav.className = 'grid grid-cols-5 h-16 items-center px-1 text-center';
     if (currentTab === 'users') switchTab('dashboard');
 
     const sbuCfg = SBU_CONFIG[currentSBU] || { name: currentSBU };
@@ -334,6 +346,13 @@ function updatePillStyles() {
   });
   const activeBtn = document.getElementById(`pill-${currentSBU}`);
   if (activeBtn) activeBtn.className = 'sbu-filter-pill px-2.5 py-1.5 rounded-lg transition bg-amber-400 text-slate-950 font-bold';
+
+  // Update mobile SBU scrollbar pills
+  document.querySelectorAll('.mob-sbu-pill').forEach(btn => {
+    btn.className = 'mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 text-slate-300 bg-slate-800 border border-slate-700 transition';
+  });
+  const activeMobBtn = document.getElementById(`mob-pill-${currentSBU}`);
+  if (activeMobBtn) activeMobBtn.className = 'mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 transition bg-amber-400 text-slate-950 font-bold shadow-sm';
 }
 
 function refreshAllData() {
@@ -359,6 +378,7 @@ function switchTab(tabName) {
   tabs.forEach(t => {
     const el = document.getElementById(`tab-${t}`);
     const nav = document.getElementById(`nav-${t}`);
+    const mobNav = document.getElementById(`mob-nav-${t}`);
     if (el) el.classList.toggle('hidden', t !== tabName);
     if (nav) {
       if (t === tabName) {
@@ -367,7 +387,17 @@ function switchTab(tabName) {
         nav.className = 'nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-slate-600 hover:bg-slate-50 transition';
       }
     }
+    if (mobNav) {
+      if (t === tabName) {
+        mobNav.className = 'mobile-nav-btn flex flex-col items-center justify-center py-1 text-[#EA5713] font-black transition';
+      } else {
+        mobNav.className = 'mobile-nav-btn flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-600 font-medium transition';
+      }
+    }
   });
+
+  // Scroll to top on tab switch
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 
   if (tabName === 'dashboard') loadDashboard();
   if (tabName === 'customers') loadCustomers();

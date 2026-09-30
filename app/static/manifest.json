@@ -1,0 +1,24 @@
+{
+  "name": "FECON CRM - Quản Trị Khách Hàng Chiến Lược",
+  "short_name": "FECON CRM",
+  "description": "Hệ thống Quản trị & Chăm sóc Khách hàng Chiến lược 5 Khối SBU FECON",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A3583",
+  "theme_color": "#EA5713",
+  "icons": [
+    {
+      "src": "/static/img/fecon_crm_logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/img/fecon_crm_logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

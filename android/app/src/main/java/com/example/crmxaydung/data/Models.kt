@@ -90,7 +90,12 @@ data class ProjectItem(
     val keyDecisionMaker: String = "",
     val decisionMakerPhone: String = "",
     val headquarters: String = "",
-    val milestones: List<MilestoneItem> = emptyList()
+    val milestones: List<MilestoneItem> = emptyList(),
+    // FECON Project Level Classification
+    val projectLevel: String = "LEVEL_4",
+    val projectLevelName: String = "Dự án Cấp 4",
+    val approverAuthority: String = "Phó Tổng Giám đốc phụ trách các mảng SBU",
+    val approverShort: String = "PTGĐ phụ trách SBU"
 )
 
 data class CareActivityItem(
@@ -104,7 +109,15 @@ data class CareActivityItem(
     val occurredAt: String,
     val leaderInCharge: String,
     val outcomeStatus: String,
-    val cost: Double = 0.0
+    val cost: Double = 0.0,
+    // Linked project & Approval authority
+    val projectId: Int? = null,
+    val projectName: String = "",
+    val projectCode: String = "",
+    val projectContractValue: Double = 0.0,
+    val projectLevel: String = "",
+    val approverAuthority: String = "",
+    val approvalStatus: String = "APPROVED"
 )
 
 data class UserItem(
@@ -133,5 +146,10 @@ data class PipelineBidItem(
     val assignedDirector: String = "",
     val biddingNotes: String = "",
     val keyDecisionMaker: String = "",
-    val decisionMakerPhone: String = ""
+    val decisionMakerPhone: String = "",
+    // FECON Project Level Classification
+    val projectLevel: String = "LEVEL_4",
+    val projectLevelName: String = "Dự án Cấp 4",
+    val approverAuthority: String = "Phó Tổng Giám đốc phụ trách các mảng SBU",
+    val approverShort: String = "PTGĐ phụ trách SBU"
 )

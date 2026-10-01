@@ -1407,14 +1407,24 @@ async function loadPipeline() {
             ${items.length > 0 ? items.map(item => {
               const canEditBid = currentUser.role === 'ADMIN' || currentUser.sbu === item.sbu;
 
+              const cls = classifyFeconProject(item.estimated_value);
+
               return `
                 <div onclick="openBidDetailModal(${item.id})" class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs hover-card space-y-2 cursor-pointer hover:border-purple-400 transition" title="Bấm để xem chi tiết & cập nhật trạng thái gói thầu">
                   <div class="flex items-center justify-between">
-                    ${getSBUBadge(item.sbu)}
+                    <div class="flex items-center gap-1.5">
+                      ${getSBUBadge(item.sbu)}
+                      <span class="px-1.5 py-0.5 rounded text-[9px] font-black border ${cls.colorClass}">
+                        ${cls.badge}
+                      </span>
+                    </div>
                     <span class="text-[10px] font-black text-purple-700">${item.win_rate}% Win</span>
                   </div>
                   <div class="font-extrabold text-slate-900 text-xs leading-snug">${item.project_title}</div>
                   <div class="text-[11px] text-slate-500">${item.customer_name}</div>
+                  <div class="text-[10px] text-indigo-900 font-medium">
+                    Duyệt CSKH: <b class="font-bold">${cls.approver_short}</b>
+                  </div>
                   <div class="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
                     <span class="font-black text-slate-900">${formatVND(item.estimated_value)}</span>
                     <div class="flex items-center gap-1" onclick="event.stopPropagation()">
@@ -1460,6 +1470,17 @@ async function openBidDetailModal(bidId) {
     document.getElementById('bid-detail-deadline').textContent = bid.tender_deadline || 'Chưa thiết lập';
     document.getElementById('bid-detail-director').textContent = bid.assigned_director || 'Chưa chỉ định';
     
+    const cls = classifyFeconProject(bid.estimated_value);
+    const lvlBadge = document.getElementById('bid-detail-level-badge');
+    const approverEl = document.getElementById('bid-detail-approver');
+    if (lvlBadge) {
+      lvlBadge.textContent = cls.badge;
+      lvlBadge.className = `px-2 py-0.5 rounded-full font-bold text-[10px] border ${cls.colorClass}`;
+    }
+    if (approverEl) {
+      approverEl.textContent = cls.approver_authority;
+    }
+
     const sbuBadge = document.getElementById('bid-detail-sbu-badge');
     if (sbuBadge) {
       sbuBadge.textContent = bid.sbu;
@@ -1595,6 +1616,7 @@ function openNewBidModal() {
     sbuSelect.disabled = false;
     if (currentSBU !== 'ALL') sbuSelect.value = currentSBU;
   }
+  updateBidLevelPreview();
   openModal('modal-bid');
 }
 
@@ -1634,81 +1656,206 @@ async function handleBidSubmit(e) {
 // ==========================================
 // 5. PROJECTS & CASHFLOW TRACKING LOGIC
 // ==========================================
+function classifyFeconProject(val) {
+  const v = parseFloat(val) || 0;
+  if (v >= 500000000000) {
+    return {
+      level: "LEVEL_SPECIAL",
+      code: "ĐẶC BIỆT",
+      name: "Dự án Cấp Đặc Biệt",
+      badge: "Cấp Đặc Biệt (≥ 500 Tỷ)",
+      approver_authority: "Chủ tịch HĐQT quyết định",
+      approver_short: "Chủ tịch HĐQT",
+      colorClass: "bg-purple-100 text-purple-800 border-purple-200",
+      accentBg: "bg-purple-600 text-white"
+    };
+  } else if (v >= 300000000000) {
+    return {
+      level: "LEVEL_1",
+      code: "CẤP 1",
+      name: "Dự án Cấp 1",
+      badge: "Cấp 1 (300 - < 500 Tỷ)",
+      approver_authority: "Tổng Giám đốc (hoặc PTGĐ có ủy quyền của Chủ tịch)",
+      approver_short: "Tổng Giám đốc (hoặc PTGĐ ủy quyền)",
+      colorClass: "bg-rose-100 text-rose-800 border-rose-200",
+      accentBg: "bg-rose-600 text-white"
+    };
+  } else if (v >= 150000000000) {
+    return {
+      level: "LEVEL_2",
+      code: "CẤP 2",
+      name: "Dự án Cấp 2",
+      badge: "Cấp 2 (150 - < 300 Tỷ)",
+      approver_authority: "Phó Tổng Giám đốc phụ trách các mảng SBU",
+      approver_short: "PTGĐ phụ trách SBU",
+      colorClass: "bg-amber-100 text-amber-900 border-amber-200",
+      accentBg: "bg-amber-500 text-slate-950"
+    };
+  } else if (v >= 50000000000) {
+    return {
+      level: "LEVEL_3",
+      code: "CẤP 3",
+      name: "Dự án Cấp 3",
+      badge: "Cấp 3 (50 - < 150 Tỷ)",
+      approver_authority: "Phó Tổng Giám đốc phụ trách các mảng SBU",
+      approver_short: "PTGĐ phụ trách SBU",
+      colorClass: "bg-blue-100 text-blue-800 border-blue-200",
+      accentBg: "bg-blue-600 text-white"
+    };
+  } else {
+    return {
+      level: "LEVEL_4",
+      code: "CẤP 4",
+      name: "Dự án Cấp 4",
+      badge: "Cấp 4 (< 50 Tỷ)",
+      approver_authority: "Phó Tổng Giám đốc phụ trách các mảng SBU",
+      approver_short: "PTGĐ phụ trách SBU",
+      colorClass: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      accentBg: "bg-emerald-600 text-white"
+    };
+  }
+}
+
+function updateProjectLevelPreview() {
+  const val = parseFloat(document.getElementById('proj-val')?.value) || 0;
+  const cls = classifyFeconProject(val);
+  const badgeEl = document.getElementById('proj-level-badge');
+  const approverEl = document.getElementById('proj-approver-text');
+  if (badgeEl) {
+    badgeEl.textContent = cls.badge;
+    badgeEl.className = `px-2 py-0.5 rounded-full font-bold border ${cls.colorClass}`;
+  }
+  if (approverEl) {
+    approverEl.textContent = cls.approver_authority;
+  }
+}
+
+function updateBidLevelPreview() {
+  const val = parseFloat(document.getElementById('bid-val')?.value) || 0;
+  const cls = classifyFeconProject(val);
+  const badgeEl = document.getElementById('bid-level-badge');
+  const approverEl = document.getElementById('bid-approver-text');
+  if (badgeEl) {
+    badgeEl.textContent = cls.badge;
+    badgeEl.className = `px-2 py-0.5 rounded-full font-bold border ${cls.colorClass}`;
+  }
+  if (approverEl) {
+    approverEl.textContent = cls.approver_authority;
+  }
+}
+
+let currentProjectLevelFilter = 'ALL';
+
+function filterProjectsByLevel(lvl) {
+  currentProjectLevelFilter = lvl;
+  document.querySelectorAll('.btn-proj-filter').forEach(btn => {
+    if (btn.getAttribute('data-level') === lvl) {
+      btn.className = "btn-proj-filter px-3 py-1.5 rounded-xl font-bold bg-[#0A3583] text-white shadow-xs";
+    } else {
+      btn.className = "btn-proj-filter px-3 py-1.5 rounded-xl font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50";
+    }
+  });
+  renderProjectsList();
+}
+
 async function loadProjects() {
   try {
     const sbuParam = currentSBU !== 'ALL' ? `?sbu=${currentSBU}` : '';
     const res = await authFetch(`/api/projects${sbuParam}`);
     allProjects = await res.json();
-
-    const container = document.getElementById('projects-container');
-    if (!container) return;
-
-    if (allProjects.length === 0) {
-      container.innerHTML = '<div class="col-span-2 text-center text-slate-400 text-xs py-8">Chưa có dự án nào.</div>';
-      return;
-    }
-
-    container.innerHTML = allProjects.map(p => {
-      const canEdit = currentUser.role === 'ADMIN' || (currentUser.role === 'SBU_DIRECTOR' && currentUser.sbu === p.sbu);
-      const canDelete = currentUser.role === 'ADMIN';
-
-      return `
-        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover-card space-y-3">
-          <div class="flex items-start justify-between gap-2">
-            <div>
-              <div class="flex items-center gap-2">
-                ${getSBUBadge(p.sbu)}
-                <span class="text-xs font-mono font-bold text-slate-400">${p.code}</span>
-              </div>
-              <h3 class="font-black text-slate-900 text-sm mt-1">${p.name}</h3>
-              <p class="text-xs text-slate-500">${p.customer_name} • ${p.key_decision_maker || ''}</p>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${p.project_health === 'GOOD' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}">
-                ${p.project_health === 'GOOD' ? '🟢 Tiến độ tốt' : '🟡 Cần lưu ý'}
-              </span>
-              ${canDelete ? `
-                <button onclick="deleteProject(${p.id})" class="p-1 text-slate-300 hover:text-rose-600 transition" title="Xóa dự án (Admin)">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              ` : ''}
-            </div>
-          </div>
-
-          <div>
-            <div class="flex justify-between text-xs font-bold mb-1">
-              <span class="text-slate-600">Tiến độ thi công cam kết:</span>
-              <span class="text-emerald-600">${p.progress_percent}%</span>
-            </div>
-            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-              <div class="bg-emerald-500 h-2.5 rounded-full" style="width: ${p.progress_percent}%"></div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-xl text-xs">
-            <div>
-              <div class="text-[10px] uppercase font-bold text-slate-400">Tổng Giá Trị Hợp Đồng</div>
-              <div class="font-black text-slate-900">${formatVND(p.contract_value)}</div>
-            </div>
-            <div>
-              <div class="text-[10px] uppercase font-bold text-slate-400">Đã Giải Ngân Thực Tế</div>
-              <div class="font-black text-emerald-600">${formatVND(p.paid_amount)}</div>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between text-[11px] pt-1 text-slate-500">
-            <div>GĐKD phụ trách: <span class="font-bold text-slate-700">${p.project_director || 'Đang cập nhật'}</span></div>
-            <button onclick="viewProjectCashflow(${p.id})" class="text-blue-600 font-bold hover:underline">
-              Xem Mốc Dòng Tiền &gt;
-            </button>
-          </div>
-        </div>
-      `;
-    }).join('');
-
+    renderProjectsList();
   } catch (err) {
     console.error("Error loading projects:", err);
   }
+}
+
+function renderProjectsList() {
+  const container = document.getElementById('projects-container');
+  if (!container) return;
+
+  const filtered = allProjects.filter(p => {
+    if (currentProjectLevelFilter === 'ALL') return true;
+    const cls = classifyFeconProject(p.contract_value);
+    const pLevel = p.project_level || cls.level;
+    return pLevel === currentProjectLevelFilter;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="col-span-2 text-center text-slate-400 text-xs py-8 bg-white rounded-2xl border border-slate-200">Không có dự án nào phù hợp với bộ lọc cấp này.</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(p => {
+    const canEdit = currentUser.role === 'ADMIN' || (currentUser.role === 'SBU_DIRECTOR' && currentUser.sbu === p.sbu);
+    const canDelete = currentUser.role === 'ADMIN';
+    const cls = classifyFeconProject(p.contract_value);
+
+    return `
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover-card space-y-3">
+        <div class="flex items-start justify-between gap-2">
+          <div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              ${getSBUBadge(p.sbu)}
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black border ${cls.colorClass}">
+                ${cls.badge}
+              </span>
+              <span class="text-xs font-mono font-bold text-slate-400">${p.code}</span>
+            </div>
+            <h3 class="font-black text-slate-900 text-sm mt-1.5">${p.name}</h3>
+            <p class="text-xs text-slate-500">${p.customer_name} • ${p.key_decision_maker || ''}</p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${p.project_health === 'GOOD' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}">
+              ${p.project_health === 'GOOD' ? '🟢 Tiến độ tốt' : '🟡 Cần lưu ý'}
+            </span>
+            ${canDelete ? `
+              <button onclick="deleteProject(${p.id})" class="p-1 text-slate-300 hover:text-rose-600 transition" title="Xóa dự án (Admin)">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            ` : ''}
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs font-bold mb-1">
+            <span class="text-slate-600">Tiến độ thi công cam kết:</span>
+            <span class="text-emerald-600">${p.progress_percent}%</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+            <div class="bg-emerald-500 h-2.5 rounded-full" style="width: ${p.progress_percent}%"></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-xl text-xs">
+          <div>
+            <div class="text-[10px] uppercase font-bold text-slate-400">Tổng Giá Trị Hợp Đồng</div>
+            <div class="font-black text-slate-900">${formatVND(p.contract_value)}</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase font-bold text-slate-400">Đã Giải Ngân Thực Tế</div>
+            <div class="font-black text-emerald-600">${formatVND(p.paid_amount)}</div>
+          </div>
+        </div>
+
+        <!-- Approval Authority Indicator -->
+        <div class="p-2.5 bg-blue-50/70 rounded-xl border border-blue-200/60 flex items-center justify-between text-[11px]">
+          <div class="text-slate-600 font-medium">
+            <i class="fa-solid fa-stamp text-blue-600 mr-1"></i> Thẩm quyền duyệt chi phí CSKH:
+          </div>
+          <div class="font-extrabold text-blue-950 text-right">
+            ${p.approver_short || cls.approver_short}
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-[11px] pt-1 text-slate-500">
+          <div>GĐKD phụ trách: <span class="font-bold text-slate-700">${p.project_director || 'Đang cập nhật'}</span></div>
+          <button onclick="viewProjectCashflow(${p.id})" class="text-blue-600 font-bold hover:underline">
+            Xem Mốc Dòng Tiền &gt;
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 async function viewProjectCashflow(id) {
@@ -1716,13 +1863,17 @@ async function viewProjectCashflow(id) {
     const res = await authFetch(`/api/projects/${id}`);
     const p = await res.json();
     const canEdit = currentUser.role === 'ADMIN' || currentUser.sbu === p.sbu;
+    const cls = classifyFeconProject(p.contract_value);
 
     const content = `
       <div class="space-y-4">
         <div class="flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               ${getSBUBadge(p.sbu)}
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-black border ${cls.colorClass}">
+                ${cls.badge}
+              </span>
               <span class="font-mono text-xs text-slate-400 font-bold">${p.code}</span>
             </div>
             <h3 class="font-black text-slate-900 text-base mt-1">${p.name}</h3>
@@ -1732,6 +1883,17 @@ async function viewProjectCashflow(id) {
             <div class="text-xs text-slate-400">Tổng giá trị</div>
             <div class="text-base font-black text-slate-900">${formatVND(p.contract_value)}</div>
           </div>
+        </div>
+
+        <!-- Approval Box -->
+        <div class="p-3 bg-purple-50/70 border border-purple-200 rounded-xl flex items-center justify-between text-xs">
+          <div>
+            <span class="text-slate-500 font-medium">Thẩm quyền phê duyệt chi phí CSKH:</span>
+            <div class="font-black text-purple-900 mt-0.5">${p.approver_authority || cls.approver_authority}</div>
+          </div>
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-black ${cls.accentBg}">
+            ${cls.code}
+          </span>
         </div>
 
         <div>
@@ -1804,6 +1966,7 @@ function openNewProjectModal() {
     sbuSelect.disabled = false;
     if (currentSBU !== 'ALL') sbuSelect.value = currentSBU;
   }
+  updateProjectLevelPreview();
   openModal('modal-project');
 }
 
@@ -1889,25 +2052,61 @@ async function loadCareActivities() {
       "CALL_DISCUSS": "Điện đàm ngoại giao"
     };
 
-    container.innerHTML = activities.map(a => `
-      <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            ${getSBUBadge(a.sbu)}
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700">${typeLabels[a.activity_type] || a.activity_type}</span>
-            <span class="font-extrabold text-slate-900 text-xs">${a.title}</span>
+    container.innerHTML = activities.map(a => {
+      let levelBadge = '';
+      if (a.project_level === 'LEVEL_SPECIAL' || (a.project_contract_value >= 500000000000)) {
+        levelBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-200">Cấp Đặc Biệt</span>`;
+      } else if (a.project_level === 'LEVEL_1' || (a.project_contract_value >= 300000000000)) {
+        levelBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">Cấp 1</span>`;
+      } else if (a.project_level === 'LEVEL_2' || (a.project_contract_value >= 150000000000)) {
+        levelBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-200">Cấp 2</span>`;
+      } else if (a.project_level === 'LEVEL_3' || (a.project_contract_value >= 50000000000)) {
+        levelBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">Cấp 3</span>`;
+      } else if (a.project_level === 'LEVEL_4' || (a.project_contract_value > 0)) {
+        levelBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">Cấp 4</span>`;
+      } else {
+        levelBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">CSKH Chung</span>`;
+      }
+
+      return `
+        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              ${getSBUBadge(a.sbu)}
+              ${levelBadge}
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700">${typeLabels[a.activity_type] || a.activity_type}</span>
+              <span class="font-extrabold text-slate-900 text-xs">${a.title}</span>
+            </div>
+            <span class="text-[11px] text-slate-400 font-mono">${a.occurred_at}</span>
           </div>
-          <span class="text-[11px] text-slate-400 font-mono">${a.occurred_at}</span>
-        </div>
 
-        <p class="text-xs text-slate-600 leading-relaxed">${a.content || ''}</p>
+          ${a.project_name ? `
+            <div class="text-[11px] font-semibold text-slate-700 bg-white p-2 rounded-lg border border-slate-200/60 flex items-center justify-between">
+              <span><i class="fa-solid fa-folder-closed text-amber-500 mr-1.5"></i> Dự án liên quan: <b>${a.project_name}</b> (${a.project_code || ''})</span>
+              <span class="font-black text-slate-800">${formatVND(a.project_contract_value)}</span>
+            </div>
+          ` : ''}
 
-        <div class="flex items-center justify-between text-[11px] pt-1 text-slate-500 border-t border-slate-200/60">
-          <div>Đối tác: <b class="text-slate-800">${a.customer_name}</b> (${a.key_decision_maker})</div>
-          <div class="text-blue-700 font-bold">Lãnh đạo tham gia: ${a.leader_in_charge}</div>
+          <p class="text-xs text-slate-600 leading-relaxed">${a.content || ''}</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 bg-white rounded-lg border border-slate-100 text-[11px]">
+            <div>
+              <span class="text-slate-400">Chi phí tiếp khách:</span>
+              <b class="text-rose-600 ml-1 font-mono">${formatVND(a.cost || 0)}</b>
+            </div>
+            <div class="text-left sm:text-right">
+              <span class="text-slate-400">Thẩm quyền duyệt:</span>
+              <b class="text-purple-900 ml-1">${a.approver_authority || 'PTGĐ phụ trách SBU'}</b>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-[11px] pt-1 text-slate-500 border-t border-slate-200/60">
+            <div>Đối tác: <b class="text-slate-800">${a.customer_name}</b> (${a.key_decision_maker || ''})</div>
+            <div class="text-blue-700 font-bold">Lãnh đạo tham gia: ${a.leader_in_charge}</div>
+          </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
   } catch (err) {
     console.error("Error loading care activities:", err);
@@ -1917,11 +2116,77 @@ async function loadCareActivities() {
 function openNewCareModal() {
   const custSelect = document.getElementById('care-customer');
   if (custSelect) {
-    custSelect.innerHTML = allCustomers.map(c => `<option value="${c.id}" data-sbu="${c.sbu}">${c.name} (${c.key_decision_maker})</option>`).join('');
+    custSelect.innerHTML = allCustomers.map(c => `<option value="${c.id}" data-sbu="${c.sbu}" data-tier="${c.tier}">${c.name} (${c.key_decision_maker || ''})</option>`).join('');
   }
   document.getElementById('care-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('care-leader').value = currentUser.full_name;
+  onCareCustomerChange();
   openModal('modal-care');
+}
+
+function onCareCustomerChange() {
+  const custSelect = document.getElementById('care-customer');
+  const projSelect = document.getElementById('care-project');
+  if (!custSelect || !projSelect) return;
+
+  const custId = parseInt(custSelect.value, 10);
+  const relevantProjects = allProjects.filter(p => p.customer_id === custId);
+
+  let opts = '<option value="">-- Tiếp khách / CSKH Chung (Theo Hạng Đối Tác) --</option>';
+  relevantProjects.forEach(p => {
+    const cls = classifyFeconProject(p.contract_value);
+    opts += `<option value="${p.id}" data-val="${p.contract_value}" data-level="${cls.level}" data-approver="${cls.approver_authority}">[${cls.code}] ${p.name} - ${formatVND(p.contract_value)}</option>`;
+  });
+  // Also append other projects in case user wants to link
+  const otherProjects = allProjects.filter(p => p.customer_id !== custId);
+  if (otherProjects.length > 0) {
+    opts += '<optgroup label="Các dự án khác">';
+    otherProjects.forEach(p => {
+      const cls = classifyFeconProject(p.contract_value);
+      opts += `<option value="${p.id}" data-val="${p.contract_value}" data-level="${cls.level}" data-approver="${cls.approver_authority}">[${cls.code}] ${p.name} (${p.sbu})</option>`;
+    });
+    opts += '</optgroup>';
+  }
+
+  projSelect.innerHTML = opts;
+  onCareProjectChange();
+}
+
+function onCareProjectChange() {
+  const projSelect = document.getElementById('care-project');
+  const custSelect = document.getElementById('care-customer');
+  const badgeEl = document.getElementById('care-level-badge');
+  const approverEl = document.getElementById('care-approver-badge');
+  if (!badgeEl || !approverEl) return;
+
+  const projId = projSelect?.value;
+  if (projId) {
+    const p = allProjects.find(x => x.id === parseInt(projId, 10));
+    if (p) {
+      const cls = classifyFeconProject(p.contract_value);
+      badgeEl.textContent = cls.badge;
+      badgeEl.className = `px-2 py-0.5 rounded-full font-bold border ${cls.colorClass}`;
+      approverEl.textContent = cls.approver_authority;
+      return;
+    }
+  }
+
+  // Fallback to customer tier policy
+  const custOpt = custSelect?.options[custSelect?.selectedIndex];
+  const tier = custOpt?.getAttribute('data-tier') || 'GOLD';
+  if (tier === 'DIAMOND') {
+    badgeEl.textContent = '💎 Kim Cương';
+    badgeEl.className = 'px-2 py-0.5 rounded-full font-bold bg-purple-100 text-purple-800 border border-purple-200';
+    approverEl.textContent = 'Chủ tịch HĐQT / TGĐ trực tiếp duyệt';
+  } else if (tier === 'GOLD') {
+    badgeEl.textContent = '🥇 Hạng Vàng';
+    badgeEl.className = 'px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-900 border border-amber-200';
+    approverEl.textContent = 'TGĐ / SBU Leader phụ trách phê duyệt';
+  } else {
+    badgeEl.textContent = '🥈 Hạng Bạc';
+    badgeEl.className = 'px-2 py-0.5 rounded-full font-bold bg-slate-100 text-slate-800 border border-slate-200';
+    approverEl.textContent = 'SBU Leader / GĐKD phụ trách phê duyệt';
+  }
 }
 
 async function handleCareSubmit(e) {
@@ -1930,9 +2195,12 @@ async function handleCareSubmit(e) {
   const custId = parseInt(custSelect.value);
   const custOpt = custSelect.options[custSelect.selectedIndex];
   const sbu = custOpt ? custOpt.getAttribute('data-sbu') : (currentSBU !== 'ALL' ? currentSBU : 'SBU1');
+  const projSelect = document.getElementById('care-project');
+  const projId = projSelect && projSelect.value ? parseInt(projSelect.value, 10) : null;
 
   const payload = {
     customer_id: custId,
+    project_id: projId,
     sbu: sbu,
     activity_type: document.getElementById('care-type').value,
     occurred_at: document.getElementById('care-date').value,

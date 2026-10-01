@@ -69,6 +69,67 @@ def resolve_db_path() -> Path:
 
 DB_PATH = resolve_db_path()
 
+def classify_fecon_project(val: float) -> dict:
+    """
+    Phân loại cấp dự án FECON & Thẩm quyền phê duyệt chi phí tiếp khách và chăm sóc khách hàng:
+    - Cấp Đặc Biệt: >= 500 Tỷ VNĐ -> Chủ tịch HĐQT quyết định
+    - Cấp 1: 300 Tỷ <= V < 500 Tỷ VNĐ -> Tổng Giám đốc (hoặc PTGĐ có ủy quyền của Chủ tịch)
+    - Cấp 2: 150 Tỷ <= V < 300 Tỷ VNĐ -> Phó Tổng Giám đốc phụ trách các mảng SBU
+    - Cấp 3: 50 Tỷ <= V < 150 Tỷ VNĐ -> Phó Tổng Giám đốc phụ trách các mảng SBU
+    - Cấp 4: < 50 Tỷ VNĐ -> Phó Tổng Giám đốc phụ trách các mảng SBU
+    """
+    v = float(val or 0.0)
+    if v >= 500_000_000_000.0:
+        return {
+            "level": "LEVEL_SPECIAL",
+            "level_code": "ĐẶC BIỆT",
+            "level_name": "Dự án Cấp Đặc Biệt",
+            "level_badge": "Cấp Đặc Biệt (≥ 500 Tỷ)",
+            "approver_authority": "Chủ tịch HĐQT quyết định",
+            "approver_short": "Chủ tịch HĐQT",
+            "color": "purple"
+        }
+    elif v >= 300_000_000_000.0:
+        return {
+            "level": "LEVEL_1",
+            "level_code": "CẤP 1",
+            "level_name": "Dự án Cấp 1",
+            "level_badge": "Cấp 1 (300 - < 500 Tỷ)",
+            "approver_authority": "Tổng Giám đốc (hoặc PTGĐ có ủy quyền của Chủ tịch)",
+            "approver_short": "Tổng Giám đốc (hoặc PTGĐ ủy quyền)",
+            "color": "rose"
+        }
+    elif v >= 150_000_000_000.0:
+        return {
+            "level": "LEVEL_2",
+            "level_code": "CẤP 2",
+            "level_name": "Dự án Cấp 2",
+            "level_badge": "Cấp 2 (150 - < 300 Tỷ)",
+            "approver_authority": "Phó Tổng Giám đốc phụ trách các mảng SBU",
+            "approver_short": "PTGĐ phụ trách SBU",
+            "color": "amber"
+        }
+    elif v >= 50_000_000_000.0:
+        return {
+            "level": "LEVEL_3",
+            "level_code": "CẤP 3",
+            "level_name": "Dự án Cấp 3",
+            "level_badge": "Cấp 3 (50 - < 150 Tỷ)",
+            "approver_authority": "Phó Tổng Giám đốc phụ trách các mảng SBU",
+            "approver_short": "PTGĐ phụ trách SBU",
+            "color": "blue"
+        }
+    else:
+        return {
+            "level": "LEVEL_4",
+            "level_code": "CẤP 4",
+            "level_name": "Dự án Cấp 4",
+            "level_badge": "Cấp 4 (< 50 Tỷ)",
+            "approver_authority": "Phó Tổng Giám đốc phụ trách các mảng SBU",
+            "approver_short": "PTGĐ phụ trách SBU",
+            "color": "emerald"
+        }
+
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -161,6 +222,9 @@ def init_db():
         target_kickoff TEXT,
         assigned_director TEXT,
         bidding_notes TEXT,
+        project_level TEXT DEFAULT 'LEVEL_4',
+        project_level_name TEXT DEFAULT 'Dự án Cấp 4',
+        approver_authority TEXT DEFAULT 'Phó Tổng Giám đốc phụ trách các mảng SBU',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
     );
@@ -184,6 +248,9 @@ def init_db():
         project_director TEXT,
         summary_scope TEXT,
         status TEXT NOT NULL DEFAULT 'IN_PROGRESS', -- IN_PROGRESS, COMPLETED, WARRANTY
+        project_level TEXT DEFAULT 'LEVEL_4',
+        project_level_name TEXT DEFAULT 'Dự án Cấp 4',
+        approver_authority TEXT DEFAULT 'Phó Tổng Giám đốc phụ trách các mảng SBU',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
     );
@@ -209,6 +276,7 @@ def init_db():
     CREATE TABLE IF NOT EXISTS customer_care_activities (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         customer_id INTEGER NOT NULL,
+        project_id INTEGER,
         sbu TEXT NOT NULL,
         activity_type TEXT NOT NULL, -- EXECUTIVE_MEETING, DINNER_NETWORKING, EVENT_INVITATION, GIFT_DELIVERY, CALL_DISCUSS
         title TEXT NOT NULL,
@@ -216,8 +284,13 @@ def init_db():
         occurred_at TEXT NOT NULL,
         leader_in_charge TEXT NOT NULL,
         outcome_status TEXT DEFAULT 'SUCCESS',
+        cost REAL DEFAULT 0.0,
+        project_level TEXT,
+        approver_authority TEXT,
+        approval_status TEXT DEFAULT 'APPROVED',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+        FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
     );
     """)
 
@@ -268,11 +341,62 @@ def init_db():
     cursor.execute("UPDATE customers SET tier = 'GOLD' WHERE tier = 'CLOSE_PARTNER';")
     cursor.execute("UPDATE customers SET tier = 'SILVER' WHERE tier = 'PROSPECT';")
 
+    # --- MIGRATIONS FOR FECON PROJECT CLASSIFICATION & APPROVAL AUTHORITY ---
+    # Migration for projects table
+    cursor.execute("PRAGMA table_info(projects);")
+    proj_cols = [col[1] for col in cursor.fetchall()]
+    new_proj_cols = {
+        "project_level": "TEXT DEFAULT 'LEVEL_4'",
+        "project_level_name": "TEXT DEFAULT 'Dự án Cấp 4'",
+        "approver_authority": "TEXT DEFAULT 'Phó Tổng Giám đốc phụ trách các mảng SBU'"
+    }
+    for col_name, col_type in new_proj_cols.items():
+        if col_name not in proj_cols:
+            cursor.execute(f"ALTER TABLE projects ADD COLUMN {col_name} {col_type};")
+
+    # Migration for pipeline_bids table
+    cursor.execute("PRAGMA table_info(pipeline_bids);")
+    bid_cols = [col[1] for col in cursor.fetchall()]
+    new_bid_cols = {
+        "project_level": "TEXT DEFAULT 'LEVEL_4'",
+        "project_level_name": "TEXT DEFAULT 'Dự án Cấp 4'",
+        "approver_authority": "TEXT DEFAULT 'Phó Tổng Giám đốc phụ trách các mảng SBU'"
+    }
+    for col_name, col_type in new_bid_cols.items():
+        if col_name not in bid_cols:
+            cursor.execute(f"ALTER TABLE pipeline_bids ADD COLUMN {col_name} {col_type};")
+
     # Migration for customer_care_activities table
     cursor.execute("PRAGMA table_info(customer_care_activities);")
     care_cols = [col[1] for col in cursor.fetchall()]
-    if "cost" not in care_cols:
-        cursor.execute("ALTER TABLE customer_care_activities ADD COLUMN cost REAL DEFAULT 0.0;")
+    new_care_cols = {
+        "cost": "REAL DEFAULT 0.0",
+        "project_id": "INTEGER",
+        "project_level": "TEXT",
+        "approver_authority": "TEXT",
+        "approval_status": "TEXT DEFAULT 'APPROVED'"
+    }
+    for col_name, col_type in new_care_cols.items():
+        if col_name not in care_cols:
+            cursor.execute(f"ALTER TABLE customer_care_activities ADD COLUMN {col_name} {col_type};")
+
+    # Sync classifications on all existing projects
+    cursor.execute("SELECT id, contract_value FROM projects;")
+    for pid, cval in cursor.fetchall():
+        cls_info = classify_fecon_project(cval)
+        cursor.execute(
+            "UPDATE projects SET project_level = ?, project_level_name = ?, approver_authority = ? WHERE id = ?",
+            (cls_info["level"], cls_info["level_name"], cls_info["approver_authority"], pid)
+        )
+
+    # Sync classifications on all existing pipeline bids
+    cursor.execute("SELECT id, estimated_value FROM pipeline_bids;")
+    for bid, eval_val in cursor.fetchall():
+        cls_info = classify_fecon_project(eval_val)
+        cursor.execute(
+            "UPDATE pipeline_bids SET project_level = ?, project_level_name = ?, approver_authority = ? WHERE id = ?",
+            (cls_info["level"], cls_info["level_name"], cls_info["approver_authority"], bid)
+        )
 
     conn.commit()
     

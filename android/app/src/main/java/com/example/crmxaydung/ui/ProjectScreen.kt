@@ -47,6 +47,7 @@ fun ProjectScreen(user: UserSession) {
     var selectedBid by remember { mutableStateOf<PipelineBidItem?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
     var selectedPipelineStage by remember { mutableStateOf("ALL") }
+    var selectedProjectLevel by remember { mutableStateOf("ALL") }
 
     val feconOrange = Color(0xFFEA580C)
     val df = DecimalFormat("#,##0.0")
@@ -79,8 +80,21 @@ fun ProjectScreen(user: UserSession) {
         "LOST" to "❌ Trượt Thầu"
     )
 
+    val projectLevels = listOf(
+        "ALL" to "Tất Cả",
+        "LEVEL_SPECIAL" to "⭐ Cấp ĐB (≥500T)",
+        "LEVEL_1" to "👑 Cấp 1 (300-500T)",
+        "LEVEL_2" to "💎 Cấp 2 (150-300T)",
+        "LEVEL_3" to "⚡ Cấp 3 (50-150T)",
+        "LEVEL_4" to "📌 Cấp 4 (<50T)"
+    )
+
     val filteredBids = pipelineBids.filter {
         selectedPipelineStage == "ALL" || it.stage == selectedPipelineStage
+    }
+
+    val filteredProjects = projects.filter {
+        selectedProjectLevel == "ALL" || it.projectLevel == selectedProjectLevel
     }
 
     Scaffold(
@@ -230,17 +244,76 @@ fun ProjectScreen(user: UserSession) {
                     }
                 }
             } else {
-                // Active Projects List
-                if (projects.isEmpty()) {
+                // Active Projects List with Level Filter
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(projectLevels) { (lvlKey, label) ->
+                        val isSelected = (selectedProjectLevel == lvlKey)
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { selectedProjectLevel = lvlKey },
+                            label = { Text(label, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = when (lvlKey) {
+                                    "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
+                                    "LEVEL_1" -> Color(0xFFDC2626)
+                                    "LEVEL_2" -> Color(0xFFEA580C)
+                                    "LEVEL_3" -> Color(0xFF2563EB)
+                                    "LEVEL_4" -> Color(0xFF059669)
+                                    else -> feconOrange
+                                },
+                                selectedLabelColor = Color.White,
+                                containerColor = Color.White,
+                                labelColor = Color(0xFF475569)
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = if (isSelected) Color.Transparent else Color(0xFFCBD5E1)
+                            )
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // FECON Matrix Banner
+                Surface(
+                    color = Color(0xFFFFF7ED),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color(0xFFFED7AA), RoundedCornerShape(8.dp))
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
+                        Text(
+                            text = "⚖️ Phân cấp FECON & Thẩm quyền duyệt tiếp khách/CSKH:",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF9A3412)
+                        )
+                        Text(
+                            text = "• ĐB (≥500T): Chủ tịch HĐQT • Cấp 1 (300-500T): Tổng Giám đốc • Cấp 2-4 (<300T): PTGĐ phụ trách SBU",
+                            fontSize = 10.sp,
+                            color = Color(0xFF7C2D12)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                if (filteredProjects.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Chưa có dự án nào được ghi nhận", color = Color(0xFF94A3B8))
+                        Text("Chưa có dự án nào phù hợp với bộ lọc", color = Color(0xFF94A3B8))
                     }
                 } else {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        items(projects) { proj ->
+                        items(filteredProjects) { proj ->
                             ProjectCard(
                                 proj = proj,
                                 df = df,
@@ -393,6 +466,39 @@ fun PipelineBidCard(bid: PipelineBidItem, df: DecimalFormat, onClick: () -> Unit
                     fontSize = 11.sp
                 )
             }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    color = when (bid.projectLevel) {
+                        "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
+                        "LEVEL_1" -> Color(0xFFDC2626)
+                        "LEVEL_2" -> Color(0xFFEA580C)
+                        "LEVEL_3" -> Color(0xFF2563EB)
+                        else -> Color(0xFF059669)
+                    },
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        text = bid.projectLevelName,
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+                Text(
+                    text = "Duyệt: ${bid.approverShort}",
+                    color = Color(0xFF475569),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
 }
@@ -480,6 +586,41 @@ fun PipelineDetailDialog(
                                 }
                             }
                         }
+                    }
+                }
+
+                // FECON Project Level & Approval Card
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED)),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.border(1.dp, Color(0xFFFED7AA), RoundedCornerShape(8.dp))
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                color = when (bid.projectLevel) {
+                                    "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
+                                    "LEVEL_1" -> Color(0xFFDC2626)
+                                    "LEVEL_2" -> Color(0xFFEA580C)
+                                    "LEVEL_3" -> Color(0xFF2563EB)
+                                    else -> Color(0xFF059669)
+                                },
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = bid.projectLevelName,
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Phân cấp dự án FECON", color = Color(0xFF9A3412), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("⚖️ Thẩm quyền duyệt chi phí tiếp khách/CSKH:", color = Color(0xFF7C2D12), fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        Text(bid.approverAuthority, color = Color(0xFFEA580C), fontWeight = FontWeight.Black, fontSize = 12.sp)
                     }
                 }
 
@@ -701,6 +842,38 @@ fun ProjectCard(proj: ProjectItem, df: DecimalFormat, onClick: () -> Unit) {
                 Text("Công nợ còn lại:", color = Color(0xFF64748B), fontSize = 11.sp)
                 Text("${df.format(proj.unpaidBillion)} Tỷ", color = Color(0xFFDC2626), fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    color = when (proj.projectLevel) {
+                        "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
+                        "LEVEL_1" -> Color(0xFFDC2626)
+                        "LEVEL_2" -> Color(0xFFEA580C)
+                        "LEVEL_3" -> Color(0xFF2563EB)
+                        else -> Color(0xFF059669)
+                    },
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        text = proj.projectLevelName,
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+                Text(
+                    text = "Duyệt: ${proj.approverShort}",
+                    color = Color(0xFF475569),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
 }
@@ -749,6 +922,58 @@ fun ProjectDetailDialog(proj: ProjectItem, df: DecimalFormat, onDismiss: () -> U
                                 }
                             }
                         }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // FECON Classification & Approval Authority Card
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED)),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.border(1.dp, Color(0xFFFED7AA), RoundedCornerShape(8.dp))
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(
+                                color = when (proj.projectLevel) {
+                                    "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
+                                    "LEVEL_1" -> Color(0xFFDC2626)
+                                    "LEVEL_2" -> Color(0xFFEA580C)
+                                    "LEVEL_3" -> Color(0xFF2563EB)
+                                    else -> Color(0xFF059669)
+                                },
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = proj.projectLevelName,
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Phân cấp dự án FECON",
+                                color = Color(0xFF9A3412),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "⚖️ Thẩm quyền duyệt tiếp khách & CSKH:",
+                            color = Color(0xFF7C2D12),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
+                        )
+                        Text(
+                            text = proj.approverAuthority,
+                            color = Color(0xFFEA580C),
+                            fontWeight = FontWeight.Black,
+                            fontSize = 12.sp
+                        )
                     }
                 }
 

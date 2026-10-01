@@ -266,7 +266,11 @@ object ApiClient {
                             startDate = obj.optString("start_date", ""),
                             expectedEndDate = obj.optString("expected_end_date", ""),
                             keyDecisionMaker = obj.optString("key_decision_maker", ""),
-                            decisionMakerPhone = obj.optString("decision_maker_phone", "")
+                            decisionMakerPhone = obj.optString("decision_maker_phone", ""),
+                            projectLevel = obj.optString("project_level", "LEVEL_4"),
+                            projectLevelName = obj.optString("project_level_name", "Dự án Cấp 4"),
+                            approverAuthority = obj.optString("approver_authority", "Phó Tổng Giám đốc phụ trách các mảng SBU"),
+                            approverShort = obj.optString("approver_short", "PTGĐ phụ trách SBU")
                         )
                     )
                 }
@@ -326,7 +330,11 @@ object ApiClient {
                     keyDecisionMaker = obj.optString("key_decision_maker", ""),
                     decisionMakerPhone = obj.optString("decision_maker_phone", ""),
                     headquarters = obj.optString("headquarters", ""),
-                    milestones = mList
+                    milestones = mList,
+                    projectLevel = obj.optString("project_level", "LEVEL_4"),
+                    projectLevelName = obj.optString("project_level_name", "Dự án Cấp 4"),
+                    approverAuthority = obj.optString("approver_authority", "Phó Tổng Giám đốc phụ trách các mảng SBU"),
+                    approverShort = obj.optString("approver_short", "PTGĐ phụ trách SBU")
                 )
                 Result.success(item)
             } else {
@@ -399,7 +407,14 @@ object ApiClient {
                             occurredAt = obj.optString("occurred_at", ""),
                             leaderInCharge = obj.optString("leader_in_charge", ""),
                             outcomeStatus = obj.optString("outcome_status", "SUCCESS"),
-                            cost = obj.optDouble("cost", 0.0)
+                            cost = obj.optDouble("cost", 0.0),
+                            projectId = if (obj.has("project_id") && !obj.isNull("project_id")) obj.optInt("project_id") else null,
+                            projectName = obj.optString("project_name", ""),
+                            projectCode = obj.optString("project_code", ""),
+                            projectContractValue = obj.optDouble("project_contract_value", 0.0),
+                            projectLevel = obj.optString("project_level", ""),
+                            approverAuthority = obj.optString("approver_authority", ""),
+                            approvalStatus = obj.optString("approval_status", "APPROVED")
                         )
                     )
                 }
@@ -421,7 +436,8 @@ object ApiClient {
         occurredAt: String,
         leaderInCharge: String,
         outcomeStatus: String = "SUCCESS",
-        cost: Double = 0.0
+        cost: Double = 0.0,
+        projectId: Int? = null
     ): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
             val json = JSONObject().apply {
@@ -435,6 +451,9 @@ object ApiClient {
                 put("leader_in_charge", leaderInCharge)
                 put("outcome_status", outcomeStatus)
                 put("cost", cost)
+                if (projectId != null && projectId > 0) {
+                    put("project_id", projectId)
+                }
             }
             val conn = openConnection("/api/care-activities", "POST").apply {
                 setRequestProperty("Content-Type", "application/json; utf-8")
@@ -606,7 +625,11 @@ object ApiClient {
                                 assignedDirector = obj.optString("assigned_director", ""),
                                 biddingNotes = obj.optString("bidding_notes", ""),
                                 keyDecisionMaker = obj.optString("key_decision_maker", ""),
-                                decisionMakerPhone = obj.optString("decision_maker_phone", "")
+                                decisionMakerPhone = obj.optString("decision_maker_phone", ""),
+                                projectLevel = obj.optString("project_level", "LEVEL_4"),
+                                projectLevelName = obj.optString("project_level_name", "Dự án Cấp 4"),
+                                approverAuthority = obj.optString("approver_authority", "Phó Tổng Giám đốc phụ trách các mảng SBU"),
+                                approverShort = obj.optString("approver_short", "PTGĐ phụ trách SBU")
                             )
                         )
                     }

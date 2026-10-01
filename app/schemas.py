@@ -101,6 +101,9 @@ class BidCreate(BaseModel):
     target_kickoff: Optional[str] = None
     assigned_director: Optional[str] = None
     bidding_notes: Optional[str] = None
+    project_level: Optional[str] = None
+    project_level_name: Optional[str] = None
+    approver_authority: Optional[str] = None
 
 class BidStageUpdate(BaseModel):
     stage: str
@@ -120,14 +123,21 @@ class ProjectCreate(BaseModel):
     project_director: Optional[str] = None
     summary_scope: Optional[str] = None
     project_health: str = "GOOD"
+    project_level: Optional[str] = None
+    project_level_name: Optional[str] = None
+    approver_authority: Optional[str] = None
 
 class ProjectUpdate(BaseModel):
     name: Optional[str] = None
     progress_percent: Optional[float] = None
     paid_amount: Optional[float] = None
+    contract_value: Optional[float] = None
     project_health: Optional[str] = None
     status: Optional[str] = None
     summary_scope: Optional[str] = None
+    project_level: Optional[str] = None
+    project_level_name: Optional[str] = None
+    approver_authority: Optional[str] = None
 
 # --- Milestone Schemas ---
 class MilestoneCreate(BaseModel):
@@ -147,6 +157,7 @@ class MilestoneUpdate(BaseModel):
 # --- Customer Care Activity ---
 class CareActivityCreate(BaseModel):
     customer_id: int
+    project_id: Optional[int] = None # Dự án liên kết để xác định thẩm quyền duyệt
     sbu: str
     activity_type: str = "EXECUTIVE_MEETING"
     title: str
@@ -155,6 +166,9 @@ class CareActivityCreate(BaseModel):
     leader_in_charge: str
     outcome_status: str = "SUCCESS"
     cost: Optional[float] = 0.0 # Chi phí tiếp khách / quà tặng phát sinh thực tế
+    project_level: Optional[str] = None
+    approver_authority: Optional[str] = None
+    approval_status: Optional[str] = "APPROVED"
 
 # --- Executive Message ---
 class SendExecutiveMessageRequest(BaseModel):

@@ -5,7 +5,7 @@ Supports:
 - Strict SBU Scope Enforcement (GĐKD SBU only manages their SBU; Admin can manage all and Delete)
 """
 from fastapi import APIRouter, HTTPException, Query, Header
-from app.database import get_db
+from app.database import get_db, classify_fecon_project
 from app.schemas import CustomerCreate, CustomerUpdate, BidCreate, BidStageUpdate, CustomerAssessRequest
 from typing import Optional
 
@@ -640,8 +640,19 @@ def get_bids_pipeline(
 
     query += " ORDER BY b.id DESC"
     cursor.execute(query, params)
-    rows = [dict(r) for r in cursor.fetchall()]
+    raw_rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
+
+    rows = []
+    for r in raw_rows:
+        cls_info = classify_fecon_project(r.get("estimated_value", 0.0))
+        r["project_level"] = r.get("project_level") or cls_info["level"]
+        r["project_level_name"] = r.get("project_level_name") or cls_info["level_name"]
+        r["project_level_badge"] = cls_info["level_badge"]
+        r["approver_authority"] = r.get("approver_authority") or cls_info["approver_authority"]
+        r["approver_short"] = cls_info["approver_short"]
+        r["level_color"] = cls_info["color"]
+        rows.append(r)
 
     stages = [
         {"id": "INFORMATION", "label": "1. Tiếp cận thông tin sơ bộ"},
@@ -676,23 +687,36 @@ def create_bid(
     if x_user_role == "SBU_DIRECTOR" and x_user_sbu and x_user_sbu != "ALL":
         target_sbu = x_user_sbu
 
+    cls_info = classify_fecon_project(data.estimated_value)
+    proj_level = data.project_level or cls_info["level"]
+    proj_level_name = data.project_level_name or cls_info["level_name"]
+    approver = data.approver_authority or cls_info["approver_authority"]
+
     conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute("""
     INSERT INTO pipeline_bids (
         customer_id, sbu, project_title, estimated_value, stage, win_rate,
-        tender_deadline, target_kickoff, assigned_director, bidding_notes
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        tender_deadline, target_kickoff, assigned_director, bidding_notes,
+        project_level, project_level_name, approver_authority
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         data.customer_id, target_sbu, data.project_title, data.estimated_value,
         data.stage, data.win_rate, data.tender_deadline, data.target_kickoff,
-        data.assigned_director, data.bidding_notes
+        data.assigned_director, data.bidding_notes,
+        proj_level, proj_level_name, approver
     ))
     new_id = cursor.lastrowid
     conn.commit()
     conn.close()
-    return {"id": new_id, "message": "Thêm hồ sơ cơ hội / dự thầu thành công"}
+    return {
+        "id": new_id,
+        "project_level": proj_level,
+        "project_level_name": proj_level_name,
+        "approver_authority": approver,
+        "message": f"Thêm hồ sơ cơ hội / dự thầu ({proj_level_name}) thành công"
+    }
 
 @router.get("/bids/{bid_id}")
 def get_bid_detail(bid_id: int):
@@ -708,7 +732,15 @@ def get_bid_detail(bid_id: int):
     conn.close()
     if not row:
         raise HTTPException(status_code=404, detail="Không tìm thấy gói thầu")
-    return dict(row)
+    bid = dict(row)
+    cls_info = classify_fecon_project(bid.get("estimated_value", 0.0))
+    bid["project_level"] = bid.get("project_level") or cls_info["level"]
+    bid["project_level_name"] = bid.get("project_level_name") or cls_info["level_name"]
+    bid["project_level_badge"] = cls_info["level_badge"]
+    bid["approver_authority"] = bid.get("approver_authority") or cls_info["approver_authority"]
+    bid["approver_short"] = cls_info["approver_short"]
+    bid["level_color"] = cls_info["color"]
+    return bid
 
 @router.put("/bids/{bid_id}/stage")
 def update_bid_stage(

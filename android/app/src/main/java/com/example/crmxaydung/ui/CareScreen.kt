@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.example.crmxaydung.data.ApiClient
 import com.example.crmxaydung.data.CareActivityItem
 import com.example.crmxaydung.data.CustomerItem
+import com.example.crmxaydung.data.ProjectItem
 import com.example.crmxaydung.data.UserSession
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
@@ -260,6 +261,40 @@ fun CareCard(act: CareActivityItem, onClick: () -> Unit) {
             Spacer(modifier = Modifier.height(4.dp))
             Text("Đối tác: ${act.customerName} (${act.sbu})", color = Color(0xFFEA580C), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
 
+            if (act.projectName.isNotBlank()) {
+                Spacer(modifier = Modifier.height(3.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("🏗️ ${act.projectName}", color = Color(0xFF0369A1), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    if (act.projectLevel.isNotBlank()) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            color = when (act.projectLevel) {
+                                "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
+                                "LEVEL_1" -> Color(0xFFDC2626)
+                                "LEVEL_2" -> Color(0xFFEA580C)
+                                "LEVEL_3" -> Color(0xFF2563EB)
+                                else -> Color(0xFF059669)
+                            },
+                            shape = RoundedCornerShape(3.dp)
+                        ) {
+                            Text(
+                                text = when (act.projectLevel) {
+                                    "LEVEL_SPECIAL" -> "Cấp ĐB"
+                                    "LEVEL_1" -> "Cấp 1"
+                                    "LEVEL_2" -> "Cấp 2"
+                                    "LEVEL_3" -> "Cấp 3"
+                                    else -> "Cấp 4"
+                                },
+                                color = Color.White,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
             if (act.content.isNotBlank()) {
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
@@ -277,6 +312,16 @@ fun CareCard(act: CareActivityItem, onClick: () -> Unit) {
                     color = Color(0xFFB45309),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
+                )
+            }
+
+            if (act.approverAuthority.isNotBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "⚖️ Duyệt: ${act.approverAuthority}",
+                    color = Color(0xFF9A3412),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium
                 )
             }
 
@@ -325,6 +370,13 @@ fun CareDetailDialog(act: CareActivityItem, onDismiss: () -> Unit) {
                     )
                 }
 
+                if (act.projectName.isNotBlank()) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Dự án liên quan:", color = Color(0xFF64748B), fontSize = 12.sp)
+                        Text(act.projectName, color = Color(0xFF0369A1), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
+
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Ngày diễn ra:", color = Color(0xFF64748B), fontSize = 12.sp)
                     Text(act.occurredAt, color = Color(0xFF0F172A), fontSize = 12.sp)
@@ -339,6 +391,19 @@ fun CareDetailDialog(act: CareActivityItem, onDismiss: () -> Unit) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("Chi phí thực hiện:", color = Color(0xFF64748B), fontSize = 12.sp)
                         Text("${DecimalFormat("#,###").format(act.cost)} VNĐ", color = Color(0xFFEA580C), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
+
+                if (act.approverAuthority.isNotBlank()) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED)),
+                        shape = RoundedCornerShape(6.dp),
+                        modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFFFED7AA), RoundedCornerShape(6.dp))
+                    ) {
+                        Column(modifier = Modifier.padding(8.dp)) {
+                            Text("⚖️ Thẩm quyền phê duyệt chi phí CSKH:", color = Color(0xFF7C2D12), fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            Text(act.approverAuthority, color = Color(0xFFEA580C), fontWeight = FontWeight.Black, fontSize = 11.sp)
+                        }
                     }
                 }
 
@@ -376,9 +441,14 @@ fun AddCarePlanDialog(
     val coroutineScope = rememberCoroutineScope()
     var customerList by remember { mutableStateOf(customers) }
     var selectedCustomer by remember { mutableStateOf<CustomerItem?>(customers.firstOrNull()) }
+    var allProjects by remember { mutableStateOf<List<ProjectItem>>(emptyList()) }
+    var selectedProject by remember { mutableStateOf<ProjectItem?>(null) }
     var showPartnerPicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        val pRes = ApiClient.fetchProjects("ALL")
+        allProjects = pRes.getOrNull() ?: emptyList()
+
         if (customerList.isEmpty()) {
             val res = ApiClient.fetchCustomers("ALL")
             val list = res.getOrNull() ?: emptyList()
@@ -391,6 +461,11 @@ fun AddCarePlanDialog(
         } else if (selectedCustomer == null) {
             selectedCustomer = customerList.firstOrNull()
         }
+    }
+
+    val customerProjects = remember(selectedCustomer, allProjects) {
+        if (selectedCustomer == null) emptyList()
+        else allProjects.filter { it.customerId == selectedCustomer!!.id }
     }
 
     val today = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
@@ -472,6 +547,60 @@ fun AddCarePlanDialog(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
+                    }
+                }
+
+                // Linked Project Selection (Optional)
+                if (customerProjects.isNotEmpty()) {
+                    Text("Gắn với Dự án cụ thể (Tùy chọn):", color = Color(0xFF0F172A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        item {
+                            val isNone = (selectedProject == null)
+                            FilterChip(
+                                selected = isNone,
+                                onClick = { selectedProject = null },
+                                label = { Text("Không gắn DA", fontSize = 10.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Color(0xFF0284C7),
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                        items(customerProjects) { proj ->
+                            val isSel = (selectedProject?.id == proj.id)
+                            FilterChip(
+                                selected = isSel,
+                                onClick = { selectedProject = proj },
+                                label = { Text("${proj.code} (${proj.projectLevelName})", fontSize = 10.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Color(0xFFEA580C),
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                    }
+                }
+
+                // Authority Preview Card
+                val authorityText = selectedProject?.approverAuthority ?: selectedCustomer?.inChargeExecutive ?: "Phó Tổng Giám đốc phụ trách các mảng SBU"
+                Surface(
+                    color = Color(0xFFFFF7ED),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFFFED7AA), RoundedCornerShape(8.dp))
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text(
+                            text = if (selectedProject != null) "⚖️ Thẩm quyền duyệt theo Dự án (${selectedProject!!.projectLevelName}):" else "⚖️ Thẩm quyền duyệt theo Hạng CĐT:",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF7C2D12)
+                        )
+                        Text(
+                            text = authorityText,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFFEA580C)
+                        )
                     }
                 }
 
@@ -606,7 +735,8 @@ fun AddCarePlanDialog(
                             occurredAt = occurredAt.trim(),
                             leaderInCharge = leaderInCharge.trim(),
                             outcomeStatus = "SUCCESS",
-                            cost = parsedCost
+                            cost = parsedCost,
+                            projectId = selectedProject?.id
                         )
                         isSaving = false
                         if (res.isSuccess) {

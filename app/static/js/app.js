@@ -999,30 +999,54 @@ async function viewCustomer360(id) {
         <div>
           <h4 class="font-black text-xs text-slate-900 uppercase mb-2">Hợp Đồng & Dự Án Đang Thực Hiện</h4>
           <div class="space-y-2">
-            ${c.projects && c.projects.length > 0 ? c.projects.map(p => `
-              <div class="p-2.5 bg-white rounded-xl border border-slate-200">
-                <div class="font-bold text-slate-900 text-xs">${p.name}</div>
-                <div class="text-[11px] text-slate-500 flex justify-between mt-1">
-                  <span>Tiến độ: <b class="text-emerald-600">${p.progress_percent}%</b></span>
-                  <span class="font-black text-slate-900">${formatVND(p.contract_value)}</span>
+            ${c.projects && c.projects.length > 0 ? c.projects.map(p => {
+              const cls = classifyFeconProject(p.contract_value);
+              return `
+                <div onclick="closeModal('modal-customer-detail'); viewProjectDetail(${p.id})" class="p-2.5 bg-white rounded-xl border border-slate-200 hover:border-blue-400 cursor-pointer transition shadow-2xs space-y-1">
+                  <div class="flex items-center justify-between gap-1">
+                    <div class="font-bold text-slate-900 text-xs truncate">${p.name}</div>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black border shrink-0 ${cls.colorClass}">
+                      ${cls.badge}
+                    </span>
+                  </div>
+                  <div class="text-[11px] text-slate-500 flex justify-between">
+                    <span>Tiến độ: <b class="text-emerald-600">${p.progress_percent}%</b></span>
+                    <span class="font-black text-slate-900">${formatVND(p.contract_value)}</span>
+                  </div>
+                  <div class="text-[10px] text-blue-700 font-semibold flex items-center gap-1 pt-0.5 border-t border-slate-100">
+                    <i class="fa-solid fa-stamp text-blue-600"></i>
+                    <span>Duyệt CSKH: <b>${cls.approver_authority}</b></span>
+                  </div>
                 </div>
-              </div>
-            `).join('') : '<div class="text-slate-400 text-xs">Chưa có dự án.</div>'}
+              `;
+            }).join('') : '<div class="text-slate-400 text-xs py-3 text-center bg-slate-50 rounded-xl">Chưa có dự án.</div>'}
           </div>
         </div>
 
         <div>
           <h4 class="font-black text-xs text-slate-900 uppercase mb-2">Cơ Hội Thầu Đang Theo Đuổi</h4>
           <div class="space-y-2">
-            ${c.bids && c.bids.length > 0 ? c.bids.map(b => `
-              <div class="p-2.5 bg-white rounded-xl border border-slate-200">
-                <div class="font-bold text-slate-900 text-xs">${b.project_title}</div>
-                <div class="text-[11px] text-slate-500 flex justify-between mt-1">
-                  <span>Giai đoạn: <b>${b.stage}</b></span>
-                  <span class="font-black text-purple-700">${formatVND(b.estimated_value)}</span>
+            ${c.bids && c.bids.length > 0 ? c.bids.map(b => {
+              const cls = classifyFeconProject(b.estimated_value);
+              return `
+                <div onclick="closeModal('modal-customer-detail'); openBidDetailModal(${b.id})" class="p-2.5 bg-white rounded-xl border border-slate-200 hover:border-purple-400 cursor-pointer transition shadow-2xs space-y-1">
+                  <div class="flex items-center justify-between gap-1">
+                    <div class="font-bold text-slate-900 text-xs truncate">${b.project_title}</div>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black border shrink-0 ${cls.colorClass}">
+                      ${cls.badge}
+                    </span>
+                  </div>
+                  <div class="text-[11px] text-slate-500 flex justify-between">
+                    <span>Giai đoạn: <b>${b.stage}</b></span>
+                    <span class="font-black text-purple-700">${formatVND(b.estimated_value)}</span>
+                  </div>
+                  <div class="text-[10px] text-purple-700 font-semibold flex items-center gap-1 pt-0.5 border-t border-slate-100">
+                    <i class="fa-solid fa-stamp text-purple-600"></i>
+                    <span>Duyệt CSKH: <b>${cls.approver_authority}</b></span>
+                  </div>
                 </div>
-              </div>
-            `).join('') : '<div class="text-slate-400 text-xs">Không có hồ sơ thầu.</div>'}
+              `;
+            }).join('') : '<div class="text-slate-400 text-xs py-3 text-center bg-slate-50 rounded-xl">Không có hồ sơ thầu.</div>'}
           </div>
         </div>
       </div>
@@ -1791,7 +1815,7 @@ function renderProjectsList() {
     const cls = classifyFeconProject(p.contract_value);
 
     return `
-      <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover-card space-y-3">
+      <div onclick="viewProjectDetail(${p.id})" class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover-card space-y-3 cursor-pointer hover:border-blue-400 transition">
         <div class="flex items-start justify-between gap-2">
           <div>
             <div class="flex items-center gap-1.5 flex-wrap">
@@ -1809,7 +1833,7 @@ function renderProjectsList() {
               ${p.project_health === 'GOOD' ? '🟢 Tiến độ tốt' : '🟡 Cần lưu ý'}
             </span>
             ${canDelete ? `
-              <button onclick="deleteProject(${p.id})" class="p-1 text-slate-300 hover:text-rose-600 transition" title="Xóa dự án (Admin)">
+              <button onclick="event.stopPropagation(); deleteProject(${p.id})" class="p-1 text-slate-300 hover:text-rose-600 transition" title="Xóa dự án (Admin)">
                 <i class="fa-solid fa-trash"></i>
               </button>
             ` : ''}
@@ -1849,8 +1873,8 @@ function renderProjectsList() {
 
         <div class="flex items-center justify-between text-[11px] pt-1 text-slate-500">
           <div>GĐKD phụ trách: <span class="font-bold text-slate-700">${p.project_director || 'Đang cập nhật'}</span></div>
-          <button onclick="viewProjectCashflow(${p.id})" class="text-blue-600 font-bold hover:underline">
-            Xem Mốc Dòng Tiền &gt;
+          <button onclick="event.stopPropagation(); viewProjectDetail(${p.id})" class="text-blue-600 font-bold hover:underline">
+            Xem Chi Tiết & Mốc Dòng Tiền &gt;
           </button>
         </div>
       </div>
@@ -1858,79 +1882,187 @@ function renderProjectsList() {
   }).join('');
 }
 
-async function viewProjectCashflow(id) {
+let currentViewProjectId = null;
+
+async function viewProjectDetail(id) {
   try {
+    currentViewProjectId = id;
     const res = await authFetch(`/api/projects/${id}`);
+    if (!res.ok) {
+      showToast("Không tìm thấy thông tin dự án", "error");
+      return;
+    }
     const p = await res.json();
-    const canEdit = currentUser.role === 'ADMIN' || currentUser.sbu === p.sbu;
     const cls = classifyFeconProject(p.contract_value);
+    const canEdit = currentUser.role === 'ADMIN' || (currentUser.role === 'SBU_DIRECTOR' && currentUser.sbu === p.sbu);
 
-    const content = `
-      <div class="space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              ${getSBUBadge(p.sbu)}
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-black border ${cls.colorClass}">
-                ${cls.badge}
-              </span>
-              <span class="font-mono text-xs text-slate-400 font-bold">${p.code}</span>
-            </div>
-            <h3 class="font-black text-slate-900 text-base mt-1">${p.name}</h3>
-            <p class="text-xs text-slate-500">Chủ đầu tư: ${p.customer_name} • HĐ: ${p.contract_number || 'N/A'}</p>
-          </div>
-          <div class="text-right">
-            <div class="text-xs text-slate-400">Tổng giá trị</div>
-            <div class="text-base font-black text-slate-900">${formatVND(p.contract_value)}</div>
-          </div>
-        </div>
+    // SBU Badge
+    const sbuContainer = document.getElementById('proj-detail-sbu-container');
+    if (sbuContainer) {
+      sbuContainer.innerHTML = getSBUBadge(p.sbu);
+    } else {
+      const sbuBadge = document.getElementById('proj-detail-sbu-badge');
+      if (sbuBadge) sbuBadge.outerHTML = `<span id="proj-detail-sbu-container">${getSBUBadge(p.sbu)}</span>`;
+    }
 
-        <!-- Approval Box -->
-        <div class="p-3 bg-purple-50/70 border border-purple-200 rounded-xl flex items-center justify-between text-xs">
-          <div>
-            <span class="text-slate-500 font-medium">Thẩm quyền phê duyệt chi phí CSKH:</span>
-            <div class="font-black text-purple-900 mt-0.5">${p.approver_authority || cls.approver_authority}</div>
-          </div>
-          <span class="px-2.5 py-1 rounded-full text-[10px] font-black ${cls.accentBg}">
-            ${cls.code}
-          </span>
-        </div>
+    // Level Badge
+    const lvlBadge = document.getElementById('proj-detail-level-badge');
+    if (lvlBadge) {
+      lvlBadge.textContent = cls.badge;
+      lvlBadge.className = `px-2.5 py-0.5 rounded-full text-[10px] font-black border ${cls.colorClass}`;
+    }
 
-        <div>
-          <h4 class="font-black text-xs text-slate-900 uppercase mb-2">Các Mốc Nghiệm Thu & Kế Hoạch Giải Ngân</h4>
-          <div class="space-y-2 max-h-64 overflow-y-auto">
-            ${p.milestones && p.milestones.length > 0 ? p.milestones.map(m => `
-              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
-                <div>
-                  <div class="font-bold text-slate-900 text-xs">${m.title}</div>
-                  <div class="text-[10px] text-slate-500">Hạn thanh toán: ${m.due_date || 'N/A'} • Tỷ lệ: ${m.percentage}%</div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="font-black text-xs text-slate-800">${formatVND(m.amount)}</span>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${m.payment_status === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-                    ${m.payment_status === 'PAID' ? 'Đã thu hồi' : 'Chờ thu'}
-                  </span>
-                  ${canEdit && m.payment_status !== 'PAID' ? `
-                    <button onclick="confirmDisbursement(${m.id})" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold">
-                      Xác nhận đã thu
-                    </button>
-                  ` : ''}
-                </div>
+    // Code & Titles
+    const codeEl = document.getElementById('proj-detail-code');
+    if (codeEl) codeEl.textContent = p.code || `DA-${p.id}`;
+
+    const nameEl = document.getElementById('proj-detail-name');
+    if (nameEl) nameEl.textContent = p.name;
+
+    const subEl = document.getElementById('proj-detail-subtitle');
+    if (subEl) subEl.textContent = `Chủ đầu tư: ${p.customer_name || 'N/A'} • HĐ: ${p.contract_number || 'Chưa có số HĐ'}`;
+
+    // Hero box classification & approver
+    const clsBox = document.getElementById('proj-detail-classification-box');
+    if (clsBox) {
+      let boxBg = 'bg-purple-50/70 border-purple-200/80';
+      if (cls.level === 'LEVEL_1') boxBg = 'bg-rose-50/70 border-rose-200/80';
+      else if (cls.level === 'LEVEL_2') boxBg = 'bg-amber-50/70 border-amber-200/80';
+      else if (cls.level === 'LEVEL_3') boxBg = 'bg-blue-50/70 border-blue-200/80';
+      else if (cls.level === 'LEVEL_4') boxBg = 'bg-emerald-50/70 border-emerald-200/80';
+      clsBox.className = `p-4 rounded-xl border space-y-2 ${boxBg}`;
+    }
+
+    const lvlTag = document.getElementById('proj-detail-level-tag');
+    if (lvlTag) {
+      lvlTag.textContent = cls.name.toUpperCase();
+      lvlTag.className = `px-2 py-0.5 rounded-md font-black text-xs ${cls.accentBg}`;
+    }
+
+    const valHead = document.getElementById('proj-detail-value-head');
+    if (valHead) valHead.textContent = formatVND(p.contract_value);
+
+    const approverEl = document.getElementById('proj-detail-approver');
+    if (approverEl) approverEl.textContent = p.approver_authority || cls.approver_authority;
+
+    // Partner & Contacts
+    const custEl = document.getElementById('proj-detail-customer');
+    if (custEl) custEl.textContent = p.customer_name || 'Đang cập nhật';
+
+    const contactEl = document.getElementById('proj-detail-contact');
+    if (contactEl) contactEl.textContent = p.key_decision_maker || 'Chưa cập nhật';
+
+    const phoneEl = document.getElementById('proj-detail-phone');
+    if (phoneEl) {
+      if (p.customer_phone) {
+        phoneEl.innerHTML = `<a href="tel:${p.customer_phone}" class="text-blue-600 hover:underline font-bold"><i class="fa-solid fa-phone mr-1"></i>${p.customer_phone}</a>`;
+      } else {
+        phoneEl.textContent = 'Chưa có SĐT';
+      }
+    }
+
+    const contractEl = document.getElementById('proj-detail-contract-no');
+    if (contractEl) contractEl.textContent = p.contract_number || 'Chưa có số HĐ';
+
+    const directorEl = document.getElementById('proj-detail-director');
+    if (directorEl) directorEl.textContent = p.project_director || 'Chưa phân công';
+
+    // Progress & Finance
+    const progress = p.progress_percent || 0;
+    const progPctEl = document.getElementById('proj-detail-progress-pct');
+    if (progPctEl) progPctEl.textContent = `${progress}%`;
+
+    const progBar = document.getElementById('proj-detail-progress-bar');
+    if (progBar) progBar.style.width = `${progress}%`;
+
+    const valEl = document.getElementById('proj-detail-val');
+    if (valEl) valEl.textContent = formatVND(p.contract_value);
+
+    const paidEl = document.getElementById('proj-detail-paid');
+    if (paidEl) paidEl.textContent = formatVND(p.paid_amount || 0);
+
+    const unpaid = Math.max(0, (p.contract_value || 0) - (p.paid_amount || 0));
+    const unpaidEl = document.getElementById('proj-detail-unpaid');
+    if (unpaidEl) unpaidEl.textContent = formatVND(unpaid);
+
+    const healthEl = document.getElementById('proj-detail-health');
+    if (healthEl) {
+      healthEl.innerHTML = p.project_health === 'GOOD'
+        ? '<span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold">🟢 Tiến độ tốt</span>'
+        : '<span class="text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-bold">🟡 Cần lưu ý</span>';
+    }
+
+    // Scope if any
+    const scopeBox = document.getElementById('proj-detail-scope-box');
+    const scopeEl = document.getElementById('proj-detail-scope');
+    if (scopeBox && scopeEl) {
+      if (p.scope_of_work) {
+        scopeEl.textContent = p.scope_of_work;
+        scopeBox.classList.remove('hidden');
+      } else {
+        scopeBox.classList.add('hidden');
+      }
+    }
+
+    // Milestones
+    const countEl = document.getElementById('proj-detail-milestones-count');
+    if (countEl) countEl.textContent = `${p.milestones ? p.milestones.length : 0} mốc`;
+
+    const mList = document.getElementById('proj-detail-milestones-list');
+    if (mList) {
+      if (p.milestones && p.milestones.length > 0) {
+        mList.innerHTML = p.milestones.map(m => `
+          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <div class="font-bold text-slate-900 text-xs truncate">${m.title}</div>
+              <div class="text-[10px] text-slate-500 mt-0.5">
+                Hạn TT: <span class="font-medium text-slate-700">${m.due_date || 'N/A'}</span> • Tỷ lệ: <span class="font-bold text-blue-600">${m.percentage}%</span>
               </div>
-            `).join('') : '<div class="text-slate-400 text-xs">Chưa có mốc.</div>'}
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="font-black text-xs text-slate-900">${formatVND(m.amount)}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${m.payment_status === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                ${m.payment_status === 'PAID' ? 'Đã thu' : 'Chờ thu'}
+              </span>
+              ${canEdit && m.payment_status !== 'PAID' ? `
+                <button onclick="confirmDisbursement(${m.id})" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold cursor-pointer transition shadow-xs">
+                  Xác nhận đã thu
+                </button>
+              ` : ''}
+            </div>
           </div>
-        </div>
-      </div>
-    `;
+        `).join('');
+      } else {
+        mList.innerHTML = '<div class="text-slate-400 text-xs py-4 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">Chưa có mốc nghiệm thu nào được tạo.</div>';
+      }
+    }
 
-    document.getElementById('view-cust-code').innerText = "DÒNG TIỀN DỰ ÁN";
-    document.getElementById('view-cust-name').innerText = p.name;
-    document.getElementById('customer-detail-content').innerHTML = content;
-    openModal('modal-customer-detail');
+    // Admin delete button
+    const delBtn = document.getElementById('btn-delete-project-modal');
+    if (delBtn) {
+      if (currentUser.role === 'ADMIN') {
+        delBtn.classList.remove('hidden');
+      } else {
+        delBtn.classList.add('hidden');
+      }
+    }
 
+    openModal('modal-project-detail');
   } catch (err) {
-    console.error("Error viewing cashflow:", err);
+    console.error("Error viewing project detail:", err);
+    showToast("Lỗi khi mở chi tiết dự án", "error");
   }
+}
+
+function viewProjectCashflow(id) {
+  viewProjectDetail(id);
+}
+
+async function deleteCurrentProject() {
+  if (!currentViewProjectId) return;
+  const id = currentViewProjectId;
+  closeModal('modal-project-detail');
+  await deleteProject(id);
 }
 
 async function confirmDisbursement(milestoneId) {
@@ -1942,6 +2074,9 @@ async function confirmDisbursement(milestoneId) {
     });
     if (res.ok) {
       showToast("Đã xác nhận thu hồi dòng tiền thành công!");
+      if (currentViewProjectId) {
+        viewProjectDetail(currentViewProjectId);
+      }
       closeModal('modal-customer-detail');
       loadProjects();
       loadDashboard();

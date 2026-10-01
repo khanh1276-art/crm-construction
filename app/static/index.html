@@ -1653,6 +1653,136 @@
     </div>
   </div>
 
+  <!-- Modal 4.2: Project 360 Detail View & FECON Classification -->
+  <div id="modal-project-detail" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span id="proj-detail-sbu-container"></span>
+            <span id="proj-detail-level-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black border bg-purple-100 text-purple-800 border-purple-200">Cấp Đặc Biệt (≥ 500 Tỷ)</span>
+            <span id="proj-detail-code" class="text-xs font-mono font-bold text-slate-400">DA-001</span>
+          </div>
+          <h3 id="proj-detail-name" class="font-black text-slate-900 text-base mt-1">Tên Dự Án</h3>
+          <p id="proj-detail-subtitle" class="text-xs text-slate-500">Chủ đầu tư: -- • HĐ: --</p>
+        </div>
+        <button onclick="closeModal('modal-project-detail')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">&times;</button>
+      </div>
+
+      <!-- Hero Card: FECON Project Classification & Approver Authority -->
+      <div id="proj-detail-classification-box" class="p-4 rounded-xl border bg-purple-50/70 border-purple-200/80 space-y-2">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
+            <span class="text-xs font-bold text-slate-700">Phân Cấp Quy Mô Dự Án:</span>
+            <span id="proj-detail-level-tag" class="px-2 py-0.5 rounded-md font-black text-xs bg-purple-600 text-white">CẤP ĐẶC BIỆT</span>
+          </div>
+          <span id="proj-detail-value-head" class="text-sm font-black text-slate-900">-- Tỷ VNĐ</span>
+        </div>
+        <div class="pt-2 border-t border-purple-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
+          <div class="text-slate-600 font-medium">
+            <i class="fa-solid fa-stamp text-purple-700 mr-1"></i> Thẩm quyền phê duyệt chi phí Tiếp khách / CSKH:
+          </div>
+          <div id="proj-detail-approver" class="font-black text-purple-950 text-right sm:text-xs">
+            Chủ tịch HĐQT quyết định
+          </div>
+        </div>
+      </div>
+
+      <!-- Overview Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+        <!-- Investor & Contacts -->
+        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-900 flex items-center gap-1.5 pb-1 border-b border-slate-200/60">
+            <i class="fa-solid fa-building text-blue-600"></i> Thông Tin Đối Tác & Hợp Đồng
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Chủ đầu tư:</span>
+            <span id="proj-detail-customer" class="font-bold text-slate-900">--</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500">Lãnh đạo CĐT:</span>
+            <span id="proj-detail-contact" class="font-semibold text-blue-600">--</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500">Điện thoại CĐT:</span>
+            <span id="proj-detail-phone-wrapper" class="flex items-center gap-1">
+              <span id="proj-detail-phone" class="font-mono text-slate-700">--</span>
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Số hợp đồng:</span>
+            <span id="proj-detail-contract-no" class="font-mono font-semibold text-slate-800">--</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">GĐKD phụ trách:</span>
+            <span id="proj-detail-director" class="font-semibold text-slate-800">--</span>
+          </div>
+        </div>
+
+        <!-- Cashflow & Progress -->
+        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2">
+          <div class="font-bold text-slate-900 flex items-center gap-1.5 pb-1 border-b border-slate-200/60">
+            <i class="fa-solid fa-chart-line text-emerald-600"></i> Tiến Độ & Tình Hình Dòng Tiền
+          </div>
+          <div>
+            <div class="flex justify-between text-[11px] font-bold mb-1">
+              <span class="text-slate-600">Tiến độ thi công:</span>
+              <span id="proj-detail-progress-pct" class="text-emerald-600 font-black">0%</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+              <div id="proj-detail-progress-bar" class="bg-emerald-500 h-2 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>
+          <div class="flex justify-between pt-1">
+            <span class="text-slate-500">Tổng giá trị HĐ:</span>
+            <span id="proj-detail-val" class="font-black text-slate-900">--</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Đã giải ngân:</span>
+            <span id="proj-detail-paid" class="font-bold text-emerald-600">--</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Công nợ còn lại:</span>
+            <span id="proj-detail-unpaid" class="font-black text-rose-600">--</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Trạng thái:</span>
+            <span id="proj-detail-health" class="font-bold">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scope if any -->
+      <div id="proj-detail-scope-box" class="hidden bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs">
+        <span class="font-bold text-slate-700">Quy mô gói thầu / Hạng mục thi công:</span>
+        <p id="proj-detail-scope" class="text-slate-600 mt-1">--</p>
+      </div>
+
+      <!-- Milestones & Cashflow section -->
+      <div>
+        <h4 class="font-black text-xs text-slate-900 uppercase mb-2 flex items-center justify-between">
+          <span>📋 Các Mốc Nghiệm Thu & Kế Hoạch Giải Ngân</span>
+          <span id="proj-detail-milestones-count" class="text-[10px] text-slate-400 font-bold">--</span>
+        </h4>
+        <div id="proj-detail-milestones-list" class="space-y-2 max-h-56 overflow-y-auto">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
+        <button type="button" id="btn-delete-project-modal" onclick="deleteCurrentProject()" class="px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-xl font-bold transition flex items-center gap-1 hidden">
+          <i class="fa-solid fa-trash"></i> Xóa Dự Án
+        </button>
+        <button type="button" onclick="closeModal('modal-project-detail')" class="ml-auto px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold cursor-pointer">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal 5: New Project -->
   <div id="modal-project" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">

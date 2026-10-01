@@ -81,18 +81,30 @@ select option {
 }
 
 /* =========================================================
-   iOS PWA & NATIVE MOBILE APP OPTIMIZATIONS
+   SCROLLING & MOBILE PWA OPTIMIZATIONS
    ========================================================= */
 
-/* Lock mobile viewport & prevent rubber-band bounce / lateral drift */
-html, body {
-  width: 100%;
-  max-width: 100vw;
+/* Ensure smooth mouse-wheel & touch scrolling across all desktop & mobile browsers */
+html {
   overflow-x: hidden;
-  overscroll-behavior-y: none;
-  -webkit-overflow-scrolling: touch;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
+  overflow-y: visible !important;
+  min-height: 100vh;
+}
+
+/* Mobile-only touch and bounce optimizations (avoids locking desktop mouse wheel) */
+@media (max-width: 768px) {
+  html, body {
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
 }
 
 /* iPhone Notch / Dynamic Island Safe Area */

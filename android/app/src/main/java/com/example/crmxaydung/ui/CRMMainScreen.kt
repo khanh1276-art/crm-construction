@@ -2,6 +2,7 @@ package com.example.crmxaydung.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -105,30 +106,32 @@ fun CRMMainScreen(
                         )
                     }
 
-                    // Right: Khối SBU Dropdown (với tickbox) + Tên tài khoản + Nút Đăng xuất
+                    // Right: Khối SBU Select box + Tên đầy đủ & Chức danh + Nút Đăng xuất
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
-                        // Khối SBU Dropdown with tickbox
+                        // Khối SBU Select Box (Dropdown một lựa chọn)
                         Box {
                             Surface(
-                                color = Color.White.copy(alpha = 0.22f),
+                                color = Color.White.copy(alpha = 0.25f),
                                 shape = RoundedCornerShape(6.dp),
-                                modifier = Modifier.clickable { showSbuMenu = true }
+                                modifier = Modifier
+                                    .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+                                    .clickable { showSbuMenu = true }
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.5.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
                                         text = if (selectedSbu == "ALL") "Khối: Tất cả" else selectedSbu,
                                         color = Color.White,
-                                        fontSize = 10.5.sp,
+                                        fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
                                     )
-                                    Spacer(modifier = Modifier.width(2.dp))
-                                    Text("▾", color = Color.White, fontSize = 10.sp)
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text("▾", color = Color.White, fontSize = 11.sp)
                                 }
                             }
 
@@ -138,24 +141,24 @@ fun CRMMainScreen(
                                 modifier = Modifier.background(Color.White)
                             ) {
                                 sbuOptions.forEach { (key, label) ->
+                                    val isSelected = (selectedSbu == key)
                                     DropdownMenuItem(
                                         text = {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Checkbox(
-                                                    checked = (selectedSbu == key),
-                                                    onCheckedChange = {
-                                                        selectedSbu = key
-                                                        showSbuMenu = false
-                                                    },
-                                                    colors = CheckboxDefaults.colors(checkedColor = feconDeepOrange)
-                                                )
-                                                Spacer(modifier = Modifier.width(4.dp))
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
                                                 Text(
                                                     text = label,
                                                     fontSize = 12.sp,
-                                                    fontWeight = if (selectedSbu == key) FontWeight.Bold else FontWeight.Normal,
-                                                    color = Color(0xFF0F172A)
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                    color = if (isSelected) feconDeepOrange else Color(0xFF0F172A)
                                                 )
+                                                if (isSelected) {
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Text("✓", color = feconDeepOrange, fontWeight = FontWeight.Black, fontSize = 13.sp)
+                                                }
                                             }
                                         },
                                         onClick = {
@@ -167,30 +170,43 @@ fun CRMMainScreen(
                             }
                         }
 
-                        // User Account Name next to Logout
+                        // Tên tài khoản hiển thị Tên đầy đủ và Chức danh
                         Surface(
-                            color = Color.White.copy(alpha = 0.18f),
+                            color = Color.White.copy(alpha = 0.2f),
                             shape = RoundedCornerShape(6.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            Column(
+                                modifier = Modifier
+                                    .padding(horizontal = 7.dp, vertical = 3.dp)
+                                    .widthIn(max = 125.dp),
+                                horizontalAlignment = Alignment.End
                             ) {
-                                Text("👤", fontSize = 10.sp)
-                                Spacer(modifier = Modifier.width(2.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("👤", fontSize = 9.5.sp)
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text(
+                                        text = user.fullName,
+                                        color = Color.White,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                                 Text(
-                                    text = user.fullName.split(" ").lastOrNull() ?: user.fullName,
-                                    color = Color.White,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1
+                                    text = user.title.ifEmpty { user.role },
+                                    color = feconLightCream,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
 
-                        // Compact Logout Button
+                        // Nút Đăng xuất
                         Surface(
-                            color = Color(0xFFB91C1C).copy(alpha = 0.85f),
+                            color = Color(0xFFB91C1C).copy(alpha = 0.9f),
                             shape = RoundedCornerShape(6.dp)
                         ) {
                             TextButton(

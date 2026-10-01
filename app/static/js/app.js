@@ -1687,7 +1687,7 @@ function classifyFeconProject(val) {
       level: "LEVEL_SPECIAL",
       code: "ĐẶC BIỆT",
       name: "Dự án Cấp Đặc Biệt",
-      badge: "Cấp Đặc Biệt (≥ 500 Tỷ)",
+      badge: "Cấp Đặc Biệt",
       approver_authority: "Chủ tịch HĐQT quyết định",
       approver_short: "Chủ tịch HĐQT",
       colorClass: "bg-purple-100 text-purple-800 border-purple-200",
@@ -1698,7 +1698,7 @@ function classifyFeconProject(val) {
       level: "LEVEL_1",
       code: "CẤP 1",
       name: "Dự án Cấp 1",
-      badge: "Cấp 1 (300 - < 500 Tỷ)",
+      badge: "Cấp 1",
       approver_authority: "Tổng Giám đốc (hoặc PTGĐ có ủy quyền của Chủ tịch)",
       approver_short: "Tổng Giám đốc (hoặc PTGĐ ủy quyền)",
       colorClass: "bg-rose-100 text-rose-800 border-rose-200",
@@ -1709,7 +1709,7 @@ function classifyFeconProject(val) {
       level: "LEVEL_2",
       code: "CẤP 2",
       name: "Dự án Cấp 2",
-      badge: "Cấp 2 (150 - < 300 Tỷ)",
+      badge: "Cấp 2",
       approver_authority: "Phó Tổng Giám đốc phụ trách các mảng SBU",
       approver_short: "PTGĐ phụ trách SBU",
       colorClass: "bg-amber-100 text-amber-900 border-amber-200",
@@ -1720,7 +1720,7 @@ function classifyFeconProject(val) {
       level: "LEVEL_3",
       code: "CẤP 3",
       name: "Dự án Cấp 3",
-      badge: "Cấp 3 (50 - < 150 Tỷ)",
+      badge: "Cấp 3",
       approver_authority: "Phó Tổng Giám đốc phụ trách các mảng SBU",
       approver_short: "PTGĐ phụ trách SBU",
       colorClass: "bg-blue-100 text-blue-800 border-blue-200",
@@ -1731,7 +1731,7 @@ function classifyFeconProject(val) {
       level: "LEVEL_4",
       code: "CẤP 4",
       name: "Dự án Cấp 4",
-      badge: "Cấp 4 (< 50 Tỷ)",
+      badge: "Cấp 4",
       approver_authority: "Phó Tổng Giám đốc phụ trách các mảng SBU",
       approver_short: "PTGĐ phụ trách SBU",
       colorClass: "bg-emerald-100 text-emerald-800 border-emerald-200",
@@ -2086,12 +2086,115 @@ async function confirmDisbursement(milestoneId) {
   }
 }
 
+function populateProjectCustomerSelect(selectedId = null) {
+  const custSelect = document.getElementById('proj-customer');
+  if (!custSelect) return;
+  let opts = '<option value="">-- Chọn Chủ đầu tư / Đối tác có sẵn --</option>';
+  opts += allCustomers.map(c => `<option value="${c.id}">${c.name} (${c.sbu})</option>`).join('');
+  opts += '<option value="__NEW__" class="font-bold text-blue-600 bg-blue-50">➕ Thêm Chủ đầu tư / Khách hàng mới...</option>';
+  custSelect.innerHTML = opts;
+  if (selectedId) {
+    custSelect.value = selectedId;
+  }
+}
+
+function toggleQuickAddCustomer(forceOpen = null) {
+  const box = document.getElementById('box-quick-add-customer');
+  if (!box) return;
+  const isOpen = !box.classList.contains('hidden');
+  const shouldOpen = forceOpen !== null ? forceOpen : !isOpen;
+  if (shouldOpen) {
+    box.classList.remove('hidden');
+    document.getElementById('quick-cust-name')?.focus();
+    const custSelect = document.getElementById('proj-customer');
+    if (custSelect && custSelect.value !== '__NEW__') {
+      custSelect.value = '__NEW__';
+    }
+  } else {
+    box.classList.add('hidden');
+    const custSelect = document.getElementById('proj-customer');
+    if (custSelect && custSelect.value === '__NEW__') {
+      custSelect.value = '';
+    }
+  }
+}
+
+function handleProjectCustomerChange(val) {
+  if (val === '__NEW__') {
+    toggleQuickAddCustomer(true);
+  } else {
+    toggleQuickAddCustomer(false);
+  }
+}
+
+async function submitQuickCustomer() {
+  const name = document.getElementById('quick-cust-name')?.value.trim();
+  const contact = document.getElementById('quick-cust-contact')?.value.trim();
+  const phone = document.getElementById('quick-cust-phone')?.value.trim() || '0900000000';
+  const segment = document.getElementById('quick-cust-segment')?.value || 'B2B';
+  const tier = document.getElementById('quick-cust-tier')?.value || 'GOLD';
+  const sbuSelect = document.getElementById('proj-sbu');
+  const sbu = currentUser.role === 'SBU_DIRECTOR' ? currentUser.sbu : (sbuSelect?.value || 'SBU1');
+
+  if (!name) {
+    showToast("Vui lòng nhập tên Chủ đầu tư / Doanh nghiệp!", "error");
+    document.getElementById('quick-cust-name')?.focus();
+    return null;
+  }
+  if (!contact) {
+    showToast("Vui lòng nhập tên Lãnh đạo / Người liên hệ!", "error");
+    document.getElementById('quick-cust-contact')?.focus();
+    return null;
+  }
+
+  const payload = {
+    name: name,
+    sbu: sbu,
+    key_decision_maker: contact,
+    decision_maker_phone: phone,
+    phone: phone,
+    tier: tier,
+    segment: segment
+  };
+
+  try {
+    const res = await authFetch('/api/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      showToast(err.detail || "Lỗi khi tạo Chủ đầu tư mới", "error");
+      return null;
+    }
+
+    const newCust = await res.json();
+    showToast(`Đã thêm CĐT "${newCust.name}" thành công!`);
+
+    // Refresh allCustomers and update select
+    await loadCustomers();
+    populateProjectCustomerSelect(newCust.id);
+    toggleQuickAddCustomer(false);
+
+    // Reset quick fields
+    document.getElementById('quick-cust-name').value = '';
+    document.getElementById('quick-cust-contact').value = '';
+    document.getElementById('quick-cust-phone').value = '';
+
+    return newCust;
+  } catch (err) {
+    console.error("Error creating quick customer:", err);
+    showToast("Lỗi kết nối khi tạo Chủ đầu tư", "error");
+    return null;
+  }
+}
+
 function openNewProjectModal() {
   document.getElementById('form-project').reset();
-  const custSelect = document.getElementById('proj-customer');
-  if (custSelect) {
-    custSelect.innerHTML = allCustomers.map(c => `<option value="${c.id}">${c.name} (${c.sbu})</option>`).join('');
-  }
+  toggleQuickAddCustomer(false);
+  populateProjectCustomerSelect();
   const sbuSelect = document.getElementById('proj-sbu');
   if (currentUser.role === 'SBU_DIRECTOR') {
     sbuSelect.value = currentUser.sbu;
@@ -2107,15 +2210,29 @@ function openNewProjectModal() {
 
 async function handleProjectSubmit(e) {
   e.preventDefault();
+
+  let custId = document.getElementById('proj-customer').value;
+  // If user selected __NEW__ or entered quick customer name without clicking the check button:
+  if (custId === '__NEW__' || (!custId && document.getElementById('quick-cust-name')?.value.trim())) {
+    const created = await submitQuickCustomer();
+    if (!created) return;
+    custId = created.id;
+  }
+
+  if (!custId) {
+    showToast("Vui lòng chọn hoặc thêm Chủ đầu tư cho dự án!", "error");
+    return;
+  }
+
   const sbuSelect = document.getElementById('proj-sbu');
   const payload = {
-    code: document.getElementById('proj-code').value,
-    name: document.getElementById('proj-name').value,
-    customer_id: parseInt(document.getElementById('proj-customer').value),
+    code: document.getElementById('proj-code').value.trim(),
+    name: document.getElementById('proj-name').value.trim(),
+    customer_id: parseInt(custId, 10),
     sbu: currentUser.role === 'SBU_DIRECTOR' ? currentUser.sbu : sbuSelect.value,
     contract_value: parseFloat(document.getElementById('proj-val').value) || 0,
-    contract_number: document.getElementById('proj-contract').value,
-    project_director: document.getElementById('proj-director').value
+    contract_number: document.getElementById('proj-contract').value.trim(),
+    project_director: document.getElementById('proj-director').value.trim()
   };
 
   try {

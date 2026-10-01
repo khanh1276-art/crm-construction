@@ -84,7 +84,7 @@ def classify_fecon_project(val: float) -> dict:
             "level": "LEVEL_SPECIAL",
             "level_code": "ĐẶC BIỆT",
             "level_name": "Dự án Cấp Đặc Biệt",
-            "level_badge": "Cấp Đặc Biệt (≥ 500 Tỷ)",
+            "level_badge": "Cấp Đặc Biệt",
             "approver_authority": "Chủ tịch HĐQT quyết định",
             "approver_short": "Chủ tịch HĐQT",
             "color": "purple"
@@ -94,7 +94,7 @@ def classify_fecon_project(val: float) -> dict:
             "level": "LEVEL_1",
             "level_code": "CẤP 1",
             "level_name": "Dự án Cấp 1",
-            "level_badge": "Cấp 1 (300 - < 500 Tỷ)",
+            "level_badge": "Cấp 1",
             "approver_authority": "Tổng Giám đốc (hoặc PTGĐ có ủy quyền của Chủ tịch)",
             "approver_short": "Tổng Giám đốc (hoặc PTGĐ ủy quyền)",
             "color": "rose"
@@ -104,7 +104,7 @@ def classify_fecon_project(val: float) -> dict:
             "level": "LEVEL_2",
             "level_code": "CẤP 2",
             "level_name": "Dự án Cấp 2",
-            "level_badge": "Cấp 2 (150 - < 300 Tỷ)",
+            "level_badge": "Cấp 2",
             "approver_authority": "Phó Tổng Giám đốc phụ trách các mảng SBU",
             "approver_short": "PTGĐ phụ trách SBU",
             "color": "amber"
@@ -114,7 +114,7 @@ def classify_fecon_project(val: float) -> dict:
             "level": "LEVEL_3",
             "level_code": "CẤP 3",
             "level_name": "Dự án Cấp 3",
-            "level_badge": "Cấp 3 (50 - < 150 Tỷ)",
+            "level_badge": "Cấp 3",
             "approver_authority": "Phó Tổng Giám đốc phụ trách các mảng SBU",
             "approver_short": "PTGĐ phụ trách SBU",
             "color": "blue"
@@ -124,7 +124,7 @@ def classify_fecon_project(val: float) -> dict:
             "level": "LEVEL_4",
             "level_code": "CẤP 4",
             "level_name": "Dự án Cấp 4",
-            "level_badge": "Cấp 4 (< 50 Tỷ)",
+            "level_badge": "Cấp 4",
             "approver_authority": "Phó Tổng Giám đốc phụ trách các mảng SBU",
             "approver_short": "PTGĐ phụ trách SBU",
             "color": "emerald"

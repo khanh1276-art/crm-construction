@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crmxaydung.data.ApiClient
 import com.example.crmxaydung.data.DashboardStats
-import com.example.crmxaydung.data.ProjectItem
+import com.example.crmxaydung.data.PipelineBidItem
 import com.example.crmxaydung.data.UserSession
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
@@ -28,11 +28,11 @@ fun DashboardScreen(user: UserSession) {
     val coroutineScope = rememberCoroutineScope()
     var selectedSbu by remember { mutableStateOf(if (user.role == "ADMIN") "ALL" else user.sbu) }
     var stats by remember { mutableStateOf<DashboardStats?>(null) }
-    var projects by remember { mutableStateOf<List<ProjectItem>>(emptyList()) }
+    var pipelineBids by remember { mutableStateOf<List<PipelineBidItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
     val sbuList = listOf(
-        "ALL" to "Tất Cả SBU",
+        "ALL" to "Tất Cả",
         "SBU1" to "SBU1 - Móng & Hầm",
         "SBU2" to "SBU2 - Năng Lượng",
         "SBU3" to "SBU3 - Metro Ngầm",
@@ -44,9 +44,9 @@ fun DashboardScreen(user: UserSession) {
         isLoading = true
         coroutineScope.launch {
             val statsRes = ApiClient.fetchDashboardStats(sbu)
-            val projRes = ApiClient.fetchProjects(sbu)
+            val bidsRes = ApiClient.fetchPipelineBids(sbu)
             stats = statsRes.getOrNull() ?: DashboardStats()
-            projects = projRes.getOrNull() ?: emptyList()
+            pipelineBids = bidsRes.getOrNull() ?: emptyList()
             isLoading = false
         }
     }
@@ -62,63 +62,31 @@ fun DashboardScreen(user: UserSession) {
             .fillMaxSize()
             .background(Color(0xFFF8FAFC))
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 8.dp, vertical = 6.dp)
+            .padding(horizontal = 8.dp, vertical = 2.dp)
     ) {
-        // Active User Welcome Banner (Compact White Card)
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(10.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
-        ) {
+        // SBU Filter (Only for Admin - ultra compact single row)
+        if (user.role == "ADMIN") {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Xin chào, ${user.fullName}",
-                        color = Color(0xFF0F172A),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "${user.title} | ${user.role} (${user.sbu})",
-                        color = Color(0xFFEA580C),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        // SBU Filter (Only for Admin)
-        if (user.role == "ADMIN") {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
+                    .padding(vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Khối SBU:",
+                    text = "Khối:",
                     color = Color(0xFF475569),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     items(sbuList) { (key, label) ->
                         val isSelected = (selectedSbu == key)
                         FilterChip(
                             selected = isSelected,
                             onClick = { selectedSbu = key },
-                            label = { Text(label, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
+                            label = { Text(label, fontSize = 9.5.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
+                            modifier = Modifier.height(26.dp),
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = Color(0xFFEA580C),
                                 selectedLabelColor = Color.White,
@@ -134,7 +102,7 @@ fun DashboardScreen(user: UserSession) {
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
         }
 
         if (isLoading) {
@@ -148,8 +116,11 @@ fun DashboardScreen(user: UserSession) {
             }
         } else {
             val s = stats ?: DashboardStats()
+            val totalFunnelBillion = s.activeBidsBillion + s.wonBidsBillion
+            val totalBidsCount = s.activeBidsCount + s.wonBidsCount
+            val winRatio = if (totalBidsCount > 0) (s.wonBidsCount * 100 / totalBidsCount) else 0
 
-            // 4 KPI Cards Grid (Focusing on Strategic Customers & Bidding Funnel)
+            // 4 KPI Cards Grid (Focusing on Bidding Funnel & Strategic Customers)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 KpiCard(
                     title = "Khách Hàng",
@@ -173,7 +144,7 @@ fun DashboardScreen(user: UserSession) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 KpiCard(
@@ -187,9 +158,9 @@ fun DashboardScreen(user: UserSession) {
                     modifier = Modifier.weight(1f)
                 )
                 KpiCard(
-                    title = "Giá Trị Hợp Đồng",
-                    value = "${df.format(s.totalContractBillion)} tỷ",
-                    sub = "Đã thu: ${df.format(s.totalCollectedBillion)} tỷ",
+                    title = "Tổng Quy Mô Phễu",
+                    value = "${df.format(totalFunnelBillion)} tỷ",
+                    sub = "Tỷ lệ trúng: $winRatio%",
                     bgColor = Color(0xFFFAF5FF),
                     borderColor = Color(0xFFE9D5FF),
                     titleColor = Color(0xFF6B21A8),
@@ -198,18 +169,35 @@ fun DashboardScreen(user: UserSession) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Projects Highlight Section
-            Text(
-                text = "🏗️ Tiến Độ Các Dự Án Trọng Điểm",
-                color = Color(0xFF0F172A),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(6.dp))
+            // Bidding Opportunities Highlight Section (Replaces construction projects)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "🎯 Các Gói Thầu Trọng Điểm Đang Bám Sát",
+                    color = Color(0xFF0F172A),
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${pipelineBids.count { it.stage != "WON" && it.stage != "LOST" }} gói",
+                    color = Color(0xFFEA580C),
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
-            if (projects.isEmpty()) {
+            Spacer(modifier = Modifier.height(4.dp))
+
+            val activeBids = pipelineBids
+                .filter { it.stage != "WON" && it.stage != "LOST" }
+                .sortedByDescending { it.estimatedValueBillion }
+
+            if (activeBids.isEmpty()) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     modifier = Modifier
@@ -217,15 +205,15 @@ fun DashboardScreen(user: UserSession) {
                         .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
                 ) {
                     Box(modifier = Modifier.padding(14.dp), contentAlignment = Alignment.Center) {
-                        Text("Chưa có dự án trong phân hệ này.", color = Color(0xFF94A3B8), fontSize = 12.sp)
+                        Text("Chưa có gói thầu nào trong phân hệ này.", color = Color(0xFF94A3B8), fontSize = 12.sp)
                     }
                 }
             } else {
-                projects.take(5).forEach { proj ->
+                activeBids.take(6).forEach { bid ->
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         shape = RoundedCornerShape(10.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 3.dp)
@@ -237,49 +225,113 @@ fun DashboardScreen(user: UserSession) {
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = proj.name,
-                                    color = Color(0xFF0F172A),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.5.sp,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
                                 Surface(
-                                    color = Color(0xFFEA580C),
+                                    color = when (bid.sbu) {
+                                        "SBU1" -> Color(0xFF1E3A8A)
+                                        "SBU2" -> Color(0xFF78350F)
+                                        "SBU3" -> Color(0xFF581C87)
+                                        "SBU4" -> Color(0xFF064E3B)
+                                        else -> Color(0xFF164E63)
+                                    },
                                     shape = RoundedCornerShape(4.dp)
                                 ) {
                                     Text(
-                                        proj.sbu,
+                                        text = bid.sbu,
                                         color = Color.White,
-                                        fontSize = 9.5.sp,
+                                        fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp)
+                                    )
+                                }
+
+                                Surface(
+                                    color = when (bid.stage) {
+                                        "NEGOTIATION" -> Color(0xFFD97706)
+                                        "TENDER_PREP" -> Color(0xFF2563EB)
+                                        "EVALUATION" -> Color(0xFF0284C7)
+                                        else -> Color(0xFF64748B)
+                                    },
+                                    shape = RoundedCornerShape(4.dp)
+                                ) {
+                                    Text(
+                                        text = when (bid.stage) {
+                                            "NEGOTIATION" -> "🤝 Thương Thảo"
+                                            "TENDER_PREP" -> "📑 Lập Hồ Sơ"
+                                            "EVALUATION" -> "🔍 Khảo Sát"
+                                            else -> "📝 Tiếp Cận"
+                                        },
+                                        color = Color.White,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp)
                                     )
                                 }
                             }
+
                             Spacer(modifier = Modifier.height(3.dp))
                             Text(
-                                text = "CĐT: ${proj.customerName} | HĐ: ${df.format(proj.contractValueBillion)} tỷ",
+                                text = bid.projectTitle,
+                                color = Color(0xFF0F172A),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.5.sp
+                            )
+
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Đối tác / CĐT: ${bid.customerName}",
                                 color = Color(0xFF64748B),
                                 fontSize = 11.5.sp
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                LinearProgressIndicator(
-                                    progress = { (proj.progressPercent / 100.0).toFloat().coerceIn(0f, 1f) },
-                                    color = Color(0xFF10B981),
-                                    trackColor = Color(0xFFE2E8F0),
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(5.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
+
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    text = "${proj.progressPercent.toInt()}%",
-                                    color = Color(0xFF059669),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
+                                    text = "${df.format(bid.estimatedValueBillion)} Tỷ VNĐ",
+                                    color = Color(0xFFEA580C),
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 13.sp
+                                )
+                                Text(
+                                    text = "${bid.winRate}% Xác Suất",
+                                    color = Color(0xFF7C3AED),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.5.sp
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Surface(
+                                    color = when (bid.projectLevel) {
+                                        "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
+                                        "LEVEL_1" -> Color(0xFFDC2626)
+                                        "LEVEL_2" -> Color(0xFFEA580C)
+                                        "LEVEL_3" -> Color(0xFF2563EB)
+                                        else -> Color(0xFF059669)
+                                    },
+                                    shape = RoundedCornerShape(4.dp)
+                                ) {
+                                    Text(
+                                        text = bid.projectLevelName,
+                                        color = Color.White,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp)
+                                    )
+                                }
+                                Text(
+                                    text = "Duyệt: ${bid.approverShort}",
+                                    color = Color(0xFF475569),
+                                    fontSize = 9.5.sp,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
@@ -306,12 +358,12 @@ fun KpiCard(
         shape = RoundedCornerShape(10.dp),
         modifier = modifier.border(1.dp, borderColor, RoundedCornerShape(10.dp))
     ) {
-        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)) {
             Text(title, color = titleColor, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(2.dp))
             Text(value, color = valColor, fontSize = 16.sp, fontWeight = FontWeight.Black)
             Spacer(modifier = Modifier.height(1.dp))
-            Text(sub, color = titleColor.copy(alpha = 0.8f), fontSize = 9.5.sp, fontWeight = FontWeight.Medium)
+            Text(sub, color = titleColor.copy(alpha = 0.85f), fontSize = 9.5.sp, fontWeight = FontWeight.Medium)
         }
     }
 }

@@ -88,6 +88,7 @@ fun ProjectScreen(user: UserSession) {
 
     Scaffold(
         containerColor = Color(0xFFF8FAFC),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
             if (user.role != "COLLABORATOR") {
                 ExtendedFloatingActionButton(
@@ -103,8 +104,8 @@ fun ProjectScreen(user: UserSession) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .padding(bottom = padding.calculateBottomPadding())
+                .padding(horizontal = 8.dp, vertical = 2.dp)
         ) {
             // Compact Header with Inline Funnel Metrics & Refresh
             Row(

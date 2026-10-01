@@ -48,7 +48,7 @@ fun CRMMainScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .statusBarsPadding()
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -59,32 +59,32 @@ fun CRMMainScreen(
                     ) {
                         Surface(
                             color = Color.White,
-                            shape = RoundedCornerShape(6.dp),
-                            modifier = Modifier.padding(end = 8.dp)
+                            shape = RoundedCornerShape(5.dp),
+                            modifier = Modifier.padding(end = 6.dp)
                         ) {
                             Image(
                                 painter = painterResource(id = R.drawable.fecon_crm_logo),
                                 contentDescription = "FECON CRM",
                                 modifier = Modifier
-                                    .height(26.dp)
-                                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                                    .height(24.dp)
+                                    .padding(horizontal = 3.dp, vertical = 1.5.dp),
                                 contentScale = ContentScale.Fit
                             )
                         }
                         Column {
                             Text(
                                 text = "FECON CRM",
-                                fontSize = 14.sp,
+                                fontSize = 13.5.sp,
                                 fontWeight = FontWeight.Black,
                                 color = Color.White,
-                                lineHeight = 16.sp
+                                lineHeight = 15.sp
                             )
                             Text(
                                 text = "${user.fullName} • ${user.sbu}",
-                                fontSize = 10.sp,
+                                fontSize = 9.5.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = feconLightCream,
-                                lineHeight = 12.sp,
+                                lineHeight = 11.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -94,17 +94,17 @@ fun CRMMainScreen(
                     // Compact Logout Button
                     Surface(
                         color = Color.White.copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(6.dp)
+                        shape = RoundedCornerShape(5.dp)
                     ) {
                         TextButton(
                             onClick = {
                                 ApiClient.currentUser = null
                                 onLogout()
                             },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                            modifier = Modifier.height(28.dp)
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 1.dp),
+                            modifier = Modifier.height(26.dp)
                         ) {
-                            Text("🚪 Đăng xuất", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text("🚪 Đăng xuất", color = Color.White, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

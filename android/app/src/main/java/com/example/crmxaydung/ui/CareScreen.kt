@@ -69,6 +69,7 @@ fun CareScreen(user: UserSession) {
 
     Scaffold(
         containerColor = Color(0xFFF8FAFC), // Nền sáng
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddCareDialog = true },
@@ -89,8 +90,8 @@ fun CareScreen(user: UserSession) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .padding(bottom = padding.calculateBottomPadding())
+                .padding(horizontal = 8.dp, vertical = 2.dp)
         ) {
             // Header
             Row(

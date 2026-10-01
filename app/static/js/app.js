@@ -26,6 +26,7 @@ const SBU_CONFIG = {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await checkAuthAndInitialize();
+  checkIosDeviceAndShowBanner();
 });
 
 // Helper: Custom fetch with Role & SBU headers
@@ -2787,3 +2788,75 @@ function quickMessageToLeader(custId) {
     onMessageCustomerChange();
   }
 }
+
+// ==========================================
+// MOBILE APP INSTALLATION MODAL & iOS PROMPTS
+// ==========================================
+function openAppInstallModal(defaultTab = 'android') {
+  switchInstallTab(defaultTab);
+  const urlInput = document.getElementById('ios-web-url-input');
+  if (urlInput) urlInput.value = window.location.origin;
+  openModal('modal-app-install');
+}
+
+function switchInstallTab(tab) {
+  const tabAndroid = document.getElementById('tab-btn-android');
+  const tabIos = document.getElementById('tab-btn-ios');
+  const contentAndroid = document.getElementById('tab-content-android');
+  const contentIos = document.getElementById('tab-content-ios');
+
+  if (tab === 'ios') {
+    if (tabIos) {
+      tabIos.className = 'flex-1 py-2 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 bg-white text-[#0A3583] shadow-sm cursor-pointer';
+    }
+    if (tabAndroid) {
+      tabAndroid.className = 'flex-1 py-2 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 cursor-pointer';
+    }
+    if (contentIos) contentIos.classList.remove('hidden');
+    if (contentAndroid) contentAndroid.classList.add('hidden');
+  } else {
+    if (tabAndroid) {
+      tabAndroid.className = 'flex-1 py-2 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 bg-white text-emerald-700 shadow-sm cursor-pointer';
+    }
+    if (tabIos) {
+      tabIos.className = 'flex-1 py-2 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 cursor-pointer';
+    }
+    if (contentAndroid) contentAndroid.classList.remove('hidden');
+    if (contentIos) contentIos.classList.add('hidden');
+  }
+}
+
+function copyWebLink() {
+  const url = window.location.origin;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(() => {
+      showToast('Đã sao chép link web! Hãy mở Safari trên iPhone và dán để cài đặt.', 'success');
+    }).catch(() => {
+      showToast('Địa chỉ web: ' + url, 'info');
+    });
+  } else {
+    showToast('Địa chỉ web: ' + url, 'info');
+  }
+}
+
+function checkIosDeviceAndShowBanner() {
+  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  const isDismissed = sessionStorage.getItem('fecon_ios_banner_dismissed') === 'true';
+
+  if (isIos && !isStandalone && !isDismissed) {
+    const banner = document.getElementById('ios-pwa-install-banner');
+    if (banner) {
+      setTimeout(() => {
+        banner.classList.remove('hidden');
+      }, 1200);
+    }
+  }
+}
+
+function dismissIosBanner() {
+  const banner = document.getElementById('ios-pwa-install-banner');
+  if (banner) banner.classList.add('hidden');
+  sessionStorage.setItem('fecon_ios_banner_dismissed', 'true');
+}
+

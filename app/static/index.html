@@ -23,7 +23,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/static/css/custom.css?v=20261001_1745">
+  <link rel="stylesheet" href="/static/css/custom.css?v=20261001_1800">
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
 
@@ -115,15 +115,22 @@
 
         <!-- Divider & App Installation Section (Android APK & iOS Web App) -->
         <div class="pt-3 border-t border-slate-100 space-y-2">
+          <div class="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-0.5">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-mobile-screen-button text-amber-500"></i> Cài đặt ứng dụng di động:</span>
+            <button type="button" onclick="openAppInstallModal()" class="text-blue-600 hover:text-blue-800 text-[10px] font-bold hover:underline cursor-pointer">
+              Xem chi tiết 2 bản &rarr;
+            </button>
+          </div>
+
           <!-- Android APK Direct Download -->
-          <div class="flex items-center justify-between bg-slate-50 hover:bg-slate-100 p-2.5 rounded-xl border border-slate-200 transition">
+          <div class="flex items-center justify-between bg-emerald-50/80 hover:bg-emerald-100/80 p-2.5 rounded-xl border border-emerald-200 transition">
             <div class="flex items-center gap-2.5">
               <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm shadow">
                 <i class="fa-brands fa-android"></i>
               </div>
               <div class="text-left">
-                <div class="text-xs font-bold text-slate-800">Cài đặt Android</div>
-                <div class="text-[10px] text-slate-500">Tải file APK trực tiếp</div>
+                <div class="text-xs font-bold text-emerald-950">Android Native (APK)</div>
+                <div class="text-[10px] text-emerald-800 font-medium">Bản v1.2 mới nhất • 13.3 MB</div>
               </div>
             </div>
             <a href="/static/crm-xaydung.apk" download="FECON-CRM.apk" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold rounded-lg shadow transition flex items-center gap-1.5">
@@ -138,12 +145,12 @@
                 <i class="fa-brands fa-apple"></i>
               </div>
               <div class="text-left">
-                <div class="text-xs font-bold text-slate-800">Cài đặt iPhone (iOS)</div>
-                <div class="text-[10px] text-slate-500">Thêm vào màn hình chính</div>
+                <div class="text-xs font-bold text-blue-950">iPhone / iPad (iOS)</div>
+                <div class="text-[10px] text-blue-800 font-medium">Thêm vào MH chính (Safari)</div>
               </div>
             </div>
-            <button type="button" onclick="alert('📱 Hướng dẫn cài đặt FECON CRM trên iPhone/iPad:\n\n1. Mở trang web này bằng trình duyệt Safari.\n2. Bấm vào nút Chia sẻ (biểu tượng hình vuông có mũi tên chỉ lên ở thanh công cụ Safari dưới cùng).\n3. Cuộn xuống và chọn \'Thêm vào MH chính\' (Add to Home Screen).\n4. Bấm \'Thêm\' ở góc phải trên màn hình.\n\n✨ Ứng dụng FECON CRM sẽ xuất hiện trên màn hình chính như một app tải từ App Store, chạy toàn màn hình cực kỳ mượt mà!')" class="px-2.5 py-1.5 bg-[#0A3583] hover:bg-[#082860] active:scale-95 text-white text-xs font-bold rounded-lg shadow transition flex items-center gap-1">
-              <i class="fa-solid fa-circle-question"></i> Hướng dẫn
+            <button type="button" onclick="openAppInstallModal('ios')" class="px-2.5 py-1.5 bg-[#0A3583] hover:bg-[#082860] active:scale-95 text-white text-xs font-bold rounded-lg shadow transition flex items-center gap-1 cursor-pointer">
+              <i class="fa-solid fa-arrow-up-from-bracket text-amber-300"></i> Hướng dẫn
             </button>
           </div>
         </div>
@@ -206,6 +213,16 @@
 
         <!-- Account Profile & Logout Widget -->
         <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+          <!-- Mobile App Download Button (Android APK & iOS WebApp) -->
+          <button onclick="openAppInstallModal()" class="px-2 sm:px-3 py-1.5 sm:py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white rounded-xl text-xs font-bold transition shadow-sm border border-emerald-500/40 flex items-center gap-1.5 cursor-pointer" title="Cài đặt Ứng dụng FECON CRM cho Android và iPhone (iOS)">
+            <i class="fa-solid fa-mobile-screen-button text-amber-300 text-sm"></i>
+            <span class="hidden md:inline">Tải App</span>
+            <span class="inline-flex items-center gap-1 text-[10px] bg-black/25 px-1 py-0.5 rounded font-mono">
+              <i class="fa-brands fa-android text-emerald-300"></i>
+              <i class="fa-brands fa-apple text-white"></i>
+            </span>
+          </button>
+
           <!-- Active Account Card -->
           <div class="flex items-center gap-1.5 sm:gap-2 bg-slate-800/90 border border-slate-700 rounded-xl px-2 py-1 sm:px-3 sm:py-1.5 shadow-sm">
             <div id="user-avatar-icon" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-400/20 text-amber-400 flex items-center justify-center text-xs sm:text-sm">
@@ -309,6 +326,25 @@
               <span class="w-2 h-2 rounded-full bg-cyan-500"></span> SBU 5: Cảng biển & BĐKH
             </div>
           </div>
+        </div>
+
+        <!-- Mobile App Download Banner Card in Sidebar -->
+        <div class="mt-3 p-3 bg-gradient-to-br from-slate-900 to-blue-950 text-white rounded-xl shadow-sm border border-blue-900/60 space-y-2">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center text-xs font-black shadow">
+              <i class="fa-solid fa-mobile-screen"></i>
+            </div>
+            <div>
+              <div class="font-extrabold text-[11px] text-white">Ứng Dụng FECON CRM</div>
+              <div class="text-[9px] text-slate-300">Android APK & iOS WebApp</div>
+            </div>
+          </div>
+          <p class="text-[10px] text-slate-300 leading-snug">
+            Cài đặt trực tiếp trên Android hoặc iPhone để quản trị phễu thầu tiện lợi.
+          </p>
+          <button type="button" onclick="openAppInstallModal()" class="w-full py-1.5 px-2 bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 rounded-lg font-bold text-[11px] shadow transition flex items-center justify-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-download"></i> Cài Đặt App Mobile
+          </button>
         </div>
 
       </nav>
@@ -887,6 +923,33 @@
 
     </div>
   </nav>
+
+  <!-- Smart Floating Banner for iOS Safari Users -->
+  <div id="ios-pwa-install-banner" class="hidden fixed bottom-20 lg:bottom-5 left-3 right-3 sm:left-auto sm:right-5 sm:max-w-md z-40 bg-slate-950/95 backdrop-blur-md text-white p-3.5 rounded-2xl border border-blue-500/50 shadow-2xl transition duration-300">
+    <div class="flex items-start gap-3">
+      <div class="w-9 h-9 rounded-xl bg-[#0A3583] text-white flex items-center justify-center shrink-0 text-base shadow border border-blue-400/40">
+        <i class="fa-brands fa-apple"></i>
+      </div>
+      <div class="flex-1 min-w-0 text-xs">
+        <div class="font-extrabold text-amber-300 flex items-center gap-1.5">
+          <span>Cài đặt FECON CRM trên iPhone</span>
+          <span class="text-[9px] bg-blue-500/40 text-blue-200 px-1 py-0.5 rounded font-mono">iOS PWA</span>
+        </div>
+        <p class="text-[11px] text-slate-300 mt-1 leading-snug">
+          Nhấn biểu tượng <i class="fa-solid fa-arrow-up-from-bracket text-blue-400 font-bold mx-0.5"></i> <strong>Chia sẻ</strong> ở Safari, sau đó chọn <strong>"Thêm vào MH chính"</strong> để dùng toàn màn hình như App Native!
+        </p>
+        <div class="flex items-center gap-2 mt-2">
+          <button type="button" onclick="openAppInstallModal('ios')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[10px] font-bold shadow transition cursor-pointer">
+            Xem hướng dẫn chi tiết
+          </button>
+          <button type="button" onclick="dismissIosBanner()" class="text-slate-400 hover:text-white text-[10px] underline ml-auto cursor-pointer">
+            Để sau
+          </button>
+        </div>
+      </div>
+      <button type="button" onclick="dismissIosBanner()" class="text-slate-400 hover:text-white text-lg leading-none cursor-pointer">&times;</button>
+    </div>
+  </div>
 
   </div> <!-- /#app-root -->
 
@@ -2002,10 +2065,169 @@
     </div>
   </div>
 
+  <!-- Modal: App Installation Guide for Android Native & iOS WebApp -->
+  <div id="modal-app-install" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-400 text-white flex items-center justify-center text-lg shadow-md">
+            <i class="fa-solid fa-mobile-screen"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-slate-900 text-base sm:text-lg">Cài Đặt FECON CRM Mobile</h3>
+            <p class="text-xs text-slate-500">Tối ưu cho cả thiết bị Android và iPhone (iOS)</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-app-install')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-lg font-bold transition cursor-pointer">&times;</button>
+      </div>
+
+      <!-- Platform Tabs (Android vs iOS) -->
+      <div class="flex items-center p-1 bg-slate-100 rounded-2xl gap-1">
+        <button type="button" id="tab-btn-android" onclick="switchInstallTab('android')" class="flex-1 py-2 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 bg-white text-emerald-700 shadow-sm cursor-pointer">
+          <i class="fa-brands fa-android text-base"></i>
+          <span>Bản Android (APK Native)</span>
+        </button>
+        <button type="button" id="tab-btn-ios" onclick="switchInstallTab('ios')" class="flex-1 py-2 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 cursor-pointer">
+          <i class="fa-brands fa-apple text-base"></i>
+          <span>Bản iPhone (iOS WebApp)</span>
+        </button>
+      </div>
+
+      <!-- Tab Content: Android APK -->
+      <div id="tab-content-android" class="space-y-4">
+        <div class="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-base shadow">
+                <i class="fa-brands fa-android"></i>
+              </div>
+              <div>
+                <div class="font-extrabold text-emerald-950 text-sm">FECON CRM Native Android</div>
+                <div class="text-[11px] text-emerald-800 font-medium">Bản v1.2 mới nhất • 13.3 MB • Đồng bộ Phễu Thầu & Phân cấp FECON</div>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 bg-emerald-200 text-emerald-900 text-[10px] font-bold rounded-full">Native App</span>
+          </div>
+
+          <p class="text-xs text-emerald-900/85 leading-relaxed">
+            Ứng dụng Android Native lập trình bằng Kotlin & Jetpack Compose, tốc độ cao, hỗ trợ thông báo tức thời, hoạt động độc lập và phân cấp dự án FECON mới nhất.
+          </p>
+
+          <a href="/static/crm-xaydung.apk" download="FECON-CRM.apk" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-download text-base"></i>
+            <span>Tải File Cài Đặt APK Trực Tiếp (13.3 MB)</span>
+          </a>
+        </div>
+
+        <!-- 3-step Android Installation Guide -->
+        <div class="space-y-2">
+          <div class="text-xs font-bold text-slate-800 uppercase tracking-wide">Hướng dẫn 3 bước cài đặt trên Android:</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+              <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-black text-xs flex items-center justify-center">1</div>
+              <div class="font-bold text-slate-800">Tải File APK</div>
+              <div class="text-[11px] text-slate-500">Nhấn nút xanh lá ở trên để tải file về điện thoại.</div>
+            </div>
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+              <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-black text-xs flex items-center justify-center">2</div>
+              <div class="font-bold text-slate-800">Mở File Vừa Tải</div>
+              <div class="text-[11px] text-slate-500">Nhấn vào thông báo tải xong hoặc mở mục Tải về (Downloads).</div>
+            </div>
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+              <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 font-black text-xs flex items-center justify-center">3</div>
+              <div class="font-bold text-slate-800">Cài Đặt & Sử Dụng</div>
+              <div class="text-[11px] text-slate-500">Chọn 'Cài đặt' (bấm 'Cho phép cài đặt nguồn này' nếu máy hỏi).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: iOS WebApp PWA -->
+      <div id="tab-content-ios" class="hidden space-y-4">
+        <div class="p-4 bg-blue-50/70 border border-blue-200 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-[#0A3583] text-white flex items-center justify-center text-base shadow">
+                <i class="fa-brands fa-apple"></i>
+              </div>
+              <div>
+                <div class="font-extrabold text-blue-950 text-sm">FECON CRM iPhone / iPad (iOS)</div>
+                <div class="text-[11px] text-blue-800 font-medium">Bản WebApp Tối Ưu (Apple PWA Standalone)</div>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 bg-blue-200 text-blue-900 text-[10px] font-bold rounded-full">iOS Standalone</span>
+          </div>
+
+          <p class="text-xs text-blue-900/85 leading-relaxed">
+            Trên iPhone/iPad, không cần qua App Store hay Jailbreak. Ứng dụng PWA của FECON chạy <strong>toàn màn hình (không có thanh địa chỉ Safari, không bị tràn viền)</strong>, siêu mượt và không tốn bộ nhớ điện thoại.
+          </p>
+
+          <div class="flex items-center gap-2">
+            <input type="text" id="ios-web-url-input" readonly value="https://crm-construction-6lrg.onrender.com" class="flex-1 bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-700 font-semibold">
+            <button type="button" onclick="copyWebLink()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow transition shrink-0 flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-copy"></i>
+              <span>Sao Chép Link</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3-step iOS Visual Installation Guide -->
+        <div class="space-y-2">
+          <div class="text-xs font-bold text-slate-800 uppercase tracking-wide">Hướng dẫn 3 bước thêm vào iPhone (Safari):</div>
+          <div class="space-y-2 text-xs">
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-start gap-3">
+              <div class="w-7 h-7 rounded-full bg-blue-100 text-[#0A3583] font-black text-xs flex items-center justify-center shrink-0">1</div>
+              <div class="space-y-0.5">
+                <div class="font-bold text-slate-900">Mở Safari trên iPhone/iPad</div>
+                <div class="text-[11px] text-slate-600">Truy cập đường link web <span class="font-mono text-blue-600 font-semibold">crm-construction-6lrg.onrender.com</span> bằng Safari (không dùng Chrome hay browser trong Zalo/FB).</div>
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-start gap-3">
+              <div class="w-7 h-7 rounded-full bg-blue-100 text-[#0A3583] font-black text-xs flex items-center justify-center shrink-0">2</div>
+              <div class="space-y-0.5">
+                <div class="font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>Nhấn nút Chia sẻ của Safari</span>
+                  <span class="inline-flex items-center justify-center w-6 h-6 rounded bg-blue-600 text-white text-xs"><i class="fa-solid fa-arrow-up-from-bracket"></i></span>
+                </div>
+                <div class="text-[11px] text-slate-600">Biểu tượng hình vuông có mũi tên chỉ lên ở thanh công cụ dưới đáy màn hình điện thoại iPhone.</div>
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-start gap-3">
+              <div class="w-7 h-7 rounded-full bg-blue-100 text-[#0A3583] font-black text-xs flex items-center justify-center shrink-0">3</div>
+              <div class="space-y-0.5">
+                <div class="font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>Chọn "Thêm vào MH chính" (Add to Home Screen)</span>
+                  <i class="fa-regular fa-square-plus text-slate-700"></i>
+                </div>
+                <div class="text-[11px] text-slate-600">Cuộn danh sách xuống và nhấn <strong>'Thêm vào MH chính'</strong>, sau đó nhấn <strong>'Thêm'</strong> ở góc trên bên phải. Icon FECON CRM sẽ xuất hiện trên màn hình điện thoại như ứng dụng tải từ App Store!</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+        <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
+          <i class="fa-solid fa-shield-halved text-amber-500"></i>
+          <span>Bảo mật nội bộ FECON Corporation</span>
+        </div>
+        <button type="button" onclick="closeModal('modal-app-install')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition cursor-pointer">
+          Đóng
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
   <!-- Application Logic -->
-  <script src="/static/js/app.js?v=20261001_1745"></script>
+  <script src="/static/js/app.js?v=20261001_1800"></script>
 </body>
 </html>

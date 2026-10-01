@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
 @Composable
-fun ProjectScreen(user: UserSession) {
+fun ProjectScreen(user: UserSession, selectedSbu: String = "ALL") {
     val coroutineScope = rememberCoroutineScope()
 
     var pipelineBids by remember { mutableStateOf<List<PipelineBidItem>>(emptyList()) }
@@ -47,7 +47,7 @@ fun ProjectScreen(user: UserSession) {
     fun loadData() {
         isLoading = true
         coroutineScope.launch {
-            val sbuFilter = if (user.role == "ADMIN") "ALL" else user.sbu
+            val sbuFilter = if (user.role == "ADMIN") selectedSbu else user.sbu
             val resBids = ApiClient.fetchPipelineBids(sbuFilter)
             val resC = ApiClient.fetchCustomers("ALL")
             pipelineBids = resBids.getOrNull() ?: emptyList()
@@ -56,7 +56,7 @@ fun ProjectScreen(user: UserSession) {
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(selectedSbu) {
         loadData()
     }
 

@@ -30,6 +30,17 @@ fun CRMMainScreen(
     onLogout: () -> Unit
 ) {
     var currentTab by remember { mutableStateOf(NavTab.DASHBOARD) }
+    var selectedSbu by remember { mutableStateOf(if (user.role == "ADMIN") "ALL" else user.sbu) }
+    var showSbuMenu by remember { mutableStateOf(false) }
+
+    val sbuOptions = listOf(
+        "ALL" to "Tất cả SBU",
+        "SBU1" to "SBU1 - Móng & Hầm",
+        "SBU2" to "SBU2 - Năng Lượng",
+        "SBU3" to "SBU3 - Metro Ngầm",
+        "SBU4" to "SBU4 - Đường Sắt",
+        "SBU5" to "SBU5 - Cảng Biển"
+    )
 
     // FECON Brand Palette
     val feconDeepOrange = Color(0xFFEA580C)
@@ -41,70 +52,159 @@ fun CRMMainScreen(
         topBar = {
             Surface(
                 color = feconDeepOrange,
-                shadowElevation = 2.dp,
+                shadowElevation = 3.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .statusBarsPadding()
-                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Logo + App Name + User Identity on 1 compact row
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                    // Left: Logo FECON
+                    Surface(
+                        color = Color.White,
+                        shape = RoundedCornerShape(7.dp),
+                        shadowElevation = 1.dp
                     ) {
-                        Surface(
-                            color = Color.White,
-                            shape = RoundedCornerShape(5.dp),
-                            modifier = Modifier.padding(end = 6.dp)
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.fecon_crm_logo),
-                                contentDescription = "FECON CRM",
-                                modifier = Modifier
-                                    .height(24.dp)
-                                    .padding(horizontal = 3.dp, vertical = 1.5.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                        Column {
-                            Text(
-                                text = "FECON CRM",
-                                fontSize = 13.5.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White,
-                                lineHeight = 15.sp
-                            )
-                            Text(
-                                text = "${user.fullName} • ${user.sbu}",
-                                fontSize = 9.5.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = feconLightCream,
-                                lineHeight = 11.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                        Image(
+                            painter = painterResource(id = R.drawable.fecon_crm_logo),
+                            contentDescription = "FECON Logo",
+                            modifier = Modifier
+                                .height(32.dp)
+                                .padding(horizontal = 5.dp, vertical = 2.5.dp),
+                            contentScale = ContentScale.Fit
+                        )
                     }
 
-                    // Compact Logout Button
-                    Surface(
-                        color = Color.White.copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(5.dp)
+                    // Center: Tên phần mềm FECON - Quản lý và chăm sóc khách hàng
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 4.dp)
                     ) {
-                        TextButton(
-                            onClick = {
-                                ApiClient.currentUser = null
-                                onLogout()
-                            },
-                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 1.dp),
-                            modifier = Modifier.height(26.dp)
+                        Text(
+                            text = "FECON",
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White,
+                            letterSpacing = 0.5.sp,
+                            lineHeight = 16.sp
+                        )
+                        Text(
+                            text = "Quản lý và chăm sóc khách hàng",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White.copy(alpha = 0.95f),
+                            lineHeight = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    // Right: Khối SBU Dropdown (với tickbox) + Tên tài khoản + Nút Đăng xuất
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // Khối SBU Dropdown with tickbox
+                        Box {
+                            Surface(
+                                color = Color.White.copy(alpha = 0.22f),
+                                shape = RoundedCornerShape(6.dp),
+                                modifier = Modifier.clickable { showSbuMenu = true }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = if (selectedSbu == "ALL") "Khối: Tất cả" else selectedSbu,
+                                        color = Color.White,
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.width(2.dp))
+                                    Text("▾", color = Color.White, fontSize = 10.sp)
+                                }
+                            }
+
+                            DropdownMenu(
+                                expanded = showSbuMenu,
+                                onDismissRequest = { showSbuMenu = false },
+                                modifier = Modifier.background(Color.White)
+                            ) {
+                                sbuOptions.forEach { (key, label) ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Checkbox(
+                                                    checked = (selectedSbu == key),
+                                                    onCheckedChange = {
+                                                        selectedSbu = key
+                                                        showSbuMenu = false
+                                                    },
+                                                    colors = CheckboxDefaults.colors(checkedColor = feconDeepOrange)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(
+                                                    text = label,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = if (selectedSbu == key) FontWeight.Bold else FontWeight.Normal,
+                                                    color = Color(0xFF0F172A)
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            selectedSbu = key
+                                            showSbuMenu = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        // User Account Name next to Logout
+                        Surface(
+                            color = Color.White.copy(alpha = 0.18f),
+                            shape = RoundedCornerShape(6.dp)
                         ) {
-                            Text("🚪 Đăng xuất", color = Color.White, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                            Row(
+                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("👤", fontSize = 10.sp)
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text(
+                                    text = user.fullName.split(" ").lastOrNull() ?: user.fullName,
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+
+                        // Compact Logout Button
+                        Surface(
+                            color = Color(0xFFB91C1C).copy(alpha = 0.85f),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            TextButton(
+                                onClick = {
+                                    ApiClient.currentUser = null
+                                    onLogout()
+                                },
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                                modifier = Modifier.height(28.dp)
+                            ) {
+                                Text("🚪", fontSize = 10.sp)
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text("Thoát", color = Color.White, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
@@ -181,10 +281,10 @@ fun CRMMainScreen(
                 .background(lightBg)
         ) {
             when (currentTab) {
-                NavTab.DASHBOARD -> DashboardScreen(user = user)
-                NavTab.CUSTOMERS -> CustomerScreen(user = user)
-                NavTab.PIPELINE -> ProjectScreen(user = user)
-                NavTab.CARE -> CareScreen(user = user)
+                NavTab.DASHBOARD -> DashboardScreen(user = user, selectedSbu = selectedSbu)
+                NavTab.CUSTOMERS -> CustomerScreen(user = user, selectedSbu = selectedSbu)
+                NavTab.PIPELINE -> ProjectScreen(user = user, selectedSbu = selectedSbu)
+                NavTab.CARE -> CareScreen(user = user, selectedSbu = selectedSbu)
                 NavTab.ACCOUNTS -> UserManagementScreen(currentUser = user)
             }
         }

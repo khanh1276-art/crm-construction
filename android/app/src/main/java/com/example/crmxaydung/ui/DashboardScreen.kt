@@ -24,21 +24,11 @@ import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
 @Composable
-fun DashboardScreen(user: UserSession) {
+fun DashboardScreen(user: UserSession, selectedSbu: String = "ALL") {
     val coroutineScope = rememberCoroutineScope()
-    var selectedSbu by remember { mutableStateOf(if (user.role == "ADMIN") "ALL" else user.sbu) }
     var stats by remember { mutableStateOf<DashboardStats?>(null) }
     var pipelineBids by remember { mutableStateOf<List<PipelineBidItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-
-    val sbuList = listOf(
-        "ALL" to "Tất Cả",
-        "SBU1" to "SBU1 - Móng & Hầm",
-        "SBU2" to "SBU2 - Năng Lượng",
-        "SBU3" to "SBU3 - Metro Ngầm",
-        "SBU4" to "SBU4 - Đường Sắt",
-        "SBU5" to "SBU5 - Cảng Biển"
-    )
 
     fun loadData(sbu: String) {
         isLoading = true
@@ -62,48 +52,8 @@ fun DashboardScreen(user: UserSession) {
             .fillMaxSize()
             .background(Color(0xFFF8FAFC))
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 8.dp, vertical = 2.dp)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
-        // SBU Filter (Only for Admin - ultra compact single row)
-        if (user.role == "ADMIN") {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Khối:",
-                    color = Color(0xFF475569),
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    items(sbuList) { (key, label) ->
-                        val isSelected = (selectedSbu == key)
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { selectedSbu = key },
-                            label = { Text(label, fontSize = 9.5.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
-                            modifier = Modifier.height(26.dp),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Color(0xFFEA580C),
-                                selectedLabelColor = Color.White,
-                                containerColor = Color.White,
-                                labelColor = Color(0xFF475569)
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = isSelected,
-                                borderColor = if (isSelected) Color(0xFFEA580C) else Color(0xFFCBD5E1)
-                            )
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-        }
 
         if (isLoading) {
             Box(

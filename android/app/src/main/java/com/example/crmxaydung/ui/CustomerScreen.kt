@@ -29,7 +29,7 @@ import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomerScreen(user: UserSession) {
+fun CustomerScreen(user: UserSession, selectedSbu: String = "ALL") {
     val coroutineScope = rememberCoroutineScope()
     var customers by remember { mutableStateOf<List<CustomerItem>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
@@ -43,13 +43,14 @@ fun CustomerScreen(user: UserSession) {
     fun loadCustomers() {
         isLoading = true
         coroutineScope.launch {
-            val res = ApiClient.fetchCustomers(if (user.role == "ADMIN") "ALL" else user.sbu)
+            val sbuFilter = if (user.role == "ADMIN") selectedSbu else user.sbu
+            val res = ApiClient.fetchCustomers(sbuFilter)
             customers = res.getOrNull() ?: emptyList()
             isLoading = false
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(selectedSbu) {
         loadCustomers()
     }
 

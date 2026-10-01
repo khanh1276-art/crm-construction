@@ -29,7 +29,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
-fun CareScreen(user: UserSession) {
+fun CareScreen(user: UserSession, selectedSbu: String = "ALL") {
     val coroutineScope = rememberCoroutineScope()
     var activities by remember { mutableStateOf<List<CareActivityItem>>(emptyList()) }
     var customers by remember { mutableStateOf<List<CustomerItem>>(emptyList()) }
@@ -41,7 +41,7 @@ fun CareScreen(user: UserSession) {
     fun loadData() {
         isLoading = true
         coroutineScope.launch {
-            val sbuFilter = if (user.role == "ADMIN") "ALL" else user.sbu
+            val sbuFilter = if (user.role == "ADMIN") selectedSbu else user.sbu
             val resAct = ApiClient.fetchCareActivities(sbuFilter)
             val resCust = ApiClient.fetchCustomers("ALL")
             activities = resAct.getOrNull() ?: emptyList()
@@ -50,7 +50,7 @@ fun CareScreen(user: UserSession) {
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(selectedSbu) {
         loadData()
     }
 

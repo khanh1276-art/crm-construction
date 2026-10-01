@@ -42,13 +42,26 @@ app.include_router(projects.router)
 app.include_router(care_activities.router)
 app.include_router(notifications.router)
 
+@app.middleware("http")
+async def add_no_cache_middleware(request, call_next):
+    response = await call_next(request)
+    if request.url.path == "/" or request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 # Mount Static Files
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 @app.get("/")
 def get_executive_portal():
-    return FileResponse(str(STATIC_DIR / "index.html"))
+    response = FileResponse(str(STATIC_DIR / "index.html"))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/manifest.json")
 def get_manifest():

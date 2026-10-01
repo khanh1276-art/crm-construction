@@ -411,6 +411,12 @@ def init_db():
             seed_database()
         except Exception as e:
             print(f"Warning: Failed to auto-seed database: {e}")
+    else:
+        try:
+            from app.services.seed_data import sync_fecon_sample_data
+            sync_fecon_sample_data()
+        except Exception as e:
+            print(f"Warning: Failed to sync FECON sample data: {e}")
 
 if __name__ == "__main__":
     init_db()

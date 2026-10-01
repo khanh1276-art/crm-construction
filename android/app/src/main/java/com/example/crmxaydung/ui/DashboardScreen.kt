@@ -28,6 +28,7 @@ import java.text.DecimalFormat
 fun DashboardScreen(
     user: UserSession,
     selectedSbu: String = "ALL",
+    onSelectSbu: (String) -> Unit = {},
     onNavigateToCustomers: () -> Unit = {},
     onNavigateToActiveBids: () -> Unit = {},
     onNavigateToWonBids: () -> Unit = {}
@@ -37,6 +38,16 @@ fun DashboardScreen(
     var pipelineBids by remember { mutableStateOf<List<PipelineBidItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var selectedBid by remember { mutableStateOf<PipelineBidItem?>(null) }
+    var showSbuDropdown by remember { mutableStateOf(false) }
+
+    val sbuOptions = listOf(
+        "ALL" to "Toàn Tập Đoàn (5 SBU)",
+        "SBU1" to "SBU1 - Móng & Hầm",
+        "SBU2" to "SBU2 - Năng Lượng",
+        "SBU3" to "SBU3 - Metro Ngầm",
+        "SBU4" to "SBU4 - Đường Sắt",
+        "SBU5" to "SBU5 - Cảng Biển"
+    )
 
     fun loadData(sbu: String) {
         isLoading = true
@@ -77,6 +88,90 @@ fun DashboardScreen(
             val totalFunnelBillion = s.activeBidsBillion + s.wonBidsBillion
             val totalBidsCount = s.activeBidsCount + s.wonBidsCount
             val winRatio = if (totalBidsCount > 0) (s.wonBidsCount * 100 / totalBidsCount) else 0
+
+            // Admin SBU Selector Row
+            if (user.role == "ADMIN") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 5.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Phân hệ: ", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF64748B))
+                        Box {
+                            Surface(
+                                color = Color.White,
+                                shape = RoundedCornerShape(6.dp),
+                                modifier = Modifier
+                                    .border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(6.dp))
+                                    .clickable { showSbuDropdown = true }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = sbuOptions.firstOrNull { it.first == selectedSbu }?.second ?: selectedSbu,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFEA580C)
+                                    )
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text("▾", fontSize = 11.sp, color = Color(0xFF64748B))
+                                }
+                            }
+
+                            DropdownMenu(
+                                expanded = showSbuDropdown,
+                                onDismissRequest = { showSbuDropdown = false },
+                                modifier = Modifier.background(Color.White)
+                            ) {
+                                sbuOptions.forEach { (key, label) ->
+                                    val isSelected = (selectedSbu == key)
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = label,
+                                                    fontSize = 11.5.sp,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                    color = if (isSelected) Color(0xFFEA580C) else Color(0xFF0F172A)
+                                                )
+                                                if (isSelected) {
+                                                    Text("✓", color = Color(0xFFEA580C), fontWeight = FontWeight.Black, fontSize = 12.sp)
+                                                }
+                                            }
+                                        },
+                                        onClick = {
+                                            onSelectSbu(key)
+                                            showSbuDropdown = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Surface(
+                        color = Color(0xFFFEF3C7),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = "👑 Ban Lãnh Đạo",
+                            fontSize = 9.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF92400E),
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
 
             // 4 KPI Cards Grid (Focusing on Bidding Funnel & Strategic Customers)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {

@@ -33,7 +33,7 @@ fun CRMMainScreen(
     var currentTab by remember { mutableStateOf(NavTab.DASHBOARD) }
     var targetPipelineStage by remember { mutableStateOf("ALL") }
     var selectedSbu by remember { mutableStateOf(if (user.role == "ADMIN") "ALL" else user.sbu) }
-    var showSbuMenu by remember { mutableStateOf(false) }
+    var showUserMenu by remember { mutableStateOf(false) }
 
     val sbuOptions = listOf(
         "ALL" to "Tất cả SBU",
@@ -107,120 +107,160 @@ fun CRMMainScreen(
                         )
                     }
 
-                    // Right: Khối SBU Select box + Tên đầy đủ & Chức danh + Nút Đăng xuất
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    // Right: Gộp Tên người sử dụng (bỏ chức danh) và biểu tượng thoát, nằm đối xứng với logo FECON
+                    Surface(
+                        color = Color.White.copy(alpha = 0.22f),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
                     ) {
-                        // Khối SBU Select Box (Dropdown một lựa chọn)
-                        Box {
-                            Surface(
-                                color = Color.White.copy(alpha = 0.25f),
-                                shape = RoundedCornerShape(6.dp),
-                                modifier = Modifier
-                                    .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
-                                    .clickable { showSbuMenu = true }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.5.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = if (selectedSbu == "ALL") "SBU: Tất cả" else selectedSbu,
-                                        color = Color.White,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(modifier = Modifier.width(3.dp))
-                                    Text("▾", color = Color.White, fontSize = 11.sp)
-                                }
-                            }
-
-                            DropdownMenu(
-                                expanded = showSbuMenu,
-                                onDismissRequest = { showSbuMenu = false },
-                                modifier = Modifier.background(Color.White)
-                            ) {
-                                sbuOptions.forEach { (key, label) ->
-                                    val isSelected = (selectedSbu == key)
-                                    DropdownMenuItem(
-                                        text = {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    text = label,
-                                                    fontSize = 12.sp,
-                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                    color = if (isSelected) feconDeepOrange else Color(0xFF0F172A)
-                                                )
-                                                if (isSelected) {
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Text("✓", color = feconDeepOrange, fontWeight = FontWeight.Black, fontSize = 13.sp)
-                                                }
-                                            }
-                                        },
-                                        onClick = {
-                                            selectedSbu = key
-                                            showSbuMenu = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-
-                        // Tên tài khoản hiển thị Tên đầy đủ và Chức danh
-                        Surface(
-                            color = Color.White.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(6.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                         ) {
-                            Column(
-                                modifier = Modifier
-                                    .padding(horizontal = 7.dp, vertical = 3.dp)
-                                    .widthIn(max = 125.dp),
-                                horizontalAlignment = Alignment.End
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("👤", fontSize = 9.5.sp)
+                            // Tên người sử dụng (chỉ để tên, bỏ chức danh)
+                            Box {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .clickable { showUserMenu = true }
+                                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                                ) {
+                                    Text("👤", fontSize = 10.sp)
                                     Spacer(modifier = Modifier.width(3.dp))
                                     Text(
                                         text = user.fullName,
                                         color = Color.White,
-                                        fontSize = 11.sp,
+                                        fontSize = 11.5.sp,
                                         fontWeight = FontWeight.Bold,
                                         maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.widthIn(max = 115.dp)
+                                    )
+                                    if (user.role == "ADMIN") {
+                                        Spacer(modifier = Modifier.width(2.dp))
+                                        Text("▾", color = Color.White, fontSize = 9.sp)
+                                    }
+                                }
+
+                                // Popup menu khi bấm vào tên người dùng
+                                DropdownMenu(
+                                    expanded = showUserMenu,
+                                    onDismissRequest = { showUserMenu = false },
+                                    modifier = Modifier.background(Color.White)
+                                ) {
+                                    DropdownMenuItem(
+                                        text = {
+                                            Column {
+                                                Text(
+                                                    text = user.fullName,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 12.5.sp,
+                                                    color = Color(0xFF0F172A)
+                                                )
+                                                if (user.title.isNotEmpty()) {
+                                                    Text(
+                                                        text = user.title,
+                                                        fontSize = 10.sp,
+                                                        color = Color(0xFF64748B)
+                                                    )
+                                                }
+                                                Text(
+                                                    text = "Vai trò: ${user.role}",
+                                                    fontSize = 9.5.sp,
+                                                    color = feconDeepOrange,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            }
+                                        },
+                                        onClick = { showUserMenu = false }
+                                    )
+
+                                    if (user.role == "ADMIN") {
+                                        HorizontalDivider(color = dividerColor)
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = "🏢 Đổi Khối SBU:",
+                                                    fontSize = 10.5.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = feconDeepOrange
+                                                )
+                                            },
+                                            onClick = {}
+                                        )
+                                        sbuOptions.forEach { (key, label) ->
+                                            val isSelected = (selectedSbu == key)
+                                            DropdownMenuItem(
+                                                text = {
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Text(
+                                                            text = label,
+                                                            fontSize = 11.5.sp,
+                                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                            color = if (isSelected) feconDeepOrange else Color(0xFF0F172A)
+                                                        )
+                                                        if (isSelected) {
+                                                            Text("✓", color = feconDeepOrange, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                                                        }
+                                                    }
+                                                },
+                                                onClick = {
+                                                    selectedSbu = key
+                                                    showUserMenu = false
+                                                }
+                                            )
+                                        }
+                                    }
+
+                                    HorizontalDivider(color = dividerColor)
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text("🚪", fontSize = 12.sp)
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(
+                                                    text = "Đăng xuất",
+                                                    color = Color(0xFFDC2626),
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 11.5.sp
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            showUserMenu = false
+                                            ApiClient.currentUser = null
+                                            onLogout()
+                                        }
                                     )
                                 }
-                                Text(
-                                    text = user.title.ifEmpty { user.role },
-                                    color = feconLightCream,
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
                             }
-                        }
 
-                        // Nút Đăng xuất
-                        Surface(
-                            color = Color(0xFFB91C1C).copy(alpha = 0.9f),
-                            shape = RoundedCornerShape(6.dp)
-                        ) {
-                            TextButton(
-                                onClick = {
-                                    ApiClient.currentUser = null
-                                    onLogout()
-                                },
-                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
-                                modifier = Modifier.height(28.dp)
+                            // Vạch phân cách mảnh giữa Tên và Biểu tượng thoát
+                            Box(
+                                modifier = Modifier
+                                    .height(14.dp)
+                                    .width(1.dp)
+                                    .background(Color.White.copy(alpha = 0.45f))
+                            )
+
+                            // Biểu tượng thoát (Thoát/Đăng xuất nhanh)
+                            Box(
+                                modifier = Modifier
+                                    .clickable {
+                                        ApiClient.currentUser = null
+                                        onLogout()
+                                    }
+                                    .padding(start = 5.dp, end = 2.dp, top = 2.dp, bottom = 2.dp)
                             ) {
-                                Text("🚪", fontSize = 10.sp)
-                                Spacer(modifier = Modifier.width(2.dp))
-                                Text("Thoát", color = Color.White, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = "🚪",
+                                    fontSize = 11.5.sp
+                                )
                             }
                         }
                     }
@@ -304,6 +344,7 @@ fun CRMMainScreen(
                 NavTab.DASHBOARD -> DashboardScreen(
                     user = user,
                     selectedSbu = selectedSbu,
+                    onSelectSbu = { selectedSbu = it },
                     onNavigateToCustomers = {
                         currentTab = NavTab.CUSTOMERS
                     },

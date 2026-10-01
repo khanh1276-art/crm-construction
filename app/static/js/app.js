@@ -411,6 +411,15 @@ function switchTab(tabName) {
 
 function navigateToBidsPipeline(filterStage) {
   switchTab('pipeline');
+  const stageSelect = document.getElementById('pipeline-filter-stage');
+  if (stageSelect) {
+    stageSelect.value = filterStage;
+    pipelineFilterStage = filterStage;
+  }
+  if (typeof renderPipelineBoard === 'function') {
+    renderPipelineBoard();
+  }
+
   setTimeout(() => {
     if (filterStage === 'WON') {
       const wonCol = document.getElementById('kanban-col-WON');
@@ -1420,77 +1429,123 @@ async function deleteCustomer(id) {
 // ==========================================
 // 4. BIDDING PIPELINE KANBAN LOGIC
 // ==========================================
+let pipelineFilterStage = 'ALL';
+let pipelineFilterLevel = 'ALL';
+
+function applyPipelineFilters() {
+  const stageSelect = document.getElementById('pipeline-filter-stage');
+  const levelSelect = document.getElementById('pipeline-filter-level');
+  if (stageSelect) pipelineFilterStage = stageSelect.value;
+  if (levelSelect) pipelineFilterLevel = levelSelect.value;
+  renderPipelineBoard();
+}
+
+function resetPipelineFilters() {
+  pipelineFilterStage = 'ALL';
+  pipelineFilterLevel = 'ALL';
+  const stageSelect = document.getElementById('pipeline-filter-stage');
+  const levelSelect = document.getElementById('pipeline-filter-level');
+  if (stageSelect) stageSelect.value = 'ALL';
+  if (levelSelect) levelSelect.value = 'ALL';
+  renderPipelineBoard();
+}
+
+function renderPipelineBoard() {
+  const data = window.currentPipelineData;
+  if (!data || !data.stages) return;
+  const board = document.getElementById('pipeline-board');
+  if (!board) return;
+
+  const activeStageIds = ["INFORMATION", "EVALUATION", "TENDER_PREP", "NEGOTIATION"];
+
+  board.innerHTML = data.stages.map(stage => {
+    // If a specific stage is selected, or ACTIVE is selected, check visibility
+    let isColumnVisible = true;
+    if (pipelineFilterStage === 'ACTIVE') {
+      isColumnVisible = activeStageIds.includes(stage.id);
+    } else if (pipelineFilterStage !== 'ALL') {
+      isColumnVisible = (stage.id === pipelineFilterStage);
+    }
+
+    if (!isColumnVisible) return '';
+
+    let items = data.items[stage.id] || [];
+
+    // Filter by level if specified
+    if (pipelineFilterLevel !== 'ALL') {
+      items = items.filter(item => {
+        const cls = classifyFeconProject(item.estimated_value);
+        return cls.level === pipelineFilterLevel;
+      });
+    }
+
+    const totalVal = items.reduce((sum, item) => sum + (item.estimated_value || 0), 0);
+
+    return `
+      <div id="kanban-col-${stage.id}" class="kanban-column bg-slate-100 rounded-2xl p-3 flex flex-col border border-slate-200 transition-all duration-500">
+        <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+          <div>
+            <div class="font-black text-xs text-slate-900">${stage.label}</div>
+            <div class="text-[10px] text-purple-700 font-bold">${formatVND(totalVal)}</div>
+          </div>
+          <span class="w-5 h-5 rounded-full bg-white text-slate-800 font-black text-[11px] flex items-center justify-center shadow-xs">
+            ${items.length}
+          </span>
+        </div>
+
+        <div class="flex-1 space-y-2.5 overflow-y-auto max-h-[600px] pr-1">
+          ${items.length > 0 ? items.map(item => {
+            const canEditBid = currentUser.role === 'ADMIN' || currentUser.sbu === item.sbu;
+            const cls = classifyFeconProject(item.estimated_value);
+
+            return `
+              <div onclick="openBidDetailModal(${item.id})" class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs hover-card space-y-2 cursor-pointer hover:border-purple-400 transition" title="Bấm để xem chi tiết & cập nhật trạng thái gói thầu">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5">
+                    ${getSBUBadge(item.sbu)}
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-black border ${cls.colorClass}">
+                      ${cls.badge}
+                    </span>
+                  </div>
+                  <span class="text-[10px] font-black text-purple-700">${item.win_rate}% Win</span>
+                </div>
+                <div class="font-extrabold text-slate-900 text-xs leading-snug">${item.project_title}</div>
+                <div class="text-[11px] text-slate-500">${item.customer_name}</div>
+                <div class="text-[10px] text-indigo-900 font-medium">
+                  Duyệt CSKH: <b class="font-bold">${cls.approver_short}</b>
+                </div>
+                <div class="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+                  <span class="font-black text-slate-900">${formatVND(item.estimated_value)}</span>
+                  <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+                    ${canEditBid && stage.id !== 'WON' && stage.id !== 'LOST' ? `
+                      <button onclick="advanceBidStage(${item.id}, '${stage.id}')" class="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded text-[10px] font-bold">
+                        Tiến &gt;
+                      </button>
+                    ` : ''}
+                    ${currentUser.role === 'ADMIN' ? `
+                      <button onclick="deleteBid(${item.id})" class="p-1 text-slate-400 hover:text-rose-600 text-[10px]" title="Xóa thầu">
+                        <i class="fa-solid fa-trash"></i>
+                      </button>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('') : '<div class="text-[11px] text-slate-400 text-center py-6">Không có hồ sơ phù hợp bộ lọc</div>'}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
 async function loadPipeline() {
   try {
     const sbuParam = currentSBU !== 'ALL' ? `?sbu=${currentSBU}` : '';
     const res = await authFetch(`/api/customers/bids/pipeline${sbuParam}`);
     const data = await res.json();
+    window.currentPipelineData = data;
     window.allBidsList = data.items ? Object.values(data.items).flat() : [];
-
-    const board = document.getElementById('pipeline-board');
-    if (!board) return;
-
-    board.innerHTML = data.stages.map(stage => {
-      const items = data.items[stage.id] || [];
-      const totalVal = items.reduce((sum, item) => sum + (item.estimated_value || 0), 0);
-
-      return `
-        <div id="kanban-col-${stage.id}" class="kanban-column bg-slate-100 rounded-2xl p-3 flex flex-col border border-slate-200 transition-all duration-500">
-          <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
-            <div>
-              <div class="font-black text-xs text-slate-900">${stage.label}</div>
-              <div class="text-[10px] text-purple-700 font-bold">${formatVND(totalVal)}</div>
-            </div>
-            <span class="w-5 h-5 rounded-full bg-white text-slate-800 font-black text-[11px] flex items-center justify-center shadow-xs">
-              ${items.length}
-            </span>
-          </div>
-
-          <div class="flex-1 space-y-2.5 overflow-y-auto max-h-[600px] pr-1">
-            ${items.length > 0 ? items.map(item => {
-              const canEditBid = currentUser.role === 'ADMIN' || currentUser.sbu === item.sbu;
-
-              const cls = classifyFeconProject(item.estimated_value);
-
-              return `
-                <div onclick="openBidDetailModal(${item.id})" class="bg-white p-3 rounded-xl border border-slate-200 shadow-xs hover-card space-y-2 cursor-pointer hover:border-purple-400 transition" title="Bấm để xem chi tiết & cập nhật trạng thái gói thầu">
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-1.5">
-                      ${getSBUBadge(item.sbu)}
-                      <span class="px-1.5 py-0.5 rounded text-[9px] font-black border ${cls.colorClass}">
-                        ${cls.badge}
-                      </span>
-                    </div>
-                    <span class="text-[10px] font-black text-purple-700">${item.win_rate}% Win</span>
-                  </div>
-                  <div class="font-extrabold text-slate-900 text-xs leading-snug">${item.project_title}</div>
-                  <div class="text-[11px] text-slate-500">${item.customer_name}</div>
-                  <div class="text-[10px] text-indigo-900 font-medium">
-                    Duyệt CSKH: <b class="font-bold">${cls.approver_short}</b>
-                  </div>
-                  <div class="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
-                    <span class="font-black text-slate-900">${formatVND(item.estimated_value)}</span>
-                    <div class="flex items-center gap-1" onclick="event.stopPropagation()">
-                      ${canEditBid && stage.id !== 'WON' && stage.id !== 'LOST' ? `
-                        <button onclick="advanceBidStage(${item.id}, '${stage.id}')" class="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded text-[10px] font-bold">
-                          Tiến &gt;
-                        </button>
-                      ` : ''}
-                      ${currentUser.role === 'ADMIN' ? `
-                        <button onclick="deleteBid(${item.id})" class="p-1 text-slate-400 hover:text-rose-600 text-[10px]" title="Xóa thầu">
-                          <i class="fa-solid fa-trash"></i>
-                        </button>
-                      ` : ''}
-                    </div>
-                  </div>
-                </div>
-              `;
-            }).join('') : '<div class="text-[11px] text-slate-400 text-center py-6">Không có hồ sơ</div>'}
-          </div>
-        </div>
-      `;
-    }).join('');
-
+    renderPipelineBoard();
   } catch (err) {
     console.error("Error loading pipeline:", err);
   }

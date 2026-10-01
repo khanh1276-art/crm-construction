@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crmxaydung.data.ApiClient
@@ -44,6 +45,8 @@ fun ProjectScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var selectedPipelineStage by remember(initialStageFilter) { mutableStateOf(initialStageFilter) }
     var selectedProjectLevel by remember { mutableStateOf("ALL") }
+    var showStageDropdown by remember { mutableStateOf(false) }
+    var showLevelDropdown by remember { mutableStateOf(false) }
 
     val feconOrange = Color(0xFFEA580C)
     val df = DecimalFormat("#,##0.0")
@@ -153,71 +156,173 @@ fun ProjectScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Stage Filter Chips (Compact 28dp)
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.fillMaxWidth()
+            val currentStageLabel = pipelineStages.firstOrNull { it.first == selectedPipelineStage }?.second ?: "Tất Cả Giai Đoạn"
+            val currentLevelLabel = projectLevels.firstOrNull { it.first == selectedProjectLevel }?.second ?: "Tất Cả Cấp"
+
+            // 2 Selectboxes on the same row: Giai đoạn & Cấp công trình
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 3.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                items(pipelineStages) { (key, label) ->
-                    val isSelected = (selectedPipelineStage == key)
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { selectedPipelineStage = key },
-                        label = { Text(label, fontSize = 9.5.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
-                        modifier = Modifier.height(28.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = when (key) {
-                                "ACTIVE" -> Color(0xFFEA580C)
-                                "WON" -> Color(0xFF059669)
-                                "LOST" -> Color(0xFFDC2626)
-                                else -> feconOrange
-                            },
-                            selectedLabelColor = Color.White,
-                            containerColor = Color.White,
-                            labelColor = Color(0xFF475569)
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = isSelected,
-                            borderColor = if (isSelected) Color.Transparent else Color(0xFFCBD5E1)
-                        )
-                    )
+                // 1. Selectbox: Giai đoạn gói thầu
+                Box(modifier = Modifier.weight(1f)) {
+                    Surface(
+                        color = Color.White,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(
+                                1.dp,
+                                if (selectedPipelineStage != "ALL") feconOrange else Color(0xFFCBD5E1),
+                                RoundedCornerShape(8.dp)
+                            )
+                            .clickable { showStageDropdown = true }
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
+                                Text(
+                                    text = "Giai đoạn",
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF64748B),
+                                    lineHeight = 10.sp
+                                )
+                                Text(
+                                    text = currentStageLabel,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (selectedPipelineStage == "ALL") Color(0xFF1E293B) else feconOrange,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text("▾", fontSize = 11.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = showStageDropdown,
+                        onDismissRequest = { showStageDropdown = false },
+                        modifier = Modifier
+                            .background(Color.White)
+                            .widthIn(min = 190.dp)
+                    ) {
+                        pipelineStages.forEach { (key, label) ->
+                            val isSelected = (selectedPipelineStage == key)
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            fontSize = 11.5.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (isSelected) feconOrange else Color(0xFF0F172A)
+                                        )
+                                        if (isSelected) {
+                                            Text("✓", color = feconOrange, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    selectedPipelineStage = key
+                                    showStageDropdown = false
+                                }
+                            )
+                        }
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(3.dp))
+                // 2. Selectbox: Cấp công trình
+                Box(modifier = Modifier.weight(1f)) {
+                    Surface(
+                        color = Color.White,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(
+                                1.dp,
+                                if (selectedProjectLevel != "ALL") Color(0xFF7C3AED) else Color(0xFFCBD5E1),
+                                RoundedCornerShape(8.dp)
+                            )
+                            .clickable { showLevelDropdown = true }
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
+                                Text(
+                                    text = "Cấp công trình",
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF64748B),
+                                    lineHeight = 10.sp
+                                )
+                                Text(
+                                    text = currentLevelLabel,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (selectedProjectLevel == "ALL") Color(0xFF1E293B) else Color(0xFF7C3AED),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text("▾", fontSize = 11.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Bold)
+                        }
+                    }
 
-            // Level Filter Chips (Clean names without monetary values, compact 28dp)
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(projectLevels) { (lvlKey, label) ->
-                    val isSelected = (selectedProjectLevel == lvlKey)
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { selectedProjectLevel = lvlKey },
-                        label = { Text(label, fontSize = 9.5.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
-                        modifier = Modifier.height(28.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = when (lvlKey) {
-                                "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
-                                "LEVEL_1" -> Color(0xFFDC2626)
-                                "LEVEL_2" -> Color(0xFFEA580C)
-                                "LEVEL_3" -> Color(0xFF2563EB)
-                                "LEVEL_4" -> Color(0xFF059669)
-                                else -> Color(0xFF475569)
-                            },
-                            selectedLabelColor = Color.White,
-                            containerColor = Color.White,
-                            labelColor = Color(0xFF475569)
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = isSelected,
-                            borderColor = if (isSelected) Color.Transparent else Color(0xFFCBD5E1)
-                        )
-                    )
+                    DropdownMenu(
+                        expanded = showLevelDropdown,
+                        onDismissRequest = { showLevelDropdown = false },
+                        modifier = Modifier
+                            .background(Color.White)
+                            .widthIn(min = 190.dp)
+                    ) {
+                        projectLevels.forEach { (lvlKey, label) ->
+                            val isSelected = (selectedProjectLevel == lvlKey)
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            fontSize = 11.5.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (isSelected) Color(0xFF7C3AED) else Color(0xFF0F172A)
+                                        )
+                                        if (isSelected) {
+                                            Text("✓", color = Color(0xFF7C3AED), fontWeight = FontWeight.Black, fontSize = 12.sp)
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    selectedProjectLevel = lvlKey
+                                    showLevelDropdown = false
+                                }
+                            )
+                        }
+                    }
                 }
             }
 

@@ -110,6 +110,8 @@ object ApiClient {
                 val contractVal = overview.optDouble("total_contract_value", 0.0)
                 val paidVal = overview.optDouble("total_paid_amount", 0.0)
                 val unpaidVal = overview.optDouble("unpaid_balance", 0.0)
+                val activeBidsVal = overview.optDouble("active_bids_value", 0.0)
+                val wonBidsVal = overview.optDouble("won_bids_value", 0.0)
 
                 val stats = DashboardStats(
                     totalCustomers = overview.optInt("total_customers", 0),
@@ -119,6 +121,10 @@ object ApiClient {
                     totalCollectedBillion = paidVal / 1_000_000_000.0,
                     unpaidBalanceBillion = unpaidVal / 1_000_000_000.0,
                     avgProgress = if (contractVal > 0) (paidVal / contractVal * 100.0) else 0.0,
+                    activeBidsCount = overview.optInt("active_bids_count", 0),
+                    activeBidsBillion = activeBidsVal / 1_000_000_000.0,
+                    wonBidsCount = overview.optInt("won_bids_count", 0),
+                    wonBidsBillion = wonBidsVal / 1_000_000_000.0,
                     sbuFilter = sbu
                 )
                 Result.success(stats)
@@ -225,6 +231,55 @@ object ApiClient {
             OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
             if (conn.responseCode in 200..201) {
                 Result.success(true)
+            } else {
+                val err = BufferedReader(InputStreamReader(conn.errorStream ?: conn.inputStream)).readText()
+                Result.failure(Exception("Lỗi tạo khách hàng: $err"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun createCustomerReturnId(
+        name: String,
+        sbu: String,
+        tier: String = "GOLD",
+        keyDecisionMaker: String = "",
+        role: String = "Chủ tịch / Tổng Giám Đốc",
+        phone: String = "",
+        email: String = "",
+        taxCode: String = "",
+        headquarters: String = "",
+        birthday: String = "",
+        anniversary: String = "",
+        notes: String = ""
+    ): Result<Int> = withContext(Dispatchers.IO) {
+        try {
+            val json = JSONObject().apply {
+                put("name", name)
+                put("sbu", sbu)
+                put("tier", tier)
+                put("key_decision_maker", keyDecisionMaker)
+                put("decision_maker_role", role.ifEmpty { "Chủ tịch / Tổng Giám Đốc" })
+                put("decision_maker_phone", phone)
+                put("phone", phone)
+                put("email", email)
+                put("tax_code", taxCode)
+                put("headquarters", headquarters)
+                put("decision_maker_birthday", birthday)
+                put("founding_anniversary", anniversary)
+                put("strategic_notes", notes)
+                put("relationship_score", 5)
+            }
+            val conn = openConnection("/api/customers", "POST").apply {
+                setRequestProperty("Content-Type", "application/json; utf-8")
+                doOutput = true
+            }
+            OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
+            if (conn.responseCode in 200..201) {
+                val res = BufferedReader(InputStreamReader(conn.inputStream)).readText()
+                val resJson = JSONObject(res)
+                Result.success(resJson.getInt("id"))
             } else {
                 val err = BufferedReader(InputStreamReader(conn.errorStream ?: conn.inputStream)).readText()
                 Result.failure(Exception("Lỗi tạo khách hàng: $err"))
@@ -666,4 +721,53 @@ object ApiClient {
             Result.failure(e)
         }
     }
+
+    suspend fun createBid(
+        customerId: Int,
+        sbu: String,
+        projectTitle: String,
+        estimatedValueVnd: Double,
+        stage: String = "INFORMATION",
+        winRate: Int = 50,
+        tenderDeadline: String = "",
+        targetKickoff: String = "",
+        assignedDirector: String = "",
+        biddingNotes: String = "",
+        projectLevel: String = "",
+        projectLevelName: String = "",
+        approverAuthority: String = ""
+    ): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val json = JSONObject().apply {
+                put("customer_id", customerId)
+                put("sbu", sbu)
+                put("project_title", projectTitle)
+                put("estimated_value", estimatedValueVnd)
+                put("stage", stage)
+                put("win_rate", winRate)
+                put("tender_deadline", tenderDeadline)
+                put("target_kickoff", targetKickoff)
+                put("assigned_director", assignedDirector)
+                put("bidding_notes", biddingNotes)
+                if (projectLevel.isNotEmpty()) put("project_level", projectLevel)
+                if (projectLevelName.isNotEmpty()) put("project_level_name", projectLevelName)
+                if (approverAuthority.isNotEmpty()) put("approver_authority", approverAuthority)
+            }
+            val conn = openConnection("/api/customers/bids", "POST").apply {
+                setRequestProperty("Content-Type", "application/json; utf-8")
+                doOutput = true
+            }
+            OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
+            if (conn.responseCode in 200..201) {
+                Result.success(true)
+            } else {
+                val err = BufferedReader(InputStreamReader(conn.errorStream ?: conn.inputStream)).readText()
+                val errMsg = try { JSONObject(err).optString("detail", err) } catch (_: Exception) { err }
+                Result.failure(Exception(errMsg))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
+

@@ -137,12 +137,12 @@ fun DashboardScreen(user: UserSession) {
         } else {
             val s = stats ?: DashboardStats()
 
-            // 4 KPI Cards Grid (Light theme with vibrant subtle tints)
+            // 4 KPI Cards Grid (Focusing on Strategic Customers & Bidding Funnel)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 KpiCard(
                     title = "Khách Hàng",
                     value = "${s.totalCustomers}",
-                    sub = "${s.strategicVipCount} đối tác VIP",
+                    sub = "Đối tác chiến lược",
                     bgColor = Color(0xFFEFF6FF),
                     borderColor = Color(0xFFBFDBFE),
                     titleColor = Color(0xFF1E40AF),
@@ -150,13 +150,13 @@ fun DashboardScreen(user: UserSession) {
                     modifier = Modifier.weight(1f)
                 )
                 KpiCard(
-                    title = "Dự Án Đang Chạy",
-                    value = "${s.totalProjects}",
-                    sub = "Đang thi công",
-                    bgColor = Color(0xFFECFDF5),
-                    borderColor = Color(0xFFA7F3D0),
-                    titleColor = Color(0xFF065F46),
-                    valColor = Color(0xFF047857),
+                    title = "Gói Thầu Đang Đấu",
+                    value = "${s.activeBidsCount}",
+                    sub = "${df.format(s.activeBidsBillion)} tỷ trong phễu",
+                    bgColor = Color(0xFFFFF7ED),
+                    borderColor = Color(0xFFFED7AA),
+                    titleColor = Color(0xFF9A3412),
+                    valColor = Color(0xFFEA580C),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -165,6 +165,16 @@ fun DashboardScreen(user: UserSession) {
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 KpiCard(
+                    title = "Gói Thầu Đã Trúng",
+                    value = "${s.wonBidsCount}",
+                    sub = "${df.format(s.wonBidsBillion)} tỷ thành công",
+                    bgColor = Color(0xFFECFDF5),
+                    borderColor = Color(0xFFA7F3D0),
+                    titleColor = Color(0xFF065F46),
+                    valColor = Color(0xFF047857),
+                    modifier = Modifier.weight(1f)
+                )
+                KpiCard(
                     title = "Giá Trị Hợp Đồng",
                     value = "${df.format(s.totalContractBillion)} tỷ",
                     sub = "Đã thu: ${df.format(s.totalCollectedBillion)} tỷ",
@@ -172,16 +182,6 @@ fun DashboardScreen(user: UserSession) {
                     borderColor = Color(0xFFE9D5FF),
                     titleColor = Color(0xFF6B21A8),
                     valColor = Color(0xFF581C87),
-                    modifier = Modifier.weight(1f)
-                )
-                KpiCard(
-                    title = "Tiến Độ Trung Bình",
-                    value = "${df.format(s.avgProgress)}%",
-                    sub = "Toàn bộ dự án",
-                    bgColor = Color(0xFFFFF7ED),
-                    borderColor = Color(0xFFFED7AA),
-                    titleColor = Color(0xFF9A3412),
-                    valColor = Color(0xFFEA580C),
                     modifier = Modifier.weight(1f)
                 )
             }

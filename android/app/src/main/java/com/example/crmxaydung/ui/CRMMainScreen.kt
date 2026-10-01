@@ -21,7 +21,7 @@ import com.example.crmxaydung.data.ApiClient
 import com.example.crmxaydung.data.UserSession
 
 enum class NavTab {
-    DASHBOARD, CUSTOMERS, PROJECTS, CARE, ACCOUNTS
+    DASHBOARD, CUSTOMERS, PIPELINE, CARE, ACCOUNTS
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -145,10 +145,10 @@ fun CRMMainScreen(
                         )
                     )
                     NavigationBarItem(
-                        selected = (currentTab == NavTab.PROJECTS),
-                        onClick = { currentTab = NavTab.PROJECTS },
-                        icon = { Text("🏗️", fontSize = 16.sp) },
-                        label = { Text("Dự Án", fontSize = 10.sp, fontWeight = if (currentTab == NavTab.PROJECTS) FontWeight.Bold else FontWeight.Normal) },
+                        selected = (currentTab == NavTab.PIPELINE),
+                        onClick = { currentTab = NavTab.PIPELINE },
+                        icon = { Text("🎯", fontSize = 16.sp) },
+                        label = { Text("Phễu Thầu", fontSize = 10.sp, fontWeight = if (currentTab == NavTab.PIPELINE) FontWeight.Bold else FontWeight.Normal) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedTextColor = feconDeepOrange,
                             selectedIconColor = feconDeepOrange,
@@ -161,7 +161,7 @@ fun CRMMainScreen(
                         selected = (currentTab == NavTab.CARE),
                         onClick = { currentTab = NavTab.CARE },
                         icon = { Text("📅", fontSize = 16.sp) },
-                        label = { Text("Lịch Chăm Sóc", fontSize = 10.sp, fontWeight = if (currentTab == NavTab.CARE) FontWeight.Bold else FontWeight.Normal) },
+                        label = { Text("Lịch CSKH", fontSize = 10.sp, fontWeight = if (currentTab == NavTab.CARE) FontWeight.Bold else FontWeight.Normal) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedTextColor = feconDeepOrange,
                             selectedIconColor = feconDeepOrange,
@@ -170,19 +170,21 @@ fun CRMMainScreen(
                             unselectedIconColor = navUnselectedText
                         )
                     )
-                    NavigationBarItem(
-                        selected = (currentTab == NavTab.ACCOUNTS),
-                        onClick = { currentTab = NavTab.ACCOUNTS },
-                        icon = { Text("👥", fontSize = 16.sp) },
-                        label = { Text("Tài Khoản", fontSize = 10.sp, fontWeight = if (currentTab == NavTab.ACCOUNTS) FontWeight.Bold else FontWeight.Normal) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedTextColor = feconDeepOrange,
-                            selectedIconColor = feconDeepOrange,
-                            indicatorColor = navSelectedIndicator,
-                            unselectedTextColor = navUnselectedText,
-                            unselectedIconColor = navUnselectedText
+                    if (user.role == "ADMIN") {
+                        NavigationBarItem(
+                            selected = (currentTab == NavTab.ACCOUNTS),
+                            onClick = { currentTab = NavTab.ACCOUNTS },
+                            icon = { Text("👥", fontSize = 16.sp) },
+                            label = { Text("Tài Khoản", fontSize = 10.sp, fontWeight = if (currentTab == NavTab.ACCOUNTS) FontWeight.Bold else FontWeight.Normal) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedTextColor = feconDeepOrange,
+                                selectedIconColor = feconDeepOrange,
+                                indicatorColor = navSelectedIndicator,
+                                unselectedTextColor = navUnselectedText,
+                                unselectedIconColor = navUnselectedText
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -196,7 +198,7 @@ fun CRMMainScreen(
             when (currentTab) {
                 NavTab.DASHBOARD -> DashboardScreen(user = user)
                 NavTab.CUSTOMERS -> CustomerScreen(user = user)
-                NavTab.PROJECTS -> ProjectScreen(user = user)
+                NavTab.PIPELINE -> ProjectScreen(user = user)
                 NavTab.CARE -> CareScreen(user = user)
                 NavTab.ACCOUNTS -> UserManagementScreen(currentUser = user)
             }

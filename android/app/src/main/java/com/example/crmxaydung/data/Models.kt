@@ -20,6 +20,10 @@ data class DashboardStats(
     val totalCollectedBillion: Double = 0.0,
     val unpaidBalanceBillion: Double = 0.0,
     val avgProgress: Double = 0.0,
+    val activeBidsCount: Int = 0,
+    val activeBidsBillion: Double = 0.0,
+    val wonBidsCount: Int = 0,
+    val wonBidsBillion: Double = 0.0,
     val sbuFilter: String = "ALL"
 )
 

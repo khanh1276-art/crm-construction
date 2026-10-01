@@ -24,26 +24,18 @@ import androidx.compose.ui.unit.sp
 import com.example.crmxaydung.data.ApiClient
 import com.example.crmxaydung.data.CustomerItem
 import com.example.crmxaydung.data.PipelineBidItem
-import com.example.crmxaydung.data.ProjectItem
 import com.example.crmxaydung.data.UserSession
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
-enum class ProjectViewTab {
-    PIPELINE, ACTIVE_PROJECTS
-}
-
 @Composable
 fun ProjectScreen(user: UserSession) {
     val coroutineScope = rememberCoroutineScope()
-    var currentSubTab by remember { mutableStateOf(ProjectViewTab.PIPELINE) }
 
-    var projects by remember { mutableStateOf<List<ProjectItem>>(emptyList()) }
     var pipelineBids by remember { mutableStateOf<List<PipelineBidItem>>(emptyList()) }
     var customers by remember { mutableStateOf<List<CustomerItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
-    var selectedProject by remember { mutableStateOf<ProjectItem?>(null) }
     var selectedBid by remember { mutableStateOf<PipelineBidItem?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
     var selectedPipelineStage by remember { mutableStateOf("ALL") }
@@ -56,10 +48,8 @@ fun ProjectScreen(user: UserSession) {
         isLoading = true
         coroutineScope.launch {
             val sbuFilter = if (user.role == "ADMIN") "ALL" else user.sbu
-            val resP = ApiClient.fetchProjects(sbuFilter)
             val resBids = ApiClient.fetchPipelineBids(sbuFilter)
             val resC = ApiClient.fetchCustomers("ALL")
-            projects = resP.getOrNull() ?: emptyList()
             pipelineBids = resBids.getOrNull() ?: emptyList()
             customers = resC.getOrNull() ?: emptyList()
             isLoading = false
@@ -71,7 +61,7 @@ fun ProjectScreen(user: UserSession) {
     }
 
     val pipelineStages = listOf(
-        "ALL" to "Tất Cả",
+        "ALL" to "Tất Cả Giai Đoạn",
         "INFORMATION" to "1. Tiếp Cận",
         "EVALUATION" to "2. Khảo Sát",
         "TENDER_PREP" to "3. Lập Hồ Sơ",
@@ -81,33 +71,32 @@ fun ProjectScreen(user: UserSession) {
     )
 
     val projectLevels = listOf(
-        "ALL" to "Tất Cả",
-        "LEVEL_SPECIAL" to "⭐ Cấp ĐB (≥500T)",
-        "LEVEL_1" to "👑 Cấp 1 (300-500T)",
-        "LEVEL_2" to "💎 Cấp 2 (150-300T)",
-        "LEVEL_3" to "⚡ Cấp 3 (50-150T)",
-        "LEVEL_4" to "📌 Cấp 4 (<50T)"
+        "ALL" to "Tất Cả Cấp",
+        "LEVEL_SPECIAL" to "🟣 Cấp Đặc Biệt",
+        "LEVEL_1" to "🔴 Cấp 1",
+        "LEVEL_2" to "🟠 Cấp 2",
+        "LEVEL_3" to "🔵 Cấp 3",
+        "LEVEL_4" to "🟢 Cấp 4"
     )
 
     val filteredBids = pipelineBids.filter {
-        selectedPipelineStage == "ALL" || it.stage == selectedPipelineStage
+        (selectedPipelineStage == "ALL" || it.stage == selectedPipelineStage) &&
+        (selectedProjectLevel == "ALL" || it.projectLevel == selectedProjectLevel)
     }
 
-    val filteredProjects = projects.filter {
-        selectedProjectLevel == "ALL" || it.projectLevel == selectedProjectLevel
-    }
+    val totalEstimatedBillion = filteredBids.sumOf { it.estimatedValueBillion }
 
     Scaffold(
-        containerColor = Color(0xFFF8FAFC), // Nền sáng
+        containerColor = Color(0xFFF8FAFC),
         floatingActionButton = {
-            if (user.role != "COLLABORATOR" && currentSubTab == ProjectViewTab.ACTIVE_PROJECTS) {
-                FloatingActionButton(
+            if (user.role != "COLLABORATOR") {
+                ExtendedFloatingActionButton(
                     onClick = { showAddDialog = true },
                     containerColor = feconOrange,
-                    contentColor = Color.White
-                ) {
-                    Text("➕", fontSize = 18.sp)
-                }
+                    contentColor = Color.White,
+                    icon = { Text("➕", fontSize = 16.sp) },
+                    text = { Text("Thêm Gói Thầu", fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+                )
             }
         }
     ) { padding ->
@@ -125,15 +114,15 @@ fun ProjectScreen(user: UserSession) {
             ) {
                 Column {
                     Text(
-                        text = "🏗️ Quản Lý Dự Án & Hồ Sơ Thầu",
+                        text = "🎯 Phễu Thầu & Cơ Hội Dự Án",
                         color = Color(0xFF0F172A),
-                        fontSize = 16.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Theo dõi phễu cơ hội, tiến trình đấu thầu & dự án",
+                        text = "Theo dõi từ tiếp cận, khảo sát đến trúng/trượt thầu",
                         color = Color(0xFF64748B),
-                        fontSize = 12.sp
+                        fontSize = 11.sp
                     )
                 }
                 TextButton(onClick = { loadData() }) {
@@ -141,190 +130,156 @@ fun ProjectScreen(user: UserSession) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Sub Tab Selector: PIPELINE vs ACTIVE PROJECTS (Light Theme Card)
+            // Summary Funnel Metrics Bar
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(10.dp))
-                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
-                    .padding(4.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Surface(
-                    color = if (currentSubTab == ProjectViewTab.PIPELINE) feconOrange else Color.Transparent,
+                    color = Color(0xFFEFF6FF),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { currentSubTab = ProjectViewTab.PIPELINE }
+                        .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(8.dp))
                 ) {
-                    Text(
-                        text = "🎯 Phễu Dự Án (${pipelineBids.size})",
-                        color = if (currentSubTab == ProjectViewTab.PIPELINE) Color.White else Color(0xFF475569),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
+                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
+                        Text("Số gói thầu", fontSize = 10.sp, color = Color(0xFF1E40AF), fontWeight = FontWeight.SemiBold)
+                        Text("${filteredBids.size} gói", fontSize = 14.sp, color = Color(0xFF1E3A8A), fontWeight = FontWeight.Black)
+                    }
                 }
-
                 Surface(
-                    color = if (currentSubTab == ProjectViewTab.ACTIVE_PROJECTS) feconOrange else Color.Transparent,
+                    color = Color(0xFFFFF7ED),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
-                        .weight(1f)
-                        .clickable { currentSubTab = ProjectViewTab.ACTIVE_PROJECTS }
+                        .weight(1.3f)
+                        .border(1.dp, Color(0xFFFED7AA), RoundedCornerShape(8.dp))
                 ) {
+                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
+                        Text("Tổng dự toán", fontSize = 10.sp, color = Color(0xFF9A3412), fontWeight = FontWeight.SemiBold)
+                        Text("${df.format(totalEstimatedBillion)} Tỷ VNĐ", fontSize = 14.sp, color = feconOrange, fontWeight = FontWeight.Black)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // FECON Matrix Banner (Clean level labels)
+            Surface(
+                color = Color(0xFFFFF7ED),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, Color(0xFFFED7AA), RoundedCornerShape(8.dp))
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
                     Text(
-                        text = "🏗️ Đang Thi Công (${projects.size})",
-                        color = if (currentSubTab == ProjectViewTab.ACTIVE_PROJECTS) Color.White else Color(0xFF475569),
-                        fontSize = 12.sp,
+                        text = "⚖️ Phân cấp FECON & Thẩm quyền duyệt chi phí tiếp khách/CSKH:",
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        color = Color(0xFF9A3412)
+                    )
+                    Text(
+                        text = "• Cấp Đặc Biệt: Chủ tịch HĐQT • Cấp 1: Tổng Giám đốc • Cấp 2-4: PTGĐ phụ trách SBU",
+                        fontSize = 10.sp,
+                        color = Color(0xFF7C2D12)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Stage Filter Chips
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(pipelineStages) { (key, label) ->
+                    val isSelected = (selectedPipelineStage == key)
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { selectedPipelineStage = key },
+                        label = { Text(label, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = when (key) {
+                                "WON" -> Color(0xFF059669)
+                                "LOST" -> Color(0xFFDC2626)
+                                else -> feconOrange
+                            },
+                            selectedLabelColor = Color.White,
+                            containerColor = Color.White,
+                            labelColor = Color(0xFF475569)
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isSelected,
+                            borderColor = if (isSelected) Color.Transparent else Color(0xFFCBD5E1)
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Level Filter Chips (Clean names without monetary values)
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(projectLevels) { (lvlKey, label) ->
+                    val isSelected = (selectedProjectLevel == lvlKey)
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { selectedProjectLevel = lvlKey },
+                        label = { Text(label, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = when (lvlKey) {
+                                "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
+                                "LEVEL_1" -> Color(0xFFDC2626)
+                                "LEVEL_2" -> Color(0xFFEA580C)
+                                "LEVEL_3" -> Color(0xFF2563EB)
+                                "LEVEL_4" -> Color(0xFF059669)
+                                else -> Color(0xFF475569)
+                            },
+                            selectedLabelColor = Color.White,
+                            containerColor = Color.White,
+                            labelColor = Color(0xFF475569)
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = isSelected,
+                            borderColor = if (isSelected) Color.Transparent else Color(0xFFCBD5E1)
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = feconOrange)
                 }
-            } else if (currentSubTab == ProjectViewTab.PIPELINE) {
-                // Stage Filter Chips for Pipeline
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(pipelineStages) { (key, label) ->
-                        val isSelected = (selectedPipelineStage == key)
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { selectedPipelineStage = key },
-                            label = { Text(label, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = when (key) {
-                                    "WON" -> Color(0xFF059669)
-                                    "LOST" -> Color(0xFFDC2626)
-                                    else -> feconOrange
-                                },
-                                selectedLabelColor = Color.White,
-                                containerColor = Color.White,
-                                labelColor = Color(0xFF475569)
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = isSelected,
-                                borderColor = if (isSelected) Color.Transparent else Color(0xFFCBD5E1)
-                            )
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                if (filteredBids.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Không có hồ sơ thầu nào trong giai đoạn này", color = Color(0xFF94A3B8))
-                    }
-                } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(filteredBids) { bid ->
-                            PipelineBidCard(
-                                bid = bid,
-                                df = df,
-                                onClick = { selectedBid = bid }
-                            )
-                        }
+            } else if (filteredBids.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("🎯", fontSize = 36.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Không có hồ sơ thầu nào phù hợp bộ lọc", color = Color(0xFF94A3B8), fontSize = 13.sp)
                     }
                 }
             } else {
-                // Active Projects List with Level Filter
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.fillMaxWidth()
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    items(projectLevels) { (lvlKey, label) ->
-                        val isSelected = (selectedProjectLevel == lvlKey)
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { selectedProjectLevel = lvlKey },
-                            label = { Text(label, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = when (lvlKey) {
-                                    "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
-                                    "LEVEL_1" -> Color(0xFFDC2626)
-                                    "LEVEL_2" -> Color(0xFFEA580C)
-                                    "LEVEL_3" -> Color(0xFF2563EB)
-                                    "LEVEL_4" -> Color(0xFF059669)
-                                    else -> feconOrange
-                                },
-                                selectedLabelColor = Color.White,
-                                containerColor = Color.White,
-                                labelColor = Color(0xFF475569)
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = isSelected,
-                                borderColor = if (isSelected) Color.Transparent else Color(0xFFCBD5E1)
-                            )
+                    items(filteredBids) { bid ->
+                        PipelineBidCard(
+                            bid = bid,
+                            df = df,
+                            onClick = { selectedBid = bid }
                         )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // FECON Matrix Banner
-                Surface(
-                    color = Color(0xFFFFF7ED),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, Color(0xFFFED7AA), RoundedCornerShape(8.dp))
-                ) {
-                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
-                        Text(
-                            text = "⚖️ Phân cấp FECON & Thẩm quyền duyệt tiếp khách/CSKH:",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF9A3412)
-                        )
-                        Text(
-                            text = "• ĐB (≥500T): Chủ tịch HĐQT • Cấp 1 (300-500T): Tổng Giám đốc • Cấp 2-4 (<300T): PTGĐ phụ trách SBU",
-                            fontSize = 10.sp,
-                            color = Color(0xFF7C2D12)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                if (filteredProjects.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Chưa có dự án nào phù hợp với bộ lọc", color = Color(0xFF94A3B8))
-                    }
-                } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(filteredProjects) { proj ->
-                            ProjectCard(
-                                proj = proj,
-                                df = df,
-                                onClick = {
-                                    coroutineScope.launch {
-                                        val detailRes = ApiClient.fetchProjectDetail(proj.id)
-                                        selectedProject = detailRes.getOrNull() ?: proj
-                                    }
-                                }
-                            )
-                        }
                     }
                 }
             }
@@ -344,18 +299,9 @@ fun ProjectScreen(user: UserSession) {
         )
     }
 
-    // Active Project Detail Dialog
-    selectedProject?.let { proj ->
-        ProjectDetailDialog(
-            proj = proj,
-            df = df,
-            onDismiss = { selectedProject = null }
-        )
-    }
-
-    // Add Project Dialog
+    // Add Bid Dialog with Quick Customer Creation
     if (showAddDialog) {
-        AddProjectDialog(
+        AddBidDialog(
             customers = customers,
             defaultSbu = if (user.role == "ADMIN") "SBU1" else user.sbu,
             onDismiss = { showAddDialog = false },
@@ -409,6 +355,7 @@ fun PipelineBidCard(bid: PipelineBidItem, df: DecimalFormat, onClick: () -> Unit
                         "LOST" -> Color(0xFFDC2626)
                         "NEGOTIATION" -> Color(0xFFD97706)
                         "TENDER_PREP" -> Color(0xFF2563EB)
+                        "EVALUATION" -> Color(0xFF0284C7)
                         else -> Color(0xFF64748B)
                     },
                     shape = RoundedCornerShape(4.dp)
@@ -469,6 +416,7 @@ fun PipelineBidCard(bid: PipelineBidItem, df: DecimalFormat, onClick: () -> Unit
 
             Spacer(modifier = Modifier.height(6.dp))
 
+            // Clean FECON Level (no threshold value) and Approver Short
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -770,173 +718,294 @@ fun PipelineDetailDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProjectCard(proj: ProjectItem, df: DecimalFormat, onClick: () -> Unit) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
-            .clickable { onClick() }
-    ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = proj.name,
-                    color = Color(0xFF0F172A),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    modifier = Modifier.weight(1f)
-                )
-                Surface(
-                    color = when (proj.projectHealth) {
-                        "GOOD" -> Color(0xFF059669)
-                        "WARNING" -> Color(0xFFD97706)
-                        else -> Color(0xFFDC2626)
-                    },
-                    shape = RoundedCornerShape(4.dp)
-                ) {
-                    Text(
-                        text = when (proj.projectHealth) {
-                            "GOOD" -> "An toàn"
-                            "WARNING" -> "Cảnh báo"
-                            else -> "Rủi ro"
-                        },
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
-            }
+fun AddBidDialog(
+    customers: List<CustomerItem>,
+    defaultSbu: String,
+    onDismiss: () -> Unit,
+    onAdded: () -> Unit
+) {
+    var localCustomers by remember { mutableStateOf(customers) }
+    var selectedCustomerId by remember { mutableStateOf(customers.firstOrNull()?.id ?: 0) }
+    var showQuickAddCustomer by remember { mutableStateOf(false) }
 
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("Chủ đầu tư: ${proj.customerName} (${proj.sbu})", color = Color(0xFFEA580C), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+    // Quick add customer fields
+    var quickCustName by remember { mutableStateOf("") }
+    var quickCustContact by remember { mutableStateOf("") }
+    var quickCustPhone by remember { mutableStateOf("") }
+    var quickCustSegment by remember { mutableStateOf("B2B") }
+    var quickCustTier by remember { mutableStateOf("GOLD") }
+    var isQuickSaving by remember { mutableStateOf(false) }
+    var quickError by remember { mutableStateOf<String?>(null) }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text("Giá trị HĐ", color = Color(0xFF64748B), fontSize = 11.sp)
-                    Text("${df.format(proj.contractValueBillion)} Tỷ", color = Color(0xFF0F172A), fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("Đã thu", color = Color(0xFF64748B), fontSize = 11.sp)
-                    Text("${df.format(proj.collectedAmountBillion)} Tỷ", color = Color(0xFF059669), fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                }
-            }
+    // Bid fields
+    var sbu by remember { mutableStateOf(defaultSbu) }
+    var projectTitle by remember { mutableStateOf("") }
+    var estimatedValueBillionText by remember { mutableStateOf("") }
+    var stage by remember { mutableStateOf("INFORMATION") }
+    var winRate by remember { mutableStateOf("50") }
+    var tenderDeadline by remember { mutableStateOf("") }
+    var assignedDirector by remember { mutableStateOf("") }
+    var biddingNotes by remember { mutableStateOf("") }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Công nợ còn lại:", color = Color(0xFF64748B), fontSize = 11.sp)
-                Text("${df.format(proj.unpaidBillion)} Tỷ", color = Color(0xFFDC2626), fontWeight = FontWeight.Bold, fontSize = 12.sp)
-            }
+    var isSaving by remember { mutableStateOf(false) }
+    var errText by remember { mutableStateOf<String?>(null) }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    color = when (proj.projectLevel) {
-                        "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
-                        "LEVEL_1" -> Color(0xFFDC2626)
-                        "LEVEL_2" -> Color(0xFFEA580C)
-                        "LEVEL_3" -> Color(0xFF2563EB)
-                        else -> Color(0xFF059669)
-                    },
-                    shape = RoundedCornerShape(4.dp)
-                ) {
-                    Text(
-                        text = proj.projectLevelName,
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
-                Text(
-                    text = "Duyệt: ${proj.approverShort}",
-                    color = Color(0xFF475569),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
+    val scope = rememberCoroutineScope()
+    val feconOrange = Color(0xFFEA580C)
+
+    // Calculate dynamic FECON level preview based on estimated value in Billion VNĐ
+    val estimatedBillion = estimatedValueBillionText.toDoubleOrNull() ?: 0.0
+    val levelInfo = when {
+        estimatedBillion >= 500.0 -> Triple("LEVEL_SPECIAL", "Cấp Đặc Biệt", "Chủ tịch HĐQT quyết định")
+        estimatedBillion >= 300.0 -> Triple("LEVEL_1", "Cấp 1", "Tổng Giám đốc (hoặc PTGĐ ủy quyền)")
+        estimatedBillion >= 150.0 -> Triple("LEVEL_2", "Cấp 2", "Phó Tổng Giám đốc phụ trách SBU")
+        estimatedBillion >= 50.0 -> Triple("LEVEL_3", "Cấp 3", "Phó Tổng Giám đốc phụ trách SBU")
+        else -> Triple("LEVEL_4", "Cấp 4", "Phó Tổng Giám đốc phụ trách SBU")
     }
-}
-
-@Composable
-fun ProjectDetailDialog(proj: ProjectItem, df: DecimalFormat, onDismiss: () -> Unit) {
-    val context = LocalContext.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Column {
-                Text(proj.name, fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), fontSize = 16.sp)
-                Text("Mã DA: ${proj.code} • Khối: ${proj.sbu}", color = Color(0xFFEA580C), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text("Thêm Cơ Hội & Hồ Sơ Dự Thầu", color = Color(0xFF0F172A), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("Quản lý từ khảo sát, lập thầu đến trúng/trượt", color = Color(0xFF64748B), fontSize = 11.sp)
             }
         },
         text = {
             Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                // Customer & Decision Maker
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
+                // Customer selector header with "+ Thêm CĐT mới" button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
-                        Text("Chủ đầu tư: ${proj.customerName}", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), fontSize = 13.sp)
-                        if (proj.keyDecisionMaker.isNotBlank()) {
-                            Text("Đại diện: ${proj.keyDecisionMaker}", color = Color(0xFF475569), fontSize = 12.sp)
-                        }
-                        if (proj.decisionMakerPhone.isNotBlank()) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                    Text("Chủ đầu tư / Khách hàng *", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF334155))
+                    TextButton(
+                        onClick = { showQuickAddCustomer = !showQuickAddCustomer },
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text(
+                            text = if (showQuickAddCustomer) "✕ Đóng thêm CĐT" else "➕ Thêm CĐT mới",
+                            color = Color(0xFF2563EB),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+
+                // Inline Quick Add Customer Form
+                if (showQuickAddCustomer) {
+                    Surface(
+                        color = Color(0xFFEFF6FF),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(8.dp))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text("🏢 Nhập Thông Tin Chủ Đầu Tư Mới", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color(0xFF1E40AF))
+                            OutlinedTextField(
+                                value = quickCustName,
+                                onValueChange = { quickCustName = it },
+                                label = { Text("Tên CĐT / Doanh nghiệp *") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            OutlinedTextField(
+                                value = quickCustContact,
+                                onValueChange = { quickCustContact = it },
+                                label = { Text("Lãnh đạo / Người liên hệ *") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            OutlinedTextField(
+                                value = quickCustPhone,
+                                onValueChange = { quickCustPhone = it },
+                                label = { Text("Số điện thoại liên hệ *") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            quickError?.let {
+                                Text(it, color = Color(0xFFDC2626), fontSize = 11.sp)
+                            }
+                            Button(
+                                onClick = {
+                                    if (quickCustName.isBlank() || quickCustContact.isBlank() || quickCustPhone.isBlank()) {
+                                        quickError = "Vui lòng điền đủ Tên, Lãnh đạo và SĐT CĐT"
+                                        return@Button
+                                    }
+                                    isQuickSaving = true
+                                    quickError = null
+                                    scope.launch {
+                                        val res = ApiClient.createCustomerReturnId(
+                                            name = quickCustName.trim(),
+                                            sbu = sbu,
+                                            tier = quickCustTier,
+                                            keyDecisionMaker = quickCustContact.trim(),
+                                            role = "Chủ tịch / Tổng Giám Đốc",
+                                            phone = quickCustPhone.trim(),
+                                            email = "",
+                                            taxCode = "",
+                                            headquarters = "",
+                                            birthday = "",
+                                            anniversary = "",
+                                            notes = "Thêm nhanh từ màn hình tạo hồ sơ thầu"
+                                        )
+                                        isQuickSaving = false
+                                        if (res.isSuccess) {
+                                            val newId = res.getOrNull() ?: 0
+                                            val newCust = CustomerItem(
+                                                id = newId,
+                                                code = "KH-$sbu-$newId",
+                                                name = quickCustName.trim(),
+                                                sbu = sbu,
+                                                tier = quickCustTier,
+                                                keyDecisionMaker = quickCustContact.trim(),
+                                                decisionMakerRole = "Chủ tịch / TGĐ",
+                                                decisionMakerPhone = quickCustPhone.trim()
+                                            )
+                                            localCustomers = listOf(newCust) + localCustomers
+                                            selectedCustomerId = newId
+                                            showQuickAddCustomer = false
+                                            quickCustName = ""
+                                            quickCustContact = ""
+                                            quickCustPhone = ""
+                                        } else {
+                                            quickError = res.exceptionOrNull()?.message ?: "Lỗi thêm CĐT"
+                                        }
+                                    }
+                                },
+                                enabled = !isQuickSaving && quickCustName.isNotBlank(),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text("SĐT: ${proj.decisionMakerPhone}", color = Color(0xFF0284C7), fontSize = 12.sp)
-                                TextButton(onClick = {
-                                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${proj.decisionMakerPhone}"))
-                                    context.startActivity(intent)
-                                }) {
-                                    Text("📞 Gọi CĐT", color = Color(0xFF059669), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                }
+                                if (isQuickSaving) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
+                                else Text("✓ Lưu & Chọn CĐT này", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                // Customer selection dropdown / list
+                var expandedCust by remember { mutableStateOf(false) }
+                val selectedCustName = localCustomers.find { it.id == selectedCustomerId }?.name ?: "Chọn chủ đầu tư"
 
-                // FECON Classification & Approval Authority Card
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED)),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.border(1.dp, Color(0xFFFED7AA), RoundedCornerShape(8.dp))
+                ExposedDropdownMenuBox(
+                    expanded = expandedCust,
+                    onExpandedChange = { expandedCust = !expandedCust }
                 ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
+                    OutlinedTextField(
+                        value = selectedCustName,
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCust) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color(0xFF0F172A),
+                            unfocusedTextColor = Color(0xFF334155),
+                            focusedBorderColor = feconOrange,
+                            unfocusedBorderColor = Color(0xFFCBD5E1)
+                        )
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expandedCust,
+                        onDismissRequest = { expandedCust = false }
+                    ) {
+                        localCustomers.forEach { cust ->
+                            DropdownMenuItem(
+                                text = { Text("${cust.name} (${cust.sbu})", fontSize = 12.sp) },
+                                onClick = {
+                                    selectedCustomerId = cust.id
+                                    if (cust.sbu.isNotBlank() && cust.sbu != "ALL") {
+                                        sbu = cust.sbu
+                                    }
+                                    expandedCust = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // SBU Selector
+                val sbus = listOf("SBU1", "SBU2", "SBU3", "SBU4", "SBU5")
+                Text("Thuộc Khối SBU:", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color(0xFF475569))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    sbus.forEach { itemSbu ->
+                        val isSel = (sbu == itemSbu)
+                        Surface(
+                            color = if (isSel) feconOrange else Color(0xFFF1F5F9),
+                            shape = RoundedCornerShape(6.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { sbu = itemSbu }
+                        ) {
+                            Text(
+                                text = itemSbu,
+                                color = if (isSel) Color.White else Color(0xFF334155),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(vertical = 6.dp),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                }
+
+                // Project Title
+                OutlinedTextField(
+                    value = projectTitle,
+                    onValueChange = { projectTitle = it },
+                    label = { Text("Tên gói thầu / Dự án *") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF334155),
+                        focusedBorderColor = feconOrange,
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                    )
+                )
+
+                // Estimated Value in Billion VNĐ
+                OutlinedTextField(
+                    value = estimatedValueBillionText,
+                    onValueChange = { estimatedValueBillionText = it },
+                    label = { Text("Ước tính giá trị gói thầu (Tỷ VNĐ) *") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF0F172A),
+                        unfocusedTextColor = Color(0xFF334155),
+                        focusedBorderColor = feconOrange,
+                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                    )
+                )
+
+                // Live FECON Classification & Authority Preview
+                Surface(
+                    color = Color(0xFFFAF5FF),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Color(0xFFE9D5FF), RoundedCornerShape(8.dp))
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Phân cấp FECON: ", fontSize = 11.sp, color = Color(0xFF6B21A8), fontWeight = FontWeight.Bold)
                             Surface(
-                                color = when (proj.projectLevel) {
+                                color = when (levelInfo.first) {
                                     "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
                                     "LEVEL_1" -> Color(0xFFDC2626)
                                     "LEVEL_2" -> Color(0xFFEA580C)
@@ -946,233 +1015,139 @@ fun ProjectDetailDialog(proj: ProjectItem, df: DecimalFormat, onDismiss: () -> U
                                 shape = RoundedCornerShape(4.dp)
                             ) {
                                 Text(
-                                    text = proj.projectLevelName,
+                                    text = levelInfo.second,
                                     color = Color.White,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Phân cấp dự án FECON",
-                                color = Color(0xFF9A3412),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
-                            )
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "⚖️ Thẩm quyền duyệt tiếp khách & CSKH:",
-                            color = Color(0xFF7C2D12),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp
-                        )
-                        Text(
-                            text = proj.approverAuthority,
-                            color = Color(0xFFEA580C),
-                            fontWeight = FontWeight.Black,
-                            fontSize = 12.sp
+                            text = "Thẩm quyền duyệt tiếp khách/CSKH: ${levelInfo.third}",
+                            fontSize = 10.sp,
+                            color = Color(0xFF581C87),
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Financial Overview
-                Text("💰 Tình Hình Dòng Tiền:", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), fontSize = 13.sp)
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Tổng giá trị HĐ:", color = Color(0xFF64748B), fontSize = 12.sp)
-                    Text("${df.format(proj.contractValueBillion)} Tỷ", color = Color(0xFF0F172A), fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Đã thu hồi:", color = Color(0xFF64748B), fontSize = 12.sp)
-                    Text("${df.format(proj.collectedAmountBillion)} Tỷ", color = Color(0xFF059669), fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Công nợ còn lại:", color = Color(0xFF64748B), fontSize = 12.sp)
-                    Text("${df.format(proj.unpaidBillion)} Tỷ", color = Color(0xFFDC2626), fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                if (proj.projectDirector.isNotBlank()) {
-                    Text("Giám đốc điều hành DA: ${proj.projectDirector}", color = Color(0xFF334155), fontSize = 12.sp)
-                }
-                if (proj.contractNumber.isNotBlank()) {
-                    Text("Số hợp đồng: ${proj.contractNumber}", color = Color(0xFF64748B), fontSize = 11.sp)
-                }
-                if (proj.summaryScope.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("Quy mô: ${proj.summaryScope}", color = Color(0xFF64748B), fontSize = 11.sp)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Milestones & Cashflow
-                Text("📋 Các Đợt Nghiệm Thu & Giải Ngân:", fontWeight = FontWeight.Bold, color = Color(0xFF0F172A), fontSize = 13.sp)
-                Spacer(modifier = Modifier.height(6.dp))
-
-                if (proj.milestones.isEmpty()) {
-                    Text("Chưa có mốc giải ngân nào được thiết lập.", color = Color(0xFF94A3B8), fontSize = 11.sp)
-                } else {
-                    proj.milestones.forEach { m ->
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                // Initial Stage
+                val initialStages = listOf(
+                    "INFORMATION" to "1. Tiếp Cận",
+                    "EVALUATION" to "2. Khảo Sát",
+                    "TENDER_PREP" to "3. Lập Hồ Sơ",
+                    "NEGOTIATION" to "4. Thương Thảo"
+                )
+                Text("Giai đoạn ban đầu:", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color(0xFF475569))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    initialStages.forEach { (stgKey, label) ->
+                        val isSel = (stage == stgKey)
+                        Surface(
+                            color = if (isSel) feconOrange else Color(0xFFF1F5F9),
                             shape = RoundedCornerShape(6.dp),
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 3.dp)
-                                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(6.dp))
+                                .weight(1f)
+                                .clickable { stage = stgKey }
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .padding(8.dp)
-                                    .fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(m.title, color = Color(0xFF0F172A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                    Text("Đáo hạn: ${m.dueDate} • ${m.percentage}% HĐ", color = Color(0xFF64748B), fontSize = 10.sp)
-                                }
-                                Surface(
-                                    color = if (m.paymentStatus == "PAID") Color(0xFF059669) else Color(0xFFD97706),
-                                    shape = RoundedCornerShape(4.dp)
-                                ) {
-                                    Text(
-                                        text = if (m.paymentStatus == "PAID") "ĐÃ THU" else "CHỜ THU",
-                                        color = Color.White,
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
-                                }
-                            }
+                            Text(
+                                text = label,
+                                color = if (isSel) Color.White else Color(0xFF334155),
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(vertical = 6.dp),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
                         }
                     }
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Đóng", color = Color(0xFFEA580C), fontWeight = FontWeight.Bold) }
-        },
-        containerColor = Color.White
-    )
-}
 
-@Composable
-fun AddProjectDialog(
-    customers: List<CustomerItem>,
-    defaultSbu: String,
-    onDismiss: () -> Unit,
-    onAdded: () -> Unit
-) {
-    var name by remember { mutableStateOf("") }
-    var sbu by remember { mutableStateOf(defaultSbu) }
-    var selectedCustomerId by remember { mutableStateOf(customers.firstOrNull()?.id ?: 0) }
-    var contractValueBillion by remember { mutableStateOf("") }
-    var progressPercent by remember { mutableStateOf("0") }
-    var contractNumber by remember { mutableStateOf("") }
-    var director by remember { mutableStateOf("") }
-    var summaryScope by remember { mutableStateOf("") }
-    var isSaving by remember { mutableStateOf(false) }
-    var errText by remember { mutableStateOf<String?>(null) }
-    val scope = rememberCoroutineScope()
-    val feconOrange = Color(0xFFEA580C)
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Tạo Hồ Sơ Dự Án Mới", color = Color(0xFF0F172A), fontWeight = FontWeight.Bold) },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.verticalScroll(rememberScrollState())
-            ) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Tên Dự Án / Gói Thầu") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color(0xFF0F172A),
-                        unfocusedTextColor = Color(0xFF334155),
-                        focusedBorderColor = feconOrange,
-                        unfocusedBorderColor = Color(0xFFCBD5E1)
+                // Win rate & Deadline
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = winRate,
+                        onValueChange = { winRate = it },
+                        label = { Text("Xác suất (%)") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
                     )
+                    OutlinedTextField(
+                        value = tenderDeadline,
+                        onValueChange = { tenderDeadline = it },
+                        label = { Text("Hạn nộp (YYYY-MM-DD)") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1.5f)
+                    )
+                }
+
+                // Director
+                OutlinedTextField(
+                    value = assignedDirector,
+                    onValueChange = { assignedDirector = it },
+                    label = { Text("Giám đốc / Cán bộ phụ trách") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
+                // Notes
                 OutlinedTextField(
-                    value = contractValueBillion,
-                    onValueChange = { contractValueBillion = it },
-                    label = { Text("Giá trị Hợp đồng (Tỷ VNĐ)") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color(0xFF0F172A),
-                        unfocusedTextColor = Color(0xFF334155),
-                        focusedBorderColor = feconOrange,
-                        unfocusedBorderColor = Color(0xFFCBD5E1)
-                    )
-                )
-
-                OutlinedTextField(
-                    value = director,
-                    onValueChange = { director = it },
-                    label = { Text("Giám đốc phụ trách") },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color(0xFF0F172A),
-                        unfocusedTextColor = Color(0xFF334155),
-                        focusedBorderColor = feconOrange,
-                        unfocusedBorderColor = Color(0xFFCBD5E1)
-                    )
-                )
-
-                OutlinedTextField(
-                    value = summaryScope,
-                    onValueChange = { summaryScope = it },
-                    label = { Text("Quy mô tóm tắt") },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color(0xFF0F172A),
-                        unfocusedTextColor = Color(0xFF334155),
-                        focusedBorderColor = feconOrange,
-                        unfocusedBorderColor = Color(0xFFCBD5E1)
-                    )
+                    value = biddingNotes,
+                    onValueChange = { biddingNotes = it },
+                    label = { Text("Ghi chú chiến lược đấu thầu") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2
                 )
 
                 errText?.let {
-                    Text(it, color = Color(0xFFDC2626), fontSize = 12.sp)
+                    Text(it, color = Color(0xFFDC2626), fontSize = 11.sp)
                 }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    if (name.isNotBlank() && selectedCustomerId > 0) {
-                        isSaving = true
-                        errText = null
-                        val cVal = (contractValueBillion.toDoubleOrNull() ?: 0.0) * 1_000_000_000.0
-                        val pPct = progressPercent.toDoubleOrNull() ?: 0.0
-                        scope.launch {
-                            val res = ApiClient.createProject(
-                                name.trim(), sbu, selectedCustomerId,
-                                cVal, pPct, contractNumber.trim(), director.trim(), summaryScope.trim()
-                            )
-                            isSaving = false
-                            if (res.isSuccess) {
-                                onAdded()
-                            } else {
-                                errText = res.exceptionOrNull()?.message ?: "Lỗi tạo dự án"
-                            }
+                    if (projectTitle.isBlank()) {
+                        errText = "Vui lòng nhập tên gói thầu / dự án"
+                        return@Button
+                    }
+                    if (selectedCustomerId <= 0) {
+                        errText = "Vui lòng chọn hoặc thêm chủ đầu tư"
+                        return@Button
+                    }
+                    val estValVnd = (estimatedValueBillionText.toDoubleOrNull() ?: 0.0) * 1_000_000_000.0
+                    val winRateInt = winRate.toIntOrNull() ?: 50
+                    isSaving = true
+                    errText = null
+                    scope.launch {
+                        val res = ApiClient.createBid(
+                            customerId = selectedCustomerId,
+                            sbu = sbu,
+                            projectTitle = projectTitle.trim(),
+                            estimatedValueVnd = estValVnd,
+                            stage = stage,
+                            winRate = winRateInt,
+                            tenderDeadline = tenderDeadline.trim(),
+                            targetKickoff = "",
+                            assignedDirector = assignedDirector.trim(),
+                            biddingNotes = biddingNotes.trim(),
+                            projectLevel = levelInfo.first,
+                            projectLevelName = levelInfo.second,
+                            approverAuthority = levelInfo.third
+                        )
+                        isSaving = false
+                        if (res.isSuccess) {
+                            onAdded()
+                        } else {
+                            errText = res.exceptionOrNull()?.message ?: "Lỗi tạo gói thầu"
                         }
                     }
                 },
-                enabled = !isSaving && name.isNotBlank(),
+                enabled = !isSaving && projectTitle.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = feconOrange)
             ) {
                 if (isSaving) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp))
-                else Text("Tạo Dự Án", fontWeight = FontWeight.Bold)
+                else Text("Lưu Gói Thầu", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

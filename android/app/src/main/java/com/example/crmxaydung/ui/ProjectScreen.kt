@@ -104,95 +104,50 @@ fun ProjectScreen(user: UserSession) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
-            // Header
+            // Compact Header with Inline Funnel Metrics & Refresh
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "🎯 Phễu Thầu & Cơ Hội Dự Án",
+                        text = "🎯 Phễu Thầu",
                         color = Color(0xFF0F172A),
-                        fontSize = 17.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(
-                        text = "Theo dõi từ tiếp cận, khảo sát đến trúng/trượt thầu",
-                        color = Color(0xFF64748B),
-                        fontSize = 11.sp
-                    )
-                }
-                TextButton(onClick = { loadData() }) {
-                    Text("Làm mới", color = feconOrange, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Summary Funnel Metrics Bar
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Surface(
-                    color = Color(0xFFEFF6FF),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier
-                        .weight(1f)
-                        .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(8.dp))
-                ) {
-                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
-                        Text("Số gói thầu", fontSize = 10.sp, color = Color(0xFF1E40AF), fontWeight = FontWeight.SemiBold)
-                        Text("${filteredBids.size} gói", fontSize = 14.sp, color = Color(0xFF1E3A8A), fontWeight = FontWeight.Black)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Surface(
+                        color = Color(0xFFEFF6FF),
+                        shape = RoundedCornerShape(6.dp),
+                        modifier = Modifier.border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(6.dp))
+                    ) {
+                        Text(
+                            text = "${filteredBids.size} gói • ${df.format(totalEstimatedBillion)} Tỷ",
+                            color = Color(0xFF1E40AF),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
                     }
                 }
-                Surface(
-                    color = Color(0xFFFFF7ED),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier
-                        .weight(1.3f)
-                        .border(1.dp, Color(0xFFFED7AA), RoundedCornerShape(8.dp))
+                TextButton(
+                    onClick = { loadData() },
+                    contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
+                    modifier = Modifier.height(26.dp)
                 ) {
-                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
-                        Text("Tổng dự toán", fontSize = 10.sp, color = Color(0xFF9A3412), fontWeight = FontWeight.SemiBold)
-                        Text("${df.format(totalEstimatedBillion)} Tỷ VNĐ", fontSize = 14.sp, color = feconOrange, fontWeight = FontWeight.Black)
-                    }
+                    Text("🔄 Làm mới", color = feconOrange, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // FECON Matrix Banner (Clean level labels)
-            Surface(
-                color = Color(0xFFFFF7ED),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, Color(0xFFFED7AA), RoundedCornerShape(8.dp))
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
-                    Text(
-                        text = "⚖️ Phân cấp FECON & Thẩm quyền duyệt chi phí tiếp khách/CSKH:",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF9A3412)
-                    )
-                    Text(
-                        text = "• Cấp Đặc Biệt: Chủ tịch HĐQT • Cấp 1: Tổng Giám đốc • Cấp 2-4: PTGĐ phụ trách SBU",
-                        fontSize = 10.sp,
-                        color = Color(0xFF7C2D12)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Stage Filter Chips
+            // Stage Filter Chips (Compact 28dp)
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(pipelineStages) { (key, label) ->
@@ -200,7 +155,8 @@ fun ProjectScreen(user: UserSession) {
                     FilterChip(
                         selected = isSelected,
                         onClick = { selectedPipelineStage = key },
-                        label = { Text(label, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
+                        label = { Text(label, fontSize = 9.5.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
+                        modifier = Modifier.height(28.dp),
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = when (key) {
                                 "WON" -> Color(0xFF059669)
@@ -220,11 +176,11 @@ fun ProjectScreen(user: UserSession) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
-            // Level Filter Chips (Clean names without monetary values)
+            // Level Filter Chips (Clean names without monetary values, compact 28dp)
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(projectLevels) { (lvlKey, label) ->
@@ -232,7 +188,8 @@ fun ProjectScreen(user: UserSession) {
                     FilterChip(
                         selected = isSelected,
                         onClick = { selectedProjectLevel = lvlKey },
-                        label = { Text(label, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
+                        label = { Text(label, fontSize = 9.5.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
+                        modifier = Modifier.height(28.dp),
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = when (lvlKey) {
                                 "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
@@ -255,7 +212,7 @@ fun ProjectScreen(user: UserSession) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -264,14 +221,14 @@ fun ProjectScreen(user: UserSession) {
             } else if (filteredBids.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("🎯", fontSize = 36.sp)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Không có hồ sơ thầu nào phù hợp bộ lọc", color = Color(0xFF94A3B8), fontSize = 13.sp)
+                        Text("🎯", fontSize = 32.sp)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("Không có hồ sơ thầu nào phù hợp bộ lọc", color = Color(0xFF94A3B8), fontSize = 12.sp)
                     }
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(filteredBids) { bid ->
@@ -317,14 +274,14 @@ fun ProjectScreen(user: UserSession) {
 fun PipelineBidCard(bid: PipelineBidItem, df: DecimalFormat, onClick: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(10.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
             .clickable { onClick() }
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -343,9 +300,9 @@ fun PipelineBidCard(bid: PipelineBidItem, df: DecimalFormat, onClick: () -> Unit
                     Text(
                         text = bid.sbu,
                         color = Color.White,
-                        fontSize = 10.sp,
+                        fontSize = 9.5.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp)
                     )
                 }
 
@@ -370,30 +327,30 @@ fun PipelineBidCard(bid: PipelineBidItem, df: DecimalFormat, onClick: () -> Unit
                             else -> "📝 Tiếp Cận"
                         },
                         color = Color.White,
-                        fontSize = 10.sp,
+                        fontSize = 9.5.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Text(
                 text = bid.projectTitle,
                 color = Color(0xFF0F172A),
                 fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
+                fontSize = 13.5.sp
             )
 
-            Spacer(modifier = Modifier.height(3.dp))
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = "Đối tác: ${bid.customerName}",
                 color = Color(0xFF64748B),
-                fontSize = 12.sp
+                fontSize = 11.5.sp
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -404,17 +361,17 @@ fun PipelineBidCard(bid: PipelineBidItem, df: DecimalFormat, onClick: () -> Unit
                     text = "${df.format(bid.estimatedValueBillion)} Tỷ VNĐ",
                     color = Color(0xFFEA580C),
                     fontWeight = FontWeight.Black,
-                    fontSize = 14.sp
+                    fontSize = 13.sp
                 )
                 Text(
                     text = "${bid.winRate}% Xác Suất",
                     color = Color(0xFF7C3AED),
                     fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp
+                    fontSize = 10.5.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
             // Clean FECON Level (no threshold value) and Approver Short
             Row(
@@ -435,15 +392,15 @@ fun PipelineBidCard(bid: PipelineBidItem, df: DecimalFormat, onClick: () -> Unit
                     Text(
                         text = bid.projectLevelName,
                         color = Color.White,
-                        fontSize = 10.sp,
+                        fontSize = 9.5.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp)
                     )
                 }
                 Text(
                     text = "Duyệt: ${bid.approverShort}",
                     color = Color(0xFF475569),
-                    fontSize = 10.sp,
+                    fontSize = 9.5.sp,
                     fontWeight = FontWeight.Medium
                 )
             }

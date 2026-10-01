@@ -62,67 +62,79 @@ fun DashboardScreen(user: UserSession) {
             .fillMaxSize()
             .background(Color(0xFFF8FAFC))
             .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+            .padding(horizontal = 8.dp, vertical = 6.dp)
     ) {
-        // Active User Welcome Banner (White Card)
+        // Active User Welcome Banner (Compact White Card)
         Card(
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            shape = RoundedCornerShape(14.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            shape = RoundedCornerShape(10.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(14.dp))
+                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Xin chào, ${user.fullName}",
-                    color = Color(0xFF0F172A),
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "${user.title} | ${user.role} (${user.sbu})",
-                    color = Color(0xFFEA580C),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // SBU Filter (Only for Admin)
-        if (user.role == "ADMIN") {
-            Text(
-                text = "Phân bổ Khối SBU:",
-                color = Color(0xFF475569),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(sbuList) { (key, label) ->
-                    val isSelected = (selectedSbu == key)
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { selectedSbu = key },
-                        label = { Text(label, fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFFEA580C),
-                            selectedLabelColor = Color.White,
-                            containerColor = Color.White,
-                            labelColor = Color(0xFF475569)
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = isSelected,
-                            borderColor = if (isSelected) Color(0xFFEA580C) else Color(0xFFCBD5E1)
-                        )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Xin chào, ${user.fullName}",
+                        color = Color(0xFF0F172A),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${user.title} | ${user.role} (${user.sbu})",
+                        color = Color(0xFFEA580C),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // SBU Filter (Only for Admin)
+        if (user.role == "ADMIN") {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Khối SBU:",
+                    color = Color(0xFF475569),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    items(sbuList) { (key, label) ->
+                        val isSelected = (selectedSbu == key)
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { selectedSbu = key },
+                            label = { Text(label, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFFEA580C),
+                                selectedLabelColor = Color.White,
+                                containerColor = Color.White,
+                                labelColor = Color(0xFF475569)
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = isSelected,
+                                borderColor = if (isSelected) Color(0xFFEA580C) else Color(0xFFCBD5E1)
+                            )
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
         }
 
         if (isLoading) {
@@ -138,7 +150,7 @@ fun DashboardScreen(user: UserSession) {
             val s = stats ?: DashboardStats()
 
             // 4 KPI Cards Grid (Focusing on Strategic Customers & Bidding Funnel)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 KpiCard(
                     title = "Khách Hàng",
                     value = "${s.totalCustomers}",
@@ -161,9 +173,9 @@ fun DashboardScreen(user: UserSession) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 KpiCard(
                     title = "Gói Thầu Đã Trúng",
                     value = "${s.wonBidsCount}",
@@ -186,16 +198,16 @@ fun DashboardScreen(user: UserSession) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Projects Highlight Section
             Text(
                 text = "🏗️ Tiến Độ Các Dự Án Trọng Điểm",
                 color = Color(0xFF0F172A),
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             if (projects.isEmpty()) {
                 Card(
@@ -204,22 +216,22 @@ fun DashboardScreen(user: UserSession) {
                         .fillMaxWidth()
                         .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
                 ) {
-                    Box(modifier = Modifier.padding(20.dp), contentAlignment = Alignment.Center) {
-                        Text("Chưa có dự án trong phân hệ này.", color = Color(0xFF94A3B8), fontSize = 13.sp)
+                    Box(modifier = Modifier.padding(14.dp), contentAlignment = Alignment.Center) {
+                        Text("Chưa có dự án trong phân hệ này.", color = Color(0xFF94A3B8), fontSize = 12.sp)
                     }
                 }
             } else {
                 projects.take(5).forEach { proj ->
                     Card(
                         colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(10.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+                            .padding(vertical = 3.dp)
+                            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
                     ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
+                        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -229,7 +241,7 @@ fun DashboardScreen(user: UserSession) {
                                     text = proj.name,
                                     color = Color(0xFF0F172A),
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
+                                    fontSize = 13.5.sp,
                                     modifier = Modifier.weight(1f)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
@@ -240,19 +252,19 @@ fun DashboardScreen(user: UserSession) {
                                     Text(
                                         proj.sbu,
                                         color = Color.White,
-                                        fontSize = 10.sp,
+                                        fontSize = 9.5.sp,
                                         fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
                                     )
                                 }
                             }
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(3.dp))
                             Text(
                                 text = "CĐT: ${proj.customerName} | HĐ: ${df.format(proj.contractValueBillion)} tỷ",
                                 color = Color(0xFF64748B),
-                                fontSize = 12.sp
+                                fontSize = 11.5.sp
                             )
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 LinearProgressIndicator(
                                     progress = { (proj.progressPercent / 100.0).toFloat().coerceIn(0f, 1f) },
@@ -260,13 +272,13 @@ fun DashboardScreen(user: UserSession) {
                                     trackColor = Color(0xFFE2E8F0),
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(6.dp)
+                                        .height(5.dp)
                                 )
-                                Spacer(modifier = Modifier.width(10.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = "${proj.progressPercent.toInt()}%",
                                     color = Color(0xFF059669),
-                                    fontSize = 12.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -291,15 +303,15 @@ fun KpiCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = bgColor),
-        shape = RoundedCornerShape(14.dp),
-        modifier = modifier.border(1.dp, borderColor, RoundedCornerShape(14.dp))
+        shape = RoundedCornerShape(10.dp),
+        modifier = modifier.border(1.dp, borderColor, RoundedCornerShape(10.dp))
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Text(title, color = titleColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(value, color = valColor, fontSize = 18.sp, fontWeight = FontWeight.Black)
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+            Text(title, color = titleColor, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(2.dp))
-            Text(sub, color = titleColor.copy(alpha = 0.8f), fontSize = 10.sp, fontWeight = FontWeight.Medium)
+            Text(value, color = valColor, fontSize = 16.sp, fontWeight = FontWeight.Black)
+            Spacer(modifier = Modifier.height(1.dp))
+            Text(sub, color = titleColor.copy(alpha = 0.8f), fontSize = 9.5.sp, fontWeight = FontWeight.Medium)
         }
     }
 }

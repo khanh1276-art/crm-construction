@@ -90,7 +90,7 @@ fun CareScreen(user: UserSession) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             // Header
             Row(
@@ -102,25 +102,25 @@ fun CareScreen(user: UserSession) {
                     Text(
                         text = "🤝 Lịch Chăm Sóc Khách Hàng",
                         color = Color(0xFF0F172A),
-                        fontSize = 16.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Kế hoạch & nhật ký tiếp khách, chiêu đãi lãnh đạo cấp cao",
+                        text = "Tiếp khách, chiêu đãi lãnh đạo cấp cao",
                         color = Color(0xFF64748B),
-                        fontSize = 12.sp
+                        fontSize = 11.5.sp
                     )
                 }
                 TextButton(onClick = { loadData() }) {
-                    Text("Làm mới", color = Color(0xFFEA580C), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("Làm mới", color = Color(0xFFEA580C), fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Filter by Care Type
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(typeFilters) { (typeKey, label) ->
@@ -128,7 +128,7 @@ fun CareScreen(user: UserSession) {
                     FilterChip(
                         selected = isSelected,
                         onClick = { selectedFilterType = typeKey },
-                        label = { Text(label, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
+                        label = { Text(label, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = Color(0xFFEA580C),
                             selectedLabelColor = Color.White,
@@ -144,7 +144,7 @@ fun CareScreen(user: UserSession) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -154,12 +154,12 @@ fun CareScreen(user: UserSession) {
                 Text(
                     text = "Tổng: ${filteredActivities.size} sự kiện chăm sóc",
                     color = Color(0xFF475569),
-                    fontSize = 12.sp,
+                    fontSize = 11.5.sp,
                     fontWeight = FontWeight.SemiBold
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -167,11 +167,11 @@ fun CareScreen(user: UserSession) {
                 }
             } else if (filteredActivities.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Không tìm thấy nhật ký chăm sóc nào", color = Color(0xFF94A3B8))
+                    Text("Không tìm thấy nhật ký chăm sóc nào", color = Color(0xFF94A3B8), fontSize = 12.sp)
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(filteredActivities) { act ->
@@ -211,14 +211,14 @@ fun CareScreen(user: UserSession) {
 fun CareCard(act: CareActivityItem, onClick: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(10.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
             .clickable { onClick() }
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -228,7 +228,7 @@ fun CareCard(act: CareActivityItem, onClick: () -> Unit) {
                     text = act.title,
                     color = Color(0xFF0F172A),
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    fontSize = 13.5.sp,
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
@@ -251,22 +251,22 @@ fun CareCard(act: CareActivityItem, onClick: () -> Unit) {
                             else -> "📞 Điện đàm"
                         },
                         color = Color.White,
-                        fontSize = 10.sp,
+                        fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("Đối tác: ${act.customerName} (${act.sbu})", color = Color(0xFFEA580C), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text("Đối tác: ${act.customerName} (${act.sbu})", color = Color(0xFFEA580C), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold)
 
             if (act.projectName.isNotBlank()) {
-                Spacer(modifier = Modifier.height(3.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🏗️ ${act.projectName}", color = Color(0xFF0369A1), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    Text("🏗️ ${act.projectName}", color = Color(0xFF0369A1), fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold)
                     if (act.projectLevel.isNotBlank()) {
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Surface(
                             color = when (act.projectLevel) {
                                 "LEVEL_SPECIAL" -> Color(0xFF7C3AED)
@@ -286,7 +286,7 @@ fun CareCard(act: CareActivityItem, onClick: () -> Unit) {
                                     else -> "Cấp 4"
                                 },
                                 color = Color.White,
-                                fontSize = 9.sp,
+                                fontSize = 8.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
                             )
@@ -296,42 +296,42 @@ fun CareCard(act: CareActivityItem, onClick: () -> Unit) {
             }
 
             if (act.content.isNotBlank()) {
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = act.content,
                     color = Color(0xFF334155),
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     maxLines = 2
                 )
             }
 
             if (act.cost > 0) {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
-                    text = "Chi phí: ${DecimalFormat("#,###").format(act.cost)} VNĐ (Trừ vào NS năm)",
+                    text = "Chi phí: ${DecimalFormat("#,###").format(act.cost)} VNĐ",
                     color = Color(0xFFB45309),
-                    fontSize = 11.sp,
+                    fontSize = 10.5.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
             if (act.approverAuthority.isNotBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "⚖️ Duyệt: ${act.approverAuthority}",
                     color = Color(0xFF9A3412),
-                    fontSize = 10.sp,
+                    fontSize = 9.5.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Lãnh đạo: ${act.leaderInCharge}", color = Color(0xFF64748B), fontSize = 11.sp)
-                Text(act.occurredAt, color = Color(0xFFEA580C), fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                Text("Lãnh đạo: ${act.leaderInCharge}", color = Color(0xFF64748B), fontSize = 10.sp)
+                Text(act.occurredAt, color = Color(0xFFEA580C), fontSize = 10.sp, fontWeight = FontWeight.Medium)
             }
         }
     }

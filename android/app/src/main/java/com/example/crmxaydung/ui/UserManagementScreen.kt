@@ -61,7 +61,7 @@ fun UserManagementScreen(currentUser: UserSession) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -72,21 +72,21 @@ fun UserManagementScreen(currentUser: UserSession) {
                     Text(
                         text = "👥 Quản Lý Tài Khoản Hệ Thống",
                         color = Color(0xFF0F172A),
-                        fontSize = 16.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "Phân quyền Ban Lãnh Đạo, 5 SBU & CTV",
                         color = Color(0xFF64748B),
-                        fontSize = 12.sp
+                        fontSize = 11.5.sp
                     )
                 }
                 TextButton(onClick = { loadUsers() }) {
-                    Text("Làm mới", color = Color(0xFFEA580C), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("Làm mới", color = Color(0xFFEA580C), fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -94,7 +94,7 @@ fun UserManagementScreen(currentUser: UserSession) {
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(users) { u ->
@@ -159,13 +159,13 @@ fun UserManagementScreen(currentUser: UserSession) {
 fun UserCard(user: UserItem, canDelete: Boolean, onDelete: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(10.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -176,12 +176,12 @@ fun UserCard(user: UserItem, canDelete: Boolean, onDelete: () -> Unit) {
                         text = user.fullName,
                         color = Color(0xFF0F172A),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 13.5.sp
                     )
                     Text(
                         text = "@${user.username} • ${user.title}",
                         color = Color(0xFF64748B),
-                        fontSize = 12.sp
+                        fontSize = 11.5.sp
                     )
                 }
 
@@ -191,7 +191,7 @@ fun UserCard(user: UserItem, canDelete: Boolean, onDelete: () -> Unit) {
                         "SBU_DIRECTOR" -> Color(0xFF0284C7)
                         else -> Color(0xFF059669)
                     },
-                    shape = RoundedCornerShape(6.dp)
+                    shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
                         text = when (user.role) {
@@ -200,14 +200,14 @@ fun UserCard(user: UserItem, canDelete: Boolean, onDelete: () -> Unit) {
                             else -> "🤝 CTV"
                         },
                         color = Color.White,
-                        fontSize = 10.sp,
+                        fontSize = 9.5.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

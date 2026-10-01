@@ -89,18 +89,18 @@ fun CustomerScreen(user: UserSession) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             // Search Input (Light Theme)
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                label = { Text("Tìm theo mã, tên DN, người đại diện...") },
-                leadingIcon = { Text("🔍", fontSize = 14.sp) },
+                label = { Text("Tìm kiếm khách hàng, đối tác, SĐT...", fontSize = 12.sp) },
+                leadingIcon = { Text("🔍", fontSize = 13.sp) },
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(12.dp)),
+                    .background(Color.White, RoundedCornerShape(10.dp)),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color(0xFF0F172A),
                     unfocusedTextColor = Color(0xFF334155),
@@ -109,11 +109,11 @@ fun CustomerScreen(user: UserSession) {
                 )
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Tier Filter Chips (CSCSKH/ĐT-01)
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(tierFilters) { (tierKey, label) ->
@@ -121,7 +121,7 @@ fun CustomerScreen(user: UserSession) {
                     FilterChip(
                         selected = isSelected,
                         onClick = { selectedTierFilter = tierKey },
-                        label = { Text(label, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
+                        label = { Text(label, fontSize = 10.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = when (tierKey) {
                                 "DIAMOND" -> Color(0xFF0891B2)
@@ -142,7 +142,7 @@ fun CustomerScreen(user: UserSession) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -152,15 +152,15 @@ fun CustomerScreen(user: UserSession) {
                 Text(
                     text = "Tổng: ${filteredList.size} Khách hàng / CĐT",
                     color = Color(0xFF475569),
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 TextButton(onClick = { loadCustomers() }) {
-                    Text("Làm mới", color = Color(0xFFEA580C), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("Làm mới", color = Color(0xFFEA580C), fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -168,11 +168,11 @@ fun CustomerScreen(user: UserSession) {
                 }
             } else if (filteredList.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Không tìm thấy khách hàng phù hợp", color = Color(0xFF94A3B8))
+                    Text("Không tìm thấy khách hàng phù hợp", color = Color(0xFF94A3B8), fontSize = 12.sp)
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(filteredList) { cust ->
@@ -266,14 +266,14 @@ fun CustomerCard(cust: CustomerItem, df: DecimalFormat, onClick: () -> Unit) {
 
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(10.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.5.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+            .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
             .clickable { onClick() }
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
             // Header Row: Customer Name & Tier Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -284,30 +284,30 @@ fun CustomerCard(cust: CustomerItem, df: DecimalFormat, onClick: () -> Unit) {
                     text = cust.name,
                     color = Color(0xFF0F172A),
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
+                    fontSize = 13.5.sp,
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Surface(
                     color = tierColor,
-                    shape = RoundedCornerShape(6.dp)
+                    shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
                         text = tierLabel,
                         color = Color.White,
-                        fontSize = 10.sp,
+                        fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Score & Rule Tags
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Surface(
                     color = Color(0xFFF1F5F9),
@@ -315,11 +315,11 @@ fun CustomerCard(cust: CustomerItem, df: DecimalFormat, onClick: () -> Unit) {
                     modifier = Modifier.border(1.dp, Color(0xFFCBD5E1), RoundedCornerShape(4.dp))
                 ) {
                     Text(
-                        text = "Điểm: ${df.format(cust.totalScore)} / 100đ",
+                        text = "Điểm: ${df.format(cust.totalScore)}/100",
                         color = Color(0xFF0284C7),
-                        fontSize = 11.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp)
                     )
                 }
 
@@ -332,9 +332,9 @@ fun CustomerCard(cust: CustomerItem, df: DecimalFormat, onClick: () -> Unit) {
                         Text(
                             text = "⚠️ Phủ quyết TC3",
                             color = Color(0xFFB91C1C),
-                            fontSize = 10.sp,
+                            fontSize = 9.5.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp)
                         )
                     }
                 }
@@ -348,22 +348,22 @@ fun CustomerCard(cust: CustomerItem, df: DecimalFormat, onClick: () -> Unit) {
                         Text(
                             text = "⭐ Đặc cách TGĐ",
                             color = Color(0xFF7E22CE),
-                            fontSize = 10.sp,
+                            fontSize = 9.5.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp)
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(3.dp))
             Text(
                 text = "Đại diện: ${cust.keyDecisionMaker} (${cust.decisionMakerRole})",
                 color = Color(0xFF334155),
-                fontSize = 13.sp
+                fontSize = 11.5.sp
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Annual Care Budget Progress
             Row(
@@ -371,34 +371,34 @@ fun CustomerCard(cust: CustomerItem, df: DecimalFormat, onClick: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Ngân sách CSKH: ${df.format(spentMil)}M / ${df.format(budgetMil)}M VNĐ/năm",
+                    text = "Ngân sách CSKH: ${df.format(spentMil)}M / ${df.format(budgetMil)}M VNĐ",
                     color = Color(0xFF64748B),
-                    fontSize = 11.sp
+                    fontSize = 10.5.sp
                 )
                 Text(
                     text = "${(progress * 100).toInt()}%",
                     color = if (progress >= 1f) Color(0xFFDC2626) else Color(0xFFEA580C),
-                    fontSize = 11.sp,
+                    fontSize = 10.5.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(3.dp))
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(4.dp),
+                    .height(3.5.dp),
                 color = if (progress >= 1f) Color(0xFFDC2626) else Color(0xFFEA580C),
                 trackColor = Color(0xFFE2E8F0)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Mã: ${cust.code} | Khối: ${cust.sbu}", color = Color(0xFF94A3B8), fontSize = 11.sp)
-                Text(cust.phone.ifEmpty { cust.decisionMakerPhone }, color = Color(0xFF0284C7), fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                Text("Mã: ${cust.code} | Khối: ${cust.sbu}", color = Color(0xFF94A3B8), fontSize = 10.sp)
+                Text(cust.phone.ifEmpty { cust.decisionMakerPhone }, color = Color(0xFF0284C7), fontSize = 10.sp, fontWeight = FontWeight.Medium)
             }
         }
     }

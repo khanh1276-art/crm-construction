@@ -269,11 +269,11 @@ function applyUserRoleState() {
     if (mobSbuBar) mobSbuBar.classList.remove('hidden');
     if (navUsers) navUsers.classList.remove('hidden');
     if (mobNavUsers) mobNavUsers.classList.remove('hidden');
-    if (mobBottomNav) mobBottomNav.className = 'grid grid-cols-6 h-16 items-center px-1 text-center';
+    if (mobBottomNav) mobBottomNav.className = 'grid grid-cols-5 h-16 items-center px-1 text-center';
     currentSBU = "ALL";
     if (bannerBadge) bannerBadge.innerText = "Cổng Điều Hành Ban Lãnh Đạo (Admin)";
     if (dashTitle) dashTitle.innerText = "Báo Cáo Điều Hành Khách Hàng & Kinh Doanh";
-    if (dashSub) dashSub.innerText = "Toàn quyền quản trị, thêm mới, sửa, xóa đối tác và dự án trên cả 5 Khối SBU.";
+    if (dashSub) dashSub.innerText = "Toàn quyền quản trị, thêm mới, sửa, xóa đối tác và hồ sơ dự thầu trên cả 5 Khối SBU.";
     if (sbuBadge) sbuBadge.innerHTML = `<i class="fa-solid fa-globe text-amber-500"></i> Toàn Tập Đoàn (5 SBU)`;
   } else if (currentUser.role === 'COLLABORATOR') {
     // Collaborator (CTV)
@@ -282,7 +282,7 @@ function applyUserRoleState() {
     if (mobSbuBar) mobSbuBar.classList.toggle('hidden', currentUser.sbu !== 'ALL');
     if (navUsers) navUsers.classList.add('hidden');
     if (mobNavUsers) mobNavUsers.classList.add('hidden');
-    if (mobBottomNav) mobBottomNav.className = 'grid grid-cols-5 h-16 items-center px-1 text-center';
+    if (mobBottomNav) mobBottomNav.className = 'grid grid-cols-4 h-16 items-center px-1 text-center';
     if (currentTab === 'users') switchTab('dashboard');
 
     if (bannerBadge) bannerBadge.innerText = "Cổng Kết Nối Dành Cho Cộng Tác Viên (CTV)";
@@ -296,13 +296,13 @@ function applyUserRoleState() {
     if (mobSbuBar) mobSbuBar.classList.add('hidden');
     if (navUsers) navUsers.classList.add('hidden');
     if (mobNavUsers) mobNavUsers.classList.add('hidden');
-    if (mobBottomNav) mobBottomNav.className = 'grid grid-cols-5 h-16 items-center px-1 text-center';
+    if (mobBottomNav) mobBottomNav.className = 'grid grid-cols-4 h-16 items-center px-1 text-center';
     if (currentTab === 'users') switchTab('dashboard');
 
     const sbuCfg = SBU_CONFIG[currentSBU] || { name: currentSBU };
     if (bannerBadge) bannerBadge.innerText = `Cổng Điều Hành Giám Đốc Kinh Doanh`;
     if (dashTitle) dashTitle.innerText = `Báo Cáo Khách Hàng & Kinh Doanh: ${sbuCfg.name}`;
-    if (dashSub) dashSub.innerText = `Quyền hạn: Thêm mới và cập nhật đối tác, dự án thuộc ${sbuCfg.name} (Không được xóa).`;
+    if (dashSub) dashSub.innerText = `Quyền hạn: Thêm mới và cập nhật đối tác, gói thầu thuộc ${sbuCfg.name} (Không được xóa).`;
     if (sbuBadge) sbuBadge.innerHTML = `<i class="fa-solid ${sbuCfg.icon || 'fa-briefcase'} text-amber-500"></i> ${sbuCfg.name}`;
   }
 
@@ -310,11 +310,7 @@ function applyUserRoleState() {
   const btnAddProj = document.getElementById('btn-add-project');
   const labelAddCust = document.getElementById('label-add-customer');
   if (btnAddProj) {
-    if (currentUser.role === 'COLLABORATOR') {
-      btnAddProj.classList.add('hidden');
-    } else {
-      btnAddProj.classList.remove('hidden');
-    }
+    btnAddProj.classList.add('hidden');
   }
   if (labelAddCust) {
     labelAddCust.innerText = (currentUser.role === 'COLLABORATOR') ? 'Giới Thiệu Đối Tác' : 'Thêm Đối Tác';
@@ -359,7 +355,6 @@ function refreshAllData() {
   loadDashboard();
   loadCustomers();
   loadPipeline();
-  loadProjects();
   loadCareActivities();
   populateCustomerSelects();
   if (currentTab === 'users') renderUsersTable();
@@ -367,13 +362,17 @@ function refreshAllData() {
 
 // Tab Switching
 function switchTab(tabName) {
+  if (tabName === 'projects') {
+    tabName = 'pipeline';
+  }
+
   if (tabName === 'users' && currentUser.role !== 'ADMIN') {
     showToast("Chỉ Ban Lãnh Đạo (Admin) mới có quyền truy cập Quản lý Tài khoản!", "error");
     return;
   }
 
   currentTab = tabName;
-  const tabs = ['dashboard', 'customers', 'pipeline', 'projects', 'care', 'users'];
+  const tabs = ['dashboard', 'customers', 'pipeline', 'care', 'users'];
   
   tabs.forEach(t => {
     const el = document.getElementById(`tab-${t}`);
@@ -402,7 +401,6 @@ function switchTab(tabName) {
   if (tabName === 'dashboard') loadDashboard();
   if (tabName === 'customers') loadCustomers();
   if (tabName === 'pipeline') loadPipeline();
-  if (tabName === 'projects') loadProjects();
   if (tabName === 'care') {
     populateCustomerSelects();
     loadCareActivities();
@@ -585,18 +583,31 @@ async function loadDashboard() {
     const res = await authFetch(`/api/dashboard/metrics${sbuParam}`);
     const data = await res.json();
 
-    document.getElementById('stat-contract-val').innerText = formatVND(data.overview.total_contract_value);
-    document.getElementById('stat-project-count').innerText = data.overview.total_projects;
-    document.getElementById('stat-paid-val').innerText = formatVND(data.overview.total_paid_amount);
+    // 1. Phễu Cơ Hội & Dự Thầu
+    const bidsValEl = document.getElementById('stat-bids-val');
+    const bidsCountEl = document.getElementById('stat-bids-count');
+    if (bidsValEl) bidsValEl.innerText = formatVND(data.overview.active_bids_value || 0);
+    if (bidsCountEl) bidsCountEl.innerText = data.overview.active_bids_count || 0;
 
-    const ratio = data.overview.total_contract_value > 0 
-      ? Math.round((data.overview.total_paid_amount / data.overview.total_contract_value) * 100) 
-      : 0;
-    document.getElementById('stat-paid-pct').innerText = `${ratio}%`;
+    // 2. Giá trị đã trúng thầu (WON)
+    const wonValEl = document.getElementById('stat-won-val');
+    const wonCountEl = document.getElementById('stat-won-count');
+    if (wonValEl) wonValEl.innerText = formatVND(data.overview.won_bids_value || 0);
+    if (wonCountEl) wonCountEl.innerText = data.overview.won_bids_count || 0;
 
-    document.getElementById('stat-balance-val').innerText = formatVND(data.overview.unpaid_balance);
-    document.getElementById('stat-bids-val').innerText = formatVND(data.overview.active_bids_value);
-    document.getElementById('stat-bids-count').innerText = data.overview.active_bids_count;
+    // 3. Khách hàng chiến lược
+    const custCountEl = document.getElementById('stat-customer-count');
+    const diamondCountEl = document.getElementById('stat-diamond-count');
+    const goldCountEl = document.getElementById('stat-gold-count');
+    if (custCountEl) custCountEl.innerText = `${data.overview.total_customers || 0} Đối tác`;
+    if (diamondCountEl) diamondCountEl.innerText = data.overview.diamond_count || 0;
+    if (goldCountEl) goldCountEl.innerText = data.overview.gold_count || 0;
+
+    // 4. Ngân sách CSKH
+    const careBudgetEl = document.getElementById('stat-care-budget');
+    const careSpentEl = document.getElementById('stat-care-spent');
+    if (careBudgetEl) careBudgetEl.innerText = formatVND(data.overview.total_care_budget || 0);
+    if (careSpentEl) careSpentEl.innerText = formatVND(data.overview.total_care_spent || 0);
 
     const matrixSection = document.getElementById('sbu-matrix-section');
     if (currentSBU !== 'ALL') {
@@ -606,7 +617,7 @@ async function loadDashboard() {
       renderSBUMatrix(data.sbu_matrix);
     }
 
-    renderUrgentMilestones(data.upcoming_payments);
+    renderUrgentTenderDeadlines(data.upcoming_bids || []);
     renderExecutiveReminders(data.executive_reminders);
 
   } catch (err) {
@@ -630,16 +641,16 @@ function renderSBUMatrix(matrix) {
         <span class="font-bold text-slate-800">${row.customer_count}</span> đối tác
       </td>
       <td class="p-3">
-        <span class="font-bold text-slate-800">${row.project_count}</span> dự án
+        <span class="font-bold text-purple-700">${row.bid_count}</span> gói thầu
       </td>
-      <td class="p-3 font-black text-slate-900">${formatVND(row.contract_value)}</td>
-      <td class="p-3 font-bold text-emerald-600">${formatVND(row.paid_amount)}</td>
+      <td class="p-3 font-black text-purple-700">${formatVND(row.bid_value)}</td>
       <td class="p-3">
-        <span class="font-black text-purple-700">${formatVND(row.bid_value)}</span>
-        <div class="text-[10px] text-slate-400 font-semibold">${row.bid_count} gói thầu</div>
+        <span class="font-bold text-emerald-600">${formatVND(row.won_value || 0)}</span>
+        <div class="text-[10px] text-emerald-700 font-semibold">${row.won_count || 0} gói trúng thầu</div>
       </td>
+      <td class="p-3 font-bold text-slate-700">${row.total_bids || (row.bid_count + (row.won_count || 0))} gói thầu</td>
       <td class="p-3 text-right">
-        <button onclick="changeSBUFilter('${row.sbu}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold">
+        <button onclick="changeSBUFilter('${row.sbu}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold cursor-pointer">
           Xem &gt;
         </button>
       </td>
@@ -647,32 +658,41 @@ function renderSBUMatrix(matrix) {
   `).join('');
 }
 
-function renderUrgentMilestones(milestones) {
+function renderUrgentTenderDeadlines(bids) {
   const container = document.getElementById('urgent-milestones-list');
   if (!container) return;
 
-  if (!milestones || milestones.length === 0) {
-    container.innerHTML = '<div class="text-xs text-slate-400 py-4 text-center">Không có mốc thanh toán nào đến hạn.</div>';
+  if (!bids || bids.length === 0) {
+    container.innerHTML = '<div class="text-xs text-slate-400 py-4 text-center">Không có hồ sơ thầu nào sắp đến hạn nộp.</div>';
     return;
   }
 
-  container.innerHTML = milestones.map(m => `
-    <div class="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200/70 flex items-center justify-between gap-3 transition">
-      <div class="space-y-0.5">
-        <div class="flex items-center gap-2">
-          ${getSBUBadge(m.sbu)}
-          <span class="font-bold text-slate-900 text-xs">${m.title}</span>
+  container.innerHTML = bids.map(b => {
+    const cls = classifyFeconProject(b.estimated_value);
+    return `
+      <div onclick="openBidDetailModal(${b.id})" class="p-3 bg-purple-50/50 hover:bg-purple-50 rounded-xl border border-purple-200/80 flex items-center justify-between gap-3 transition cursor-pointer hover:border-purple-400" title="Bấm để xem chi tiết hồ sơ thầu">
+        <div class="space-y-0.5 min-w-0">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            ${getSBUBadge(b.sbu)}
+            <span class="px-1.5 py-0.5 rounded text-[9px] font-black border ${cls.colorClass}">${cls.badge}</span>
+            <span class="font-bold text-slate-900 text-xs truncate max-w-[200px]">${b.project_title}</span>
+          </div>
+          <div class="text-[11px] text-slate-600 truncate">
+            CĐT: <b class="text-slate-800">${b.customer_name}</b> • Người liên hệ: ${b.key_decision_maker || 'Chưa cập nhật'}
+          </div>
+          <div class="text-[10px] text-indigo-900 font-semibold">
+            Thẩm quyền duyệt CSKH: <b class="font-bold">${cls.approver_short}</b>
+          </div>
         </div>
-        <div class="text-[11px] text-slate-500">
-          ${m.project_name} • <span class="font-semibold text-slate-700">${m.customer_name}</span>
+        <div class="text-right shrink-0">
+          <div class="font-black text-purple-700 text-xs">${formatVND(b.estimated_value)}</div>
+          <div class="text-[10px] font-bold text-rose-600 mt-0.5">
+            <i class="fa-solid fa-clock mr-0.5"></i> Hạn: ${b.tender_deadline || 'Sớm'}
+          </div>
         </div>
       </div>
-      <div class="text-right">
-        <div class="font-black text-slate-900 text-xs">${formatVND(m.amount)}</div>
-        <div class="text-[10px] text-slate-400">Hạn: ${m.due_date || 'N/A'}</div>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function renderExecutiveReminders(reminders) {
@@ -995,59 +1015,37 @@ async function viewCustomer360(id) {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <h4 class="font-black text-xs text-slate-900 uppercase mb-2">Hợp Đồng & Dự Án Đang Thực Hiện</h4>
-          <div class="space-y-2">
-            ${c.projects && c.projects.length > 0 ? c.projects.map(p => {
-              const cls = classifyFeconProject(p.contract_value);
-              return `
-                <div onclick="closeModal('modal-customer-detail'); viewProjectDetail(${p.id})" class="p-2.5 bg-white rounded-xl border border-slate-200 hover:border-blue-400 cursor-pointer transition shadow-2xs space-y-1">
-                  <div class="flex items-center justify-between gap-1">
-                    <div class="font-bold text-slate-900 text-xs truncate">${p.name}</div>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black border shrink-0 ${cls.colorClass}">
-                      ${cls.badge}
-                    </span>
-                  </div>
-                  <div class="text-[11px] text-slate-500 flex justify-between">
-                    <span>Tiến độ: <b class="text-emerald-600">${p.progress_percent}%</b></span>
-                    <span class="font-black text-slate-900">${formatVND(p.contract_value)}</span>
-                  </div>
-                  <div class="text-[10px] text-blue-700 font-semibold flex items-center gap-1 pt-0.5 border-t border-slate-100">
-                    <i class="fa-solid fa-stamp text-blue-600"></i>
-                    <span>Duyệt CSKH: <b>${cls.approver_authority}</b></span>
-                  </div>
-                </div>
-              `;
-            }).join('') : '<div class="text-slate-400 text-xs py-3 text-center bg-slate-50 rounded-xl">Chưa có dự án.</div>'}
-          </div>
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="font-black text-xs text-slate-900 uppercase flex items-center gap-1.5">
+            <i class="fa-solid fa-filter-circle-dollar text-purple-600"></i> Các Cơ Hội & Hồ Sơ Dự Thầu Đang Theo Đuổi (${c.bids ? c.bids.length : 0})
+          </h4>
+          <button onclick="closeModal('modal-customer-detail'); openNewBidModal()" class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-[11px] rounded-lg transition cursor-pointer flex items-center gap-1">
+            <i class="fa-solid fa-plus"></i> Thêm Gói Thầu Cho CĐT Này
+          </button>
         </div>
-
-        <div>
-          <h4 class="font-black text-xs text-slate-900 uppercase mb-2">Cơ Hội Thầu Đang Theo Đuổi</h4>
-          <div class="space-y-2">
-            ${c.bids && c.bids.length > 0 ? c.bids.map(b => {
-              const cls = classifyFeconProject(b.estimated_value);
-              return `
-                <div onclick="closeModal('modal-customer-detail'); openBidDetailModal(${b.id})" class="p-2.5 bg-white rounded-xl border border-slate-200 hover:border-purple-400 cursor-pointer transition shadow-2xs space-y-1">
-                  <div class="flex items-center justify-between gap-1">
-                    <div class="font-bold text-slate-900 text-xs truncate">${b.project_title}</div>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black border shrink-0 ${cls.colorClass}">
-                      ${cls.badge}
-                    </span>
-                  </div>
-                  <div class="text-[11px] text-slate-500 flex justify-between">
-                    <span>Giai đoạn: <b>${b.stage}</b></span>
-                    <span class="font-black text-purple-700">${formatVND(b.estimated_value)}</span>
-                  </div>
-                  <div class="text-[10px] text-purple-700 font-semibold flex items-center gap-1 pt-0.5 border-t border-slate-100">
-                    <i class="fa-solid fa-stamp text-purple-600"></i>
-                    <span>Duyệt CSKH: <b>${cls.approver_authority}</b></span>
-                  </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          ${c.bids && c.bids.length > 0 ? c.bids.map(b => {
+            const cls = classifyFeconProject(b.estimated_value);
+            return `
+              <div onclick="closeModal('modal-customer-detail'); openBidDetailModal(${b.id})" class="p-3 bg-white rounded-xl border border-slate-200 hover:border-purple-400 cursor-pointer transition shadow-2xs space-y-2">
+                <div class="flex items-center justify-between gap-1">
+                  <div class="font-bold text-slate-900 text-xs truncate">${b.project_title}</div>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-black border shrink-0 ${cls.colorClass}">
+                    ${cls.badge}
+                  </span>
                 </div>
-              `;
-            }).join('') : '<div class="text-slate-400 text-xs py-3 text-center bg-slate-50 rounded-xl">Không có hồ sơ thầu.</div>'}
-          </div>
+                <div class="text-[11px] text-slate-500 flex justify-between">
+                  <span>Giai đoạn: <b class="text-purple-700">${b.stage}</b> (${b.win_rate || 50}% Win)</span>
+                  <span class="font-black text-purple-700">${formatVND(b.estimated_value)}</span>
+                </div>
+                <div class="text-[10px] text-indigo-900 font-semibold flex items-center justify-between pt-1 border-t border-slate-100">
+                  <span>Duyệt CSKH: <b class="font-bold">${cls.approver_authority}</b></span>
+                  <span class="text-slate-400">Hạn: ${b.tender_deadline || 'N/A'}</span>
+                </div>
+              </div>
+            `;
+          }).join('') : '<div class="col-span-2 text-slate-400 text-xs py-4 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">Chưa có hồ sơ thầu nào cho đối tác này.</div>'}
         </div>
       </div>
 
@@ -1407,6 +1405,7 @@ async function loadPipeline() {
     const sbuParam = currentSBU !== 'ALL' ? `?sbu=${currentSBU}` : '';
     const res = await authFetch(`/api/customers/bids/pipeline${sbuParam}`);
     const data = await res.json();
+    window.allBidsList = data.items ? Object.values(data.items).flat() : [];
 
     const board = document.getElementById('pipeline-board');
     if (!board) return;
@@ -1627,11 +1626,113 @@ async function deleteBid(bidId) {
   }
 }
 
-function openNewBidModal() {
+function populateBidCustomerSelect(selectedId = null) {
   const custSelect = document.getElementById('bid-customer');
-  if (custSelect) {
-    custSelect.innerHTML = allCustomers.map(c => `<option value="${c.id}">${c.name} (${c.sbu})</option>`).join('');
+  if (!custSelect) return;
+  let opts = '<option value="">-- Chọn Chủ đầu tư / Đối tác có sẵn --</option>';
+  opts += allCustomers.map(c => `<option value="${c.id}">${c.name} (${c.sbu})</option>`).join('');
+  opts += '<option value="__NEW__" class="font-bold text-blue-600 bg-blue-50">➕ Thêm Chủ đầu tư / Khách hàng mới...</option>';
+  custSelect.innerHTML = opts;
+  if (selectedId) {
+    custSelect.value = selectedId;
   }
+}
+
+function toggleQuickAddBidCustomer(forceOpen = null) {
+  const box = document.getElementById('box-quick-add-bid-customer');
+  if (!box) return;
+  const isOpen = !box.classList.contains('hidden');
+  const shouldOpen = forceOpen !== null ? forceOpen : !isOpen;
+  if (shouldOpen) {
+    box.classList.remove('hidden');
+    document.getElementById('quick-bid-cust-name')?.focus();
+    const custSelect = document.getElementById('bid-customer');
+    if (custSelect && custSelect.value !== '__NEW__') {
+      custSelect.value = '__NEW__';
+    }
+  } else {
+    box.classList.add('hidden');
+    const custSelect = document.getElementById('bid-customer');
+    if (custSelect && custSelect.value === '__NEW__') {
+      custSelect.value = '';
+    }
+  }
+}
+
+function handleBidCustomerChange(val) {
+  if (val === '__NEW__') {
+    toggleQuickAddBidCustomer(true);
+  } else {
+    toggleQuickAddBidCustomer(false);
+  }
+}
+
+async function submitQuickBidCustomer() {
+  const name = document.getElementById('quick-bid-cust-name')?.value.trim();
+  const contact = document.getElementById('quick-bid-cust-contact')?.value.trim();
+  const phone = document.getElementById('quick-bid-cust-phone')?.value.trim() || '0900000000';
+  const segment = document.getElementById('quick-bid-cust-segment')?.value || 'B2B';
+  const tier = document.getElementById('quick-bid-cust-tier')?.value || 'GOLD';
+  const sbuSelect = document.getElementById('bid-sbu');
+  const sbu = currentUser.role === 'SBU_DIRECTOR' ? currentUser.sbu : (sbuSelect?.value || 'SBU1');
+
+  if (!name) {
+    showToast("Vui lòng nhập tên Chủ đầu tư / Doanh nghiệp!", "error");
+    document.getElementById('quick-bid-cust-name')?.focus();
+    return null;
+  }
+  if (!contact) {
+    showToast("Vui lòng nhập tên Lãnh đạo / Người liên hệ!", "error");
+    document.getElementById('quick-bid-cust-contact')?.focus();
+    return null;
+  }
+
+  const payload = {
+    name: name,
+    sbu: sbu,
+    key_decision_maker: contact,
+    decision_maker_phone: phone,
+    phone: phone,
+    tier: tier,
+    segment: segment
+  };
+
+  try {
+    const res = await authFetch('/api/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      showToast(err.detail || "Lỗi khi tạo Chủ đầu tư mới", "error");
+      return null;
+    }
+
+    const newCust = await res.json();
+    showToast(`Đã thêm CĐT "${newCust.name}" thành công!`);
+
+    await loadCustomers();
+    populateBidCustomerSelect(newCust.id);
+    toggleQuickAddBidCustomer(false);
+
+    document.getElementById('quick-bid-cust-name').value = '';
+    document.getElementById('quick-bid-cust-contact').value = '';
+    document.getElementById('quick-bid-cust-phone').value = '';
+
+    return newCust;
+  } catch (err) {
+    console.error("Error creating quick customer for bid:", err);
+    showToast("Lỗi kết nối khi tạo Chủ đầu tư", "error");
+    return null;
+  }
+}
+
+function openNewBidModal() {
+  document.getElementById('form-bid').reset();
+  toggleQuickAddBidCustomer(false);
+  populateBidCustomerSelect();
   const sbuSelect = document.getElementById('bid-sbu');
   if (currentUser.role === 'SBU_DIRECTOR') {
     sbuSelect.value = currentUser.sbu;
@@ -1646,14 +1747,28 @@ function openNewBidModal() {
 
 async function handleBidSubmit(e) {
   e.preventDefault();
+
+  let custId = document.getElementById('bid-customer').value;
+  // If user selected __NEW__ or entered quick customer name without clicking the check button:
+  if (custId === '__NEW__' || (!custId && document.getElementById('quick-bid-cust-name')?.value.trim())) {
+    const created = await submitQuickBidCustomer();
+    if (!created) return;
+    custId = created.id;
+  }
+
+  if (!custId) {
+    showToast("Vui lòng chọn hoặc thêm Chủ đầu tư cho gói thầu!", "error");
+    return;
+  }
+
   const sbuSelect = document.getElementById('bid-sbu');
   const payload = {
-    customer_id: parseInt(document.getElementById('bid-customer').value),
+    customer_id: parseInt(custId, 10),
     sbu: currentUser.role === 'SBU_DIRECTOR' ? currentUser.sbu : sbuSelect.value,
-    project_title: document.getElementById('bid-title').value,
+    project_title: document.getElementById('bid-title').value.trim(),
     estimated_value: parseFloat(document.getElementById('bid-val').value) || 0,
     stage: document.getElementById('bid-stage').value,
-    win_rate: parseInt(document.getElementById('bid-winrate').value) || 50,
+    win_rate: parseInt(document.getElementById('bid-winrate').value, 10) || 50,
     tender_deadline: document.getElementById('bid-deadline').value
   };
 
@@ -2382,22 +2497,42 @@ function onCareCustomerChange() {
   if (!custSelect || !projSelect) return;
 
   const custId = parseInt(custSelect.value, 10);
-  const relevantProjects = allProjects.filter(p => p.customer_id === custId);
-
   let opts = '<option value="">-- Tiếp khách / CSKH Chung (Theo Hạng Đối Tác) --</option>';
-  relevantProjects.forEach(p => {
-    const cls = classifyFeconProject(p.contract_value);
-    opts += `<option value="${p.id}" data-val="${p.contract_value}" data-level="${cls.level}" data-approver="${cls.approver_authority}">[${cls.code}] ${p.name} - ${formatVND(p.contract_value)}</option>`;
-  });
-  // Also append other projects in case user wants to link
-  const otherProjects = allProjects.filter(p => p.customer_id !== custId);
-  if (otherProjects.length > 0) {
-    opts += '<optgroup label="Các dự án khác">';
-    otherProjects.forEach(p => {
-      const cls = classifyFeconProject(p.contract_value);
-      opts += `<option value="${p.id}" data-val="${p.contract_value}" data-level="${cls.level}" data-approver="${cls.approver_authority}">[${cls.code}] ${p.name} (${p.sbu})</option>`;
-    });
-    opts += '</optgroup>';
+
+  // Link to Bids (gói thầu đang theo đuổi)
+  if (window.allBidsList && window.allBidsList.length > 0) {
+    const relevantBids = window.allBidsList.filter(b => b.customer_id === custId);
+    if (relevantBids.length > 0) {
+      opts += '<optgroup label="Gói thầu / Cơ hội đang theo đuổi của CĐT">';
+      relevantBids.forEach(b => {
+        const cls = classifyFeconProject(b.estimated_value);
+        opts += `<option value="BID_${b.id}" data-val="${b.estimated_value}" data-level="${cls.level}" data-approver="${cls.approver_authority}">[${cls.badge}] ${b.project_title} - ${formatVND(b.estimated_value)}</option>`;
+      });
+      opts += '</optgroup>';
+    }
+
+    const otherBids = window.allBidsList.filter(b => b.customer_id !== custId);
+    if (otherBids.length > 0) {
+      opts += '<optgroup label="Các gói thầu khác">';
+      otherBids.forEach(b => {
+        const cls = classifyFeconProject(b.estimated_value);
+        opts += `<option value="BID_${b.id}" data-val="${b.estimated_value}" data-level="${cls.level}" data-approver="${cls.approver_authority}">[${cls.badge}] ${b.project_title} (${b.sbu})</option>`;
+      });
+      opts += '</optgroup>';
+    }
+  }
+
+  // Fallback to allProjects if any exist
+  if (allProjects && allProjects.length > 0) {
+    const relevantProjects = allProjects.filter(p => p.customer_id === custId);
+    if (relevantProjects.length > 0) {
+      opts += '<optgroup label="Hồ sơ liên quan khác">';
+      relevantProjects.forEach(p => {
+        const cls = classifyFeconProject(p.contract_value);
+        opts += `<option value="${p.id}" data-val="${p.contract_value}" data-level="${cls.level}" data-approver="${cls.approver_authority}">[${cls.badge}] ${p.name} - ${formatVND(p.contract_value)}</option>`;
+      });
+      opts += '</optgroup>';
+    }
   }
 
   projSelect.innerHTML = opts;
@@ -2411,8 +2546,20 @@ function onCareProjectChange() {
   const approverEl = document.getElementById('care-approver-badge');
   if (!badgeEl || !approverEl) return;
 
+  const selectedOpt = projSelect?.options[projSelect?.selectedIndex];
+  const approverAttr = selectedOpt?.getAttribute('data-approver');
+  const valAttr = selectedOpt?.getAttribute('data-val');
+
+  if (approverAttr && valAttr) {
+    const cls = classifyFeconProject(parseFloat(valAttr) || 0);
+    badgeEl.textContent = cls.badge;
+    badgeEl.className = `px-2 py-0.5 rounded-full font-bold border ${cls.colorClass}`;
+    approverEl.textContent = approverAttr;
+    return;
+  }
+
   const projId = projSelect?.value;
-  if (projId) {
+  if (projId && !projId.startsWith('BID_')) {
     const p = allProjects.find(x => x.id === parseInt(projId, 10));
     if (p) {
       const cls = classifyFeconProject(p.contract_value);

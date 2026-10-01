@@ -32,6 +32,7 @@ def get_executive_metrics(sbu: Optional[str] = Query(None)):
     total_customers = cursor.fetchone()[0]
 
     # 2. Projects & Contract Values
+    # 2. Projects & Contract Values (Historical context)
     proj_query = "SELECT COUNT(*), COALESCE(SUM(contract_value), 0), COALESCE(SUM(paid_amount), 0) FROM projects" + ("" if is_all else " WHERE sbu = ?")
     proj_params = [] if is_all else [sbu]
     cursor.execute(proj_query, proj_params)
@@ -41,7 +42,7 @@ def get_executive_metrics(sbu: Optional[str] = Query(None)):
     total_paid_amount = proj_row[2]
     unpaid_balance = total_contract_value - total_paid_amount
 
-    # 3. Pipeline Bids
+    # 3. Pipeline Bids (Active, Won, Lost)
     bids_query = "SELECT COUNT(*), COALESCE(SUM(estimated_value), 0) FROM pipeline_bids WHERE stage NOT IN ('WON', 'LOST')" + ("" if is_all else " AND sbu = ?")
     bids_params = [] if is_all else [sbu]
     cursor.execute(bids_query, bids_params)
@@ -49,19 +50,32 @@ def get_executive_metrics(sbu: Optional[str] = Query(None)):
     active_bids_count = bids_row[0]
     active_bids_value = bids_row[1]
 
-    # 4. SBU Comparison Matrix (Always computed for corporate context)
-    cursor.execute("""
-    SELECT sbu, COUNT(*) as proj_count, COALESCE(SUM(contract_value), 0) as contract_val,
-           COALESCE(SUM(paid_amount), 0) as paid_val
-    FROM projects
-    GROUP BY sbu
-    """)
-    sbu_projects = {r["sbu"]: r for r in cursor.fetchall()}
+    # Won Bids
+    won_query = "SELECT COUNT(*), COALESCE(SUM(estimated_value), 0) FROM pipeline_bids WHERE stage = 'WON'" + ("" if is_all else " AND sbu = ?")
+    won_params = [] if is_all else [sbu]
+    cursor.execute(won_query, won_params)
+    won_row = cursor.fetchone()
+    won_bids_count = won_row[0]
+    won_bids_value = won_row[1]
 
+    # Lost Bids
+    lost_query = "SELECT COUNT(*), COALESCE(SUM(estimated_value), 0) FROM pipeline_bids WHERE stage = 'LOST'" + ("" if is_all else " AND sbu = ?")
+    lost_params = [] if is_all else [sbu]
+    cursor.execute(lost_query, lost_params)
+    lost_row = cursor.fetchone()
+    lost_bids_count = lost_row[0]
+    lost_bids_value = lost_row[1]
+
+    # 4. SBU Comparison Matrix (Focused on Strategic Customers & Bidding Funnel)
     cursor.execute("""
-    SELECT sbu, COUNT(*) as bid_count, COALESCE(SUM(estimated_value), 0) as bid_val
+    SELECT sbu, 
+           COUNT(*) as total_bid_count,
+           COALESCE(SUM(estimated_value), 0) as total_bid_val,
+           COALESCE(SUM(CASE WHEN stage NOT IN ('WON', 'LOST') THEN 1 ELSE 0 END), 0) as active_bid_count,
+           COALESCE(SUM(CASE WHEN stage NOT IN ('WON', 'LOST') THEN estimated_value ELSE 0 END), 0) as active_bid_val,
+           COALESCE(SUM(CASE WHEN stage = 'WON' THEN 1 ELSE 0 END), 0) as won_bid_count,
+           COALESCE(SUM(CASE WHEN stage = 'WON' THEN estimated_value ELSE 0 END), 0) as won_bid_val
     FROM pipeline_bids
-    WHERE stage NOT IN ('WON', 'LOST')
     GROUP BY sbu
     """)
     sbu_bids = {r["sbu"]: r for r in cursor.fetchall()}
@@ -71,23 +85,41 @@ def get_executive_metrics(sbu: Optional[str] = Query(None)):
 
     sbu_matrix = []
     for s_code, meta in SBU_META.items():
-        p_info = sbu_projects.get(s_code, {"proj_count": 0, "contract_val": 0, "paid_val": 0})
-        b_info = sbu_bids.get(s_code, {"bid_count": 0, "bid_val": 0})
+        b_info = sbu_bids.get(s_code, {
+            "total_bid_count": 0, "total_bid_val": 0,
+            "active_bid_count": 0, "active_bid_val": 0,
+            "won_bid_count": 0, "won_bid_val": 0
+        })
         sbu_matrix.append({
             "sbu": s_code,
             "name": meta["name"],
             "icon": meta["icon"],
             "color": meta["color"],
             "customer_count": sbu_custs.get(s_code, 0),
-            "project_count": p_info["proj_count"],
-            "contract_value": p_info["contract_val"],
-            "paid_amount": p_info["paid_val"],
-            "balance": p_info["contract_val"] - p_info["paid_val"],
-            "bid_count": b_info["bid_count"],
-            "bid_value": b_info["bid_val"]
+            "bid_count": b_info["active_bid_count"],
+            "bid_value": b_info["active_bid_val"],
+            "won_count": b_info["won_bid_count"],
+            "won_value": b_info["won_bid_val"],
+            "total_bids": b_info["total_bid_count"]
         })
 
-    # 5. Critical Cashflow Milestones (Mốc nghiệm thu & giải ngân lớn)
+    # 5. Upcoming Bid Submission Deadlines (Hạn nộp hồ sơ thầu sắp tới)
+    up_bids_query = """
+    SELECT b.id, b.project_title, b.estimated_value, b.stage, b.win_rate, b.tender_deadline, b.sbu,
+           c.name as customer_name, c.key_decision_maker, c.decision_maker_phone
+    FROM pipeline_bids b
+    JOIN customers c ON b.customer_id = c.id
+    WHERE b.stage NOT IN ('WON', 'LOST') AND b.tender_deadline IS NOT NULL AND b.tender_deadline != ''
+    """
+    up_bids_params = []
+    if not is_all:
+        up_bids_query += " AND b.sbu = ?"
+        up_bids_params.append(sbu)
+    up_bids_query += " ORDER BY b.tender_deadline ASC LIMIT 6"
+    cursor.execute(up_bids_query, up_bids_params)
+    upcoming_bids = [dict(r) for r in cursor.fetchall()]
+
+    # Critical Cashflow Milestones (Kept for historical compatibility)
     m_query = """
     SELECT m.*, p.name as project_name, p.code as project_code, p.sbu, c.name as customer_name, c.decision_maker_phone
     FROM milestones m
@@ -206,9 +238,14 @@ def get_executive_metrics(sbu: Optional[str] = Query(None)):
             "unpaid_balance": unpaid_balance,
             "active_bids_count": active_bids_count,
             "active_bids_value": active_bids_value,
+            "won_bids_count": won_bids_count,
+            "won_bids_value": won_bids_value,
+            "lost_bids_count": lost_bids_count,
+            "lost_bids_value": lost_bids_value,
             "sbu": sbu or "ALL"
         },
         "sbu_matrix": sbu_matrix,
+        "upcoming_bids": upcoming_bids,
         "upcoming_payments": upcoming_payments,
         "executive_reminders": reminders[:6],
         "recent_activities": recent_activities

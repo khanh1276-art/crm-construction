@@ -23,7 +23,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/static/css/custom.css?v=20261001_1715">
+  <link rel="stylesheet" href="/static/css/custom.css?v=20261001_1745">
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
 
@@ -281,17 +281,13 @@
           <i class="fa-solid fa-filter-circle-dollar w-5 text-center text-purple-500 text-sm"></i> 3. Phễu Cơ Hội & Dự Thầu
         </button>
 
-        <button onclick="switchTab('projects')" id="nav-projects" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-slate-600 hover:bg-slate-50 transition">
-          <i class="fa-solid fa-city w-5 text-center text-emerald-600 text-sm"></i> 4. Theo Dõi Dự Án & Dòng Tiền
-        </button>
-
         <button onclick="switchTab('care')" id="nav-care" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-slate-600 hover:bg-slate-50 transition">
-          <i class="fa-solid fa-calendar-check w-5 text-center text-amber-500 text-sm"></i> 5. Lịch Chăm Sóc Khách Hàng
+          <i class="fa-solid fa-calendar-check w-5 text-center text-amber-500 text-sm"></i> 4. Lịch Chăm Sóc Khách Hàng
         </button>
 
         <!-- Account Management Nav (Available to Admin) -->
         <button onclick="switchTab('users')" id="nav-users" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-slate-600 hover:bg-slate-50 transition">
-          <i class="fa-solid fa-users-gear w-5 text-center text-indigo-600 text-sm"></i> 6. Quản Lý Tài Khoản (Admin)
+          <i class="fa-solid fa-users-gear w-5 text-center text-indigo-600 text-sm"></i> 5. Quản Lý Tài Khoản (Admin)
         </button>
 
         <div class="pt-4 border-t border-slate-100 px-2 space-y-2">
@@ -344,42 +340,42 @@
           </div>
         </div>
 
-        <!-- 4 Top Executive KPI Cards -->
+        <!-- 4 Top Executive KPI Cards (Pre-construction & Bidding BD) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
             <div class="flex items-center justify-between text-slate-400">
-              <span class="text-[10px] font-black uppercase tracking-wider">Tổng Giá Trị Hợp Đồng</span>
-              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-file-contract"></i></div>
-            </div>
-            <div id="stat-contract-val" class="text-2xl font-black text-slate-900 mt-2">-- Tỷ</div>
-            <p class="text-[11px] text-slate-500 mt-1"><span id="stat-project-count" class="font-bold text-slate-800">--</span> dự án trọng điểm</p>
-          </div>
-
-          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
-            <div class="flex items-center justify-between text-slate-400">
-              <span class="text-[10px] font-black uppercase tracking-wider">Đã Thu Hồi Dòng Tiền</span>
-              <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-vault"></i></div>
-            </div>
-            <div id="stat-paid-val" class="text-2xl font-black text-emerald-600 mt-2">-- Tỷ</div>
-            <p class="text-[11px] text-slate-500 mt-1">Đạt <span id="stat-paid-pct" class="font-bold text-emerald-700">--%</span> kế hoạch</p>
-          </div>
-
-          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
-            <div class="flex items-center justify-between text-slate-400">
-              <span class="text-[10px] font-black uppercase tracking-wider">Mốc Cần Giải Ngân</span>
-              <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs"><i class="fa-solid fa-clock-rotate-left"></i></div>
-            </div>
-            <div id="stat-balance-val" class="text-2xl font-black text-amber-600 mt-2">-- Tỷ</div>
-            <p class="text-[11px] text-slate-500 mt-1">Công nợ mốc nghiệm thu</p>
-          </div>
-
-          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
-            <div class="flex items-center justify-between text-slate-400">
-              <span class="text-[10px] font-black uppercase tracking-wider">Phễu Cơ Hội & Đấu Thầu</span>
+              <span class="text-[10px] font-black uppercase tracking-wider">Phễu Cơ Hội & Dự Thầu</span>
               <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xs"><i class="fa-solid fa-bullseye"></i></div>
             </div>
             <div id="stat-bids-val" class="text-2xl font-black text-purple-600 mt-2">-- Tỷ</div>
             <p class="text-[11px] text-slate-500 mt-1"><span id="stat-bids-count" class="font-bold text-slate-800">--</span> hồ sơ đang theo đuổi</p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
+            <div class="flex items-center justify-between text-slate-400">
+              <span class="text-[10px] font-black uppercase tracking-wider">Giá Trị Đã Trúng Thầu (WON)</span>
+              <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-trophy"></i></div>
+            </div>
+            <div id="stat-won-val" class="text-2xl font-black text-emerald-600 mt-2">-- Tỷ</div>
+            <p class="text-[11px] text-slate-500 mt-1"><span id="stat-won-count" class="font-bold text-emerald-700">--</span> gói thầu thành công</p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
+            <div class="flex items-center justify-between text-slate-400">
+              <span class="text-[10px] font-black uppercase tracking-wider">Khách Hàng / CĐT Chiến Lược</span>
+              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-handshake-simple"></i></div>
+            </div>
+            <div id="stat-customer-count" class="text-2xl font-black text-blue-600 mt-2">-- Đối tác</div>
+            <p class="text-[11px] text-slate-500 mt-1"><span id="stat-diamond-count" class="font-bold text-cyan-700">--</span> Kim Cương • <span id="stat-gold-count" class="font-bold text-amber-700">--</span> Vàng</p>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
+            <div class="flex items-center justify-between text-slate-400">
+              <span class="text-[10px] font-black uppercase tracking-wider">Ngân Sách CSKH Phê Duyệt</span>
+              <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs"><i class="fa-solid fa-crown"></i></div>
+            </div>
+            <div id="stat-care-budget" class="text-2xl font-black text-amber-600 mt-2">-- Triệu</div>
+            <p class="text-[11px] text-slate-500 mt-1">Đã chi: <span id="stat-care-spent" class="font-bold text-slate-800">--</span> thường niên</p>
           </div>
         </div>
 
@@ -388,9 +384,9 @@
           <div class="flex items-center justify-between">
             <div>
               <h3 class="font-black text-slate-900 text-sm flex items-center gap-2">
-                <i class="fa-solid fa-network-wired text-amber-500"></i> Ma Trận Hiệu Quả Kinh Doanh & Quan Hệ Khách Hàng 5 Khối SBU
+                <i class="fa-solid fa-network-wired text-amber-500"></i> Ma Trận Hiệu Quả Kinh Doanh & Phễu Dự Thầu 5 Khối SBU
               </h3>
-              <p class="text-xs text-slate-500">Báo cáo so sánh toàn diện giá trị hợp đồng, dòng tiền và cơ hội thầu</p>
+              <p class="text-xs text-slate-500">Báo cáo so sánh toàn diện khách hàng chiến lược, cơ hội đấu thầu và tỷ lệ trúng thầu</p>
             </div>
             <span class="text-[11px] font-bold text-slate-400">Dữ liệu thời gian thực</span>
           </div>
@@ -401,10 +397,10 @@
                 <tr>
                   <th class="p-3">Khối SBU</th>
                   <th class="p-3">Khách Hàng Chiến Lược</th>
-                  <th class="p-3">Dự Án Đang Thực Hiện</th>
-                  <th class="p-3">Tổng Giá Trị HĐ</th>
-                  <th class="p-3">Đã Thu Hồi</th>
-                  <th class="p-3">Phễu Cơ Hội Thầu</th>
+                  <th class="p-3">Hồ Sơ Đang Dự Thầu</th>
+                  <th class="p-3">Tổng Giá Trị Phễu</th>
+                  <th class="p-3">Đã Trúng Thầu (WON)</th>
+                  <th class="p-3">Tổng Số Gói Thầu</th>
                   <th class="p-3 text-right">Chi Tiết</th>
                 </tr>
               </thead>
@@ -415,19 +411,19 @@
           </div>
         </div>
 
-        <!-- 2 Columns: Critical Cashflow Milestones & VIP Relations Reminders -->
+        <!-- 2 Columns: Upcoming Tender Deadlines & VIP Relations Reminders -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          <!-- Column 1: Cashflow Milestones -->
+          <!-- Column 1: Upcoming Tender Deadlines -->
           <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="font-black text-slate-900 text-sm flex items-center gap-2">
-                  <i class="fa-solid fa-file-invoice-dollar text-blue-600"></i> Mốc Giải Ngân Trọng Điểm Cần Thu Hồi
+                  <i class="fa-solid fa-hourglass-half text-purple-600"></i> Hạn Nộp Hồ Sơ Dự Thầu Sắp Tới
                 </h3>
-                <p class="text-xs text-slate-500">Các đợt thanh toán lớn từ Chủ đầu tư / Ban QLDA</p>
+                <p class="text-xs text-slate-500">Các gói thầu trọng điểm cần hoàn thành hồ sơ & nộp báo giá</p>
               </div>
-              <span class="px-2.5 py-0.5 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-bold">Dòng tiền</span>
+              <span class="px-2.5 py-0.5 bg-purple-50 text-purple-700 rounded-lg text-[10px] font-bold">Hạn nộp thầu</span>
             </div>
 
             <div id="urgent-milestones-list" class="space-y-3">
@@ -534,26 +530,6 @@
           </button>
         </div>
 
-        <!-- Kanban Board -->
-        <div class="overflow-x-auto pb-6">
-          <div id="pipeline-board" class="flex gap-4 min-w-max">
-            <!-- Rendered via JS -->
-          </div>
-        </div>
-      </section>
-
-      <!-- ==================== TAB 4: PROJECTS & CASHFLOW ==================== -->
-      <section id="tab-projects" class="hidden space-y-6">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h2 class="text-xl font-black text-slate-900">Theo Dõi Dự Án & Dòng Tiền Hợp Đồng (Executive Tracking)</h2>
-            <p class="text-slate-500 text-xs mt-1">Quản lý tổng quan tiến độ %, phân cấp dự án FECON và thẩm quyền phê duyệt chi phí tiếp khách/CSKH</p>
-          </div>
-          <button id="btn-add-project" onclick="openNewProjectModal()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-bold transition shadow">
-            <i class="fa-solid fa-folder-plus mr-1"></i> Thêm Dự Án Theo Dõi
-          </button>
-        </div>
-
         <!-- FECON Project Classification & Approver Authority Policy Banner -->
         <div class="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white p-5 rounded-2xl shadow-md border border-blue-800/40">
           <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-3 border-b border-white/10">
@@ -635,19 +611,11 @@
           </div>
         </div>
 
-        <!-- Level Filter Buttons -->
-        <div class="flex flex-wrap items-center gap-2 text-xs">
-          <span class="text-slate-500 font-bold mr-1">Lọc Cấp Dự Án:</span>
-          <button onclick="filterProjectsByLevel('ALL')" class="btn-proj-filter px-3 py-1.5 rounded-xl font-bold bg-[#0A3583] text-white shadow-xs" data-level="ALL">Tất Cả</button>
-          <button onclick="filterProjectsByLevel('LEVEL_SPECIAL')" class="btn-proj-filter px-3 py-1.5 rounded-xl font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50" data-level="LEVEL_SPECIAL">🟣 Cấp Đặc Biệt</button>
-          <button onclick="filterProjectsByLevel('LEVEL_1')" class="btn-proj-filter px-3 py-1.5 rounded-xl font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50" data-level="LEVEL_1">🔴 Cấp 1</button>
-          <button onclick="filterProjectsByLevel('LEVEL_2')" class="btn-proj-filter px-3 py-1.5 rounded-xl font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50" data-level="LEVEL_2">🟠 Cấp 2</button>
-          <button onclick="filterProjectsByLevel('LEVEL_3')" class="btn-proj-filter px-3 py-1.5 rounded-xl font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50" data-level="LEVEL_3">🔵 Cấp 3</button>
-          <button onclick="filterProjectsByLevel('LEVEL_4')" class="btn-proj-filter px-3 py-1.5 rounded-xl font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50" data-level="LEVEL_4">🟢 Cấp 4</button>
-        </div>
-
-        <div id="projects-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Rendered via JS -->
+        <!-- Kanban Board -->
+        <div class="overflow-x-auto pb-6">
+          <div id="pipeline-board" class="flex gap-4 min-w-max">
+            <!-- Rendered via JS -->
+          </div>
         </div>
       </section>
 
@@ -904,11 +872,6 @@
       <button type="button" onclick="switchTab('pipeline')" id="mob-nav-pipeline" class="mobile-nav-btn flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-600 font-medium transition">
         <i class="fa-solid fa-filter-circle-dollar text-lg mb-0.5"></i>
         <span class="text-[10px] leading-tight">Phễu Thầu</span>
-      </button>
-
-      <button type="button" onclick="switchTab('projects')" id="mob-nav-projects" class="mobile-nav-btn flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-600 font-medium transition">
-        <i class="fa-solid fa-city text-lg mb-0.5"></i>
-        <span class="text-[10px] leading-tight">Dự Án</span>
       </button>
 
       <button type="button" onclick="switchTab('care')" id="mob-nav-care" class="mobile-nav-btn flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-600 font-medium transition">
@@ -1482,10 +1445,63 @@
 
       <form id="form-bid" onsubmit="handleBidSubmit(event)" class="space-y-3 text-xs">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Chủ đầu tư / Đối tác *</label>
-          <select id="bid-customer" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold">
+          <div class="flex items-center justify-between mb-1">
+            <label class="block font-bold text-slate-700">Chủ đầu tư / Đối tác *</label>
+            <button type="button" onclick="toggleQuickAddBidCustomer()" id="btn-toggle-quick-bid-cust" class="text-blue-600 hover:text-blue-800 font-bold text-[11px] flex items-center gap-1 cursor-pointer">
+              <i class="fa-solid fa-user-plus"></i> + Thêm CĐT mới
+            </button>
+          </div>
+          <select id="bid-customer" onchange="handleBidCustomerChange(this.value)" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold">
             <!-- Populated via JS -->
           </select>
+        </div>
+
+        <!-- Inline Quick Add Customer Box for Bid -->
+        <div id="box-quick-add-bid-customer" class="hidden p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl space-y-2.5 transition shadow-2xs">
+          <div class="flex items-center justify-between text-xs font-bold text-blue-900 border-b border-blue-200/60 pb-1.5">
+            <span><i class="fa-solid fa-building-circle-check mr-1 text-blue-600"></i> Nhập Thông Tin Chủ Đầu Tư / Khách Hàng Mới</span>
+            <button type="button" onclick="toggleQuickAddBidCustomer(false)" class="text-slate-400 hover:text-slate-600 text-sm font-bold cursor-pointer">&times;</button>
+          </div>
+          <div class="space-y-2">
+            <div>
+              <label class="block font-bold text-slate-700 text-[11px] mb-0.5">Tên Chủ đầu tư / Doanh nghiệp *</label>
+              <input type="text" id="quick-bid-cust-name" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 font-bold text-xs" placeholder="VD: Tập đoàn Masterise Homes, Sun Group, Doji...">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-bold text-slate-700 text-[11px] mb-0.5">Lãnh đạo / Người liên hệ *</label>
+                <input type="text" id="quick-bid-cust-contact" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs" placeholder="VD: Ông Phan Trọng Đạt - Phó TGĐ">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 text-[11px] mb-0.5">Số điện thoại liên hệ *</label>
+                <input type="text" id="quick-bid-cust-phone" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 font-mono text-xs" placeholder="VD: 0912345678">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-bold text-slate-700 text-[11px] mb-0.5">Phân khúc đối tác</label>
+                <select id="quick-bid-cust-segment" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold">
+                  <option value="B2B">B2B - Doanh nghiệp tư nhân</option>
+                  <option value="B2G">B2G - Ban QLDA / Nhà nước</option>
+                  <option value="FDI">FDI - Doanh nghiệp FDI</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 text-[11px] mb-0.5">Hạng đối tác FECON</label>
+                <select id="quick-bid-cust-tier" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold">
+                  <option value="GOLD">🥇 Hạng Vàng (GOLD)</option>
+                  <option value="DIAMOND">💎 Hạng Kim Cương (DIAMOND)</option>
+                  <option value="SILVER">🥈 Hạng Bạc (SILVER)</option>
+                </select>
+              </div>
+            </div>
+            <div class="pt-1 flex items-center justify-between">
+              <span class="text-[10px] text-slate-500 italic">* CĐT sẽ tự động được thêm vào hệ thống và chọn cho gói thầu</span>
+              <button type="button" onclick="submitQuickBidCustomer()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs shadow-xs flex items-center gap-1 cursor-pointer">
+                <i class="fa-solid fa-check"></i> Lưu & Chọn CĐT này
+              </button>
+            </div>
+          </div>
         </div>
 
         <div>
@@ -1990,6 +2006,6 @@
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
   <!-- Application Logic -->
-  <script src="/static/js/app.js?v=20261001_1715"></script>
+  <script src="/static/js/app.js?v=20261001_1745"></script>
 </body>
 </html>

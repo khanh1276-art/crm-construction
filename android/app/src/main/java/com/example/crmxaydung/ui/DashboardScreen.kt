@@ -2,6 +2,7 @@ package com.example.crmxaydung.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -24,11 +25,18 @@ import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
 @Composable
-fun DashboardScreen(user: UserSession, selectedSbu: String = "ALL") {
+fun DashboardScreen(
+    user: UserSession,
+    selectedSbu: String = "ALL",
+    onNavigateToCustomers: () -> Unit = {},
+    onNavigateToActiveBids: () -> Unit = {},
+    onNavigateToWonBids: () -> Unit = {}
+) {
     val coroutineScope = rememberCoroutineScope()
     var stats by remember { mutableStateOf<DashboardStats?>(null) }
     var pipelineBids by remember { mutableStateOf<List<PipelineBidItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var selectedBid by remember { mutableStateOf<PipelineBidItem?>(null) }
 
     fun loadData(sbu: String) {
         isLoading = true
@@ -80,6 +88,7 @@ fun DashboardScreen(user: UserSession, selectedSbu: String = "ALL") {
                     borderColor = Color(0xFFBFDBFE),
                     titleColor = Color(0xFF1E40AF),
                     valColor = Color(0xFF1E3A8A),
+                    onClick = onNavigateToCustomers,
                     modifier = Modifier.weight(1f)
                 )
                 KpiCard(
@@ -90,6 +99,7 @@ fun DashboardScreen(user: UserSession, selectedSbu: String = "ALL") {
                     borderColor = Color(0xFFFED7AA),
                     titleColor = Color(0xFF9A3412),
                     valColor = Color(0xFFEA580C),
+                    onClick = onNavigateToActiveBids,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -105,6 +115,7 @@ fun DashboardScreen(user: UserSession, selectedSbu: String = "ALL") {
                     borderColor = Color(0xFFA7F3D0),
                     titleColor = Color(0xFF065F46),
                     valColor = Color(0xFF047857),
+                    onClick = onNavigateToWonBids,
                     modifier = Modifier.weight(1f)
                 )
                 KpiCard(
@@ -115,6 +126,7 @@ fun DashboardScreen(user: UserSession, selectedSbu: String = "ALL") {
                     borderColor = Color(0xFFE9D5FF),
                     titleColor = Color(0xFF6B21A8),
                     valColor = Color(0xFF581C87),
+                    onClick = onNavigateToActiveBids,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -123,7 +135,10 @@ fun DashboardScreen(user: UserSession, selectedSbu: String = "ALL") {
 
             // Bidding Opportunities Highlight Section (Replaces construction projects)
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToActiveBids() }
+                    .padding(vertical = 2.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -133,12 +148,16 @@ fun DashboardScreen(user: UserSession, selectedSbu: String = "ALL") {
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Text(
-                    text = "${pipelineBids.count { it.stage != "WON" && it.stage != "LOST" }} gói",
-                    color = Color(0xFFEA580C),
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "${pipelineBids.count { it.stage != "WON" && it.stage != "LOST" }} gói",
+                        color = Color(0xFFEA580C),
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text("➔", color = Color(0xFFEA580C), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
             }
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -168,6 +187,7 @@ fun DashboardScreen(user: UserSession, selectedSbu: String = "ALL") {
                             .fillMaxWidth()
                             .padding(vertical = 3.dp)
                             .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
+                            .clickable { selectedBid = bid }
                     ) {
                         Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
                             Row(
@@ -290,6 +310,18 @@ fun DashboardScreen(user: UserSession, selectedSbu: String = "ALL") {
             }
         }
     }
+
+    selectedBid?.let { bid ->
+        PipelineDetailDialog(
+            bid = bid,
+            df = df,
+            onDismiss = { selectedBid = null },
+            onUpdated = {
+                selectedBid = null
+                loadData(selectedSbu)
+            }
+        )
+    }
 }
 
 @Composable
@@ -301,15 +333,27 @@ fun KpiCard(
     borderColor: Color,
     titleColor: Color,
     valColor: Color,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
+        onClick = { onClick?.invoke() },
+        enabled = onClick != null,
         colors = CardDefaults.cardColors(containerColor = bgColor),
         shape = RoundedCornerShape(10.dp),
         modifier = modifier.border(1.dp, borderColor, RoundedCornerShape(10.dp))
     ) {
         Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp)) {
-            Text(title, color = titleColor, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(title, color = titleColor, fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                if (onClick != null) {
+                    Text("➔", color = titleColor.copy(alpha = 0.65f), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
+            }
             Spacer(modifier = Modifier.height(2.dp))
             Text(value, color = valColor, fontSize = 16.sp, fontWeight = FontWeight.Black)
             Spacer(modifier = Modifier.height(1.dp))

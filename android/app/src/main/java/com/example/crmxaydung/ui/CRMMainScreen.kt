@@ -31,6 +31,7 @@ fun CRMMainScreen(
     onLogout: () -> Unit
 ) {
     var currentTab by remember { mutableStateOf(NavTab.DASHBOARD) }
+    var targetPipelineStage by remember { mutableStateOf("ALL") }
     var selectedSbu by remember { mutableStateOf(if (user.role == "ADMIN") "ALL" else user.sbu) }
     var showSbuMenu by remember { mutableStateOf(false) }
 
@@ -125,7 +126,7 @@ fun CRMMainScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = if (selectedSbu == "ALL") "Khối: Tất cả" else selectedSbu,
+                                        text = if (selectedSbu == "ALL") "SBU: Tất cả" else selectedSbu,
                                         color = Color.White,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
@@ -261,7 +262,10 @@ fun CRMMainScreen(
                         )
                         CompactBottomNavItem(
                             selected = (currentTab == NavTab.PIPELINE),
-                            onClick = { currentTab = NavTab.PIPELINE },
+                            onClick = {
+                                targetPipelineStage = "ALL"
+                                currentTab = NavTab.PIPELINE
+                            },
                             icon = "🎯",
                             label = "Phễu Thầu",
                             activeColor = feconDeepOrange,
@@ -297,9 +301,27 @@ fun CRMMainScreen(
                 .background(lightBg)
         ) {
             when (currentTab) {
-                NavTab.DASHBOARD -> DashboardScreen(user = user, selectedSbu = selectedSbu)
+                NavTab.DASHBOARD -> DashboardScreen(
+                    user = user,
+                    selectedSbu = selectedSbu,
+                    onNavigateToCustomers = {
+                        currentTab = NavTab.CUSTOMERS
+                    },
+                    onNavigateToActiveBids = {
+                        targetPipelineStage = "ACTIVE"
+                        currentTab = NavTab.PIPELINE
+                    },
+                    onNavigateToWonBids = {
+                        targetPipelineStage = "WON"
+                        currentTab = NavTab.PIPELINE
+                    }
+                )
                 NavTab.CUSTOMERS -> CustomerScreen(user = user, selectedSbu = selectedSbu)
-                NavTab.PIPELINE -> ProjectScreen(user = user, selectedSbu = selectedSbu)
+                NavTab.PIPELINE -> ProjectScreen(
+                    user = user,
+                    selectedSbu = selectedSbu,
+                    initialStageFilter = targetPipelineStage
+                )
                 NavTab.CARE -> CareScreen(user = user, selectedSbu = selectedSbu)
                 NavTab.ACCOUNTS -> UserManagementScreen(currentUser = user)
             }

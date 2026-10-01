@@ -185,7 +185,7 @@
               <span>FECON CRM</span> 
               <span class="bg-amber-400 text-slate-950 text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded font-black tracking-wider uppercase">Executive</span>
             </div>
-            <p class="text-[10px] text-slate-400 hidden sm:block truncate">Hệ Thống Quản Trị & Chăm Sóc Khách Hàng Chiến Lược 5 Khối SBU</p>
+            <p class="text-[10px] text-slate-400 hidden sm:block truncate">Hệ Thống Quản Trị & Chăm Sóc Khách Hàng Chiến Lược 5 SBU</p>
           </div>
         </div>
 
@@ -378,40 +378,56 @@
 
         <!-- 4 Top Executive KPI Cards (Pre-construction & Bidding BD) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
+          <!-- 1. Gói Thầu Đang Đấu / Phễu Thầu -->
+          <div onclick="navigateToBidsPipeline('ACTIVE')" class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card cursor-pointer transition hover:border-purple-400 hover:shadow-md group" title="Click để xem danh sách chi tiết các Gói Thầu Đang Đấu">
             <div class="flex items-center justify-between text-slate-400">
-              <span class="text-[10px] font-black uppercase tracking-wider">Phễu Cơ Hội & Dự Thầu</span>
-              <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xs"><i class="fa-solid fa-bullseye"></i></div>
+              <span class="text-[10px] font-black uppercase tracking-wider group-hover:text-purple-600 transition">Gói Thầu Đang Đấu</span>
+              <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xs group-hover:bg-purple-600 group-hover:text-white transition"><i class="fa-solid fa-arrow-right"></i></div>
             </div>
             <div id="stat-bids-val" class="text-2xl font-black text-purple-600 mt-2">-- Tỷ</div>
-            <p class="text-[11px] text-slate-500 mt-1"><span id="stat-bids-count" class="font-bold text-slate-800">--</span> hồ sơ đang theo đuổi</p>
+            <p class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+              <span><span id="stat-bids-count" class="font-bold text-slate-800">--</span> hồ sơ đang theo đuổi</span>
+              <span class="text-[10px] text-purple-600 font-bold group-hover:underline">Chi tiết ➔</span>
+            </p>
           </div>
 
-          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
+          <!-- 2. Gói Thầu Đã Trúng (WON) -->
+          <div onclick="navigateToBidsPipeline('WON')" class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card cursor-pointer transition hover:border-emerald-400 hover:shadow-md group" title="Click để xem danh sách chi tiết các Gói Thầu Đã Trúng">
             <div class="flex items-center justify-between text-slate-400">
-              <span class="text-[10px] font-black uppercase tracking-wider">Giá Trị Đã Trúng Thầu (WON)</span>
-              <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="fa-solid fa-trophy"></i></div>
+              <span class="text-[10px] font-black uppercase tracking-wider group-hover:text-emerald-600 transition">Gói Thầu Đã Trúng (WON)</span>
+              <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs group-hover:bg-emerald-600 group-hover:text-white transition"><i class="fa-solid fa-arrow-right"></i></div>
             </div>
             <div id="stat-won-val" class="text-2xl font-black text-emerald-600 mt-2">-- Tỷ</div>
-            <p class="text-[11px] text-slate-500 mt-1"><span id="stat-won-count" class="font-bold text-emerald-700">--</span> gói thầu thành công</p>
+            <p class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+              <span><span id="stat-won-count" class="font-bold text-emerald-700">--</span> gói thầu thành công</span>
+              <span class="text-[10px] text-emerald-600 font-bold group-hover:underline">Chi tiết ➔</span>
+            </p>
           </div>
 
-          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
+          <!-- 3. Khách Hàng / CĐT Chiến Lược -->
+          <div onclick="switchTab('customers')" class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card cursor-pointer transition hover:border-blue-400 hover:shadow-md group" title="Click để xem danh sách chi tiết Đối tác / Khách hàng">
             <div class="flex items-center justify-between text-slate-400">
-              <span class="text-[10px] font-black uppercase tracking-wider">Khách Hàng / CĐT Chiến Lược</span>
-              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs"><i class="fa-solid fa-handshake-simple"></i></div>
+              <span class="text-[10px] font-black uppercase tracking-wider group-hover:text-blue-600 transition">Khách Hàng / CĐT Chiến Lược</span>
+              <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs group-hover:bg-blue-600 group-hover:text-white transition"><i class="fa-solid fa-arrow-right"></i></div>
             </div>
             <div id="stat-customer-count" class="text-2xl font-black text-blue-600 mt-2">-- Đối tác</div>
-            <p class="text-[11px] text-slate-500 mt-1"><span id="stat-diamond-count" class="font-bold text-cyan-700">--</span> Kim Cương • <span id="stat-gold-count" class="font-bold text-amber-700">--</span> Vàng</p>
+            <p class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+              <span><span id="stat-diamond-count" class="font-bold text-cyan-700">--</span> KC • <span id="stat-gold-count" class="font-bold text-amber-700">--</span> Vàng</span>
+              <span class="text-[10px] text-blue-600 font-bold group-hover:underline">Chi tiết ➔</span>
+            </p>
           </div>
 
-          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card">
+          <!-- 4. Ngân Sách CSKH Phê Duyệt -->
+          <div onclick="switchTab('care')" class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover-card cursor-pointer transition hover:border-amber-400 hover:shadow-md group" title="Click để xem lịch Chăm sóc khách hàng">
             <div class="flex items-center justify-between text-slate-400">
-              <span class="text-[10px] font-black uppercase tracking-wider">Ngân Sách CSKH Phê Duyệt</span>
-              <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs"><i class="fa-solid fa-crown"></i></div>
+              <span class="text-[10px] font-black uppercase tracking-wider group-hover:text-amber-600 transition">Ngân Sách CSKH Phê Duyệt</span>
+              <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs group-hover:bg-amber-600 group-hover:text-white transition"><i class="fa-solid fa-arrow-right"></i></div>
             </div>
             <div id="stat-care-budget" class="text-2xl font-black text-amber-600 mt-2">-- Triệu</div>
-            <p class="text-[11px] text-slate-500 mt-1">Đã chi: <span id="stat-care-spent" class="font-bold text-slate-800">--</span> thường niên</p>
+            <p class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+              <span>Đã chi: <span id="stat-care-spent" class="font-bold text-slate-800">--</span> thường niên</span>
+              <span class="text-[10px] text-amber-600 font-bold group-hover:underline">Chi tiết ➔</span>
+            </p>
           </div>
         </div>
 

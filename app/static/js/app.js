@@ -409,6 +409,25 @@ function switchTab(tabName) {
   if (tabName === 'users') renderUsersTable();
 }
 
+function navigateToBidsPipeline(filterStage) {
+  switchTab('pipeline');
+  setTimeout(() => {
+    if (filterStage === 'WON') {
+      const wonCol = document.getElementById('kanban-col-WON');
+      if (wonCol) {
+        wonCol.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        wonCol.classList.add('ring-4', 'ring-emerald-500', 'shadow-xl');
+        setTimeout(() => wonCol.classList.remove('ring-4', 'ring-emerald-500', 'shadow-xl'), 2500);
+      }
+    } else {
+      const board = document.getElementById('pipeline-board');
+      if (board) {
+        board.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }, 300);
+}
+
 // User CRUD (Admin Only)
 function renderUsersTable() {
   const tbody = document.getElementById('users-table-body');
@@ -1416,7 +1435,7 @@ async function loadPipeline() {
       const totalVal = items.reduce((sum, item) => sum + (item.estimated_value || 0), 0);
 
       return `
-        <div class="kanban-column bg-slate-100 rounded-2xl p-3 flex flex-col border border-slate-200">
+        <div id="kanban-col-${stage.id}" class="kanban-column bg-slate-100 rounded-2xl p-3 flex flex-col border border-slate-200 transition-all duration-500">
           <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
             <div>
               <div class="font-black text-xs text-slate-900">${stage.label}</div>

@@ -29,7 +29,11 @@ import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
 @Composable
-fun ProjectScreen(user: UserSession, selectedSbu: String = "ALL") {
+fun ProjectScreen(
+    user: UserSession,
+    selectedSbu: String = "ALL",
+    initialStageFilter: String = "ALL"
+) {
     val coroutineScope = rememberCoroutineScope()
 
     var pipelineBids by remember { mutableStateOf<List<PipelineBidItem>>(emptyList()) }
@@ -38,7 +42,7 @@ fun ProjectScreen(user: UserSession, selectedSbu: String = "ALL") {
 
     var selectedBid by remember { mutableStateOf<PipelineBidItem?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
-    var selectedPipelineStage by remember { mutableStateOf("ALL") }
+    var selectedPipelineStage by remember(initialStageFilter) { mutableStateOf(initialStageFilter) }
     var selectedProjectLevel by remember { mutableStateOf("ALL") }
 
     val feconOrange = Color(0xFFEA580C)
@@ -62,11 +66,12 @@ fun ProjectScreen(user: UserSession, selectedSbu: String = "ALL") {
 
     val pipelineStages = listOf(
         "ALL" to "Tất Cả Giai Đoạn",
+        "ACTIVE" to "⚡ Đang Đấu Thầu",
+        "WON" to "🏆 Trúng Thầu",
         "INFORMATION" to "1. Tiếp Cận",
         "EVALUATION" to "2. Khảo Sát",
         "TENDER_PREP" to "3. Lập Hồ Sơ",
         "NEGOTIATION" to "4. Thương Thảo",
-        "WON" to "🏆 Trúng Thầu",
         "LOST" to "❌ Trượt Thầu"
     )
 
@@ -80,7 +85,9 @@ fun ProjectScreen(user: UserSession, selectedSbu: String = "ALL") {
     )
 
     val filteredBids = pipelineBids.filter {
-        (selectedPipelineStage == "ALL" || it.stage == selectedPipelineStage) &&
+        (selectedPipelineStage == "ALL" ||
+         (selectedPipelineStage == "ACTIVE" && it.stage != "WON" && it.stage != "LOST") ||
+         it.stage == selectedPipelineStage) &&
         (selectedProjectLevel == "ALL" || it.projectLevel == selectedProjectLevel)
     }
 
@@ -160,6 +167,7 @@ fun ProjectScreen(user: UserSession, selectedSbu: String = "ALL") {
                         modifier = Modifier.height(28.dp),
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = when (key) {
+                                "ACTIVE" -> Color(0xFFEA580C)
                                 "WON" -> Color(0xFF059669)
                                 "LOST" -> Color(0xFFDC2626)
                                 else -> feconOrange

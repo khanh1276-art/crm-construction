@@ -28,6 +28,16 @@ def resolve_db_path() -> Path:
     """
     repo_root = Path(__file__).resolve().parent.parent
     local_db = repo_root / "crm_construction.db"
+    backup_db = repo_root / "data_backup" / "crm_construction.db"
+
+    # Auto-sync live database from data_backup (Render production dump)
+    if backup_db.exists() and backup_db.stat().st_size > 0:
+        if not local_db.exists() or local_db.stat().st_size < backup_db.stat().st_size:
+            try:
+                shutil.copy2(backup_db, local_db)
+                print(f"[Database] Synchronized live database from {backup_db} ({backup_db.stat().st_size} bytes)")
+            except Exception as e:
+                print(f"[Database] Notice syncing live db from data_backup: {e}")
 
     # 1. Environment variable override
     env_path = os.environ.get("CRM_DB_PATH")

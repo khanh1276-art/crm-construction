@@ -7,8 +7,10 @@ Focused purely on:
 - High-level Customer Care & Automated Executive Messaging (Zalo/SMS/Email)
 - Role-based Access for Board of Directors (Admin) and 5 SBU Directors
 """
+import shutil
+import urllib.request
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -101,3 +103,48 @@ def health_check():
             "SBU5 - Cảng biển và biến đổi khí hậu"
         ]
     }
+
+@app.get("/api/admin/export-database")
+def export_database():
+    if DB_PATH.exists():
+        return FileResponse(
+            path=str(DB_PATH),
+            media_type="application/x-sqlite3",
+            filename="crm_construction.db"
+        )
+    raise HTTPException(status_code=404, detail="Database file not found")
+
+@app.post("/api/admin/import-database")
+async def import_database(file: UploadFile = File(...)):
+    try:
+        if DB_PATH.exists():
+            backup_path = DB_PATH.with_suffix(".db.bak")
+            shutil.copy2(DB_PATH, backup_path)
+        with open(DB_PATH, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        init_db()
+        return {
+            "success": True,
+            "message": "Cơ sở dữ liệu đã được cập nhật thành công!",
+            "size_bytes": DB_PATH.stat().st_size
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi import database: {str(e)}")
+
+@app.api_route("/api/admin/sync-from-render", methods=["GET", "POST"])
+def sync_from_render():
+    try:
+        render_url = "https://crm-construction-6lrg.onrender.com/api/admin/export-database"
+        if DB_PATH.exists():
+            backup_path = DB_PATH.with_suffix(".db.bak")
+            shutil.copy2(DB_PATH, backup_path)
+        urllib.request.urlretrieve(render_url, str(DB_PATH))
+        init_db()
+        return {
+            "success": True,
+            "message": "Đã kéo và đồng bộ toàn bộ dữ liệu thành công từ Render sang máy chủ!",
+            "size_bytes": DB_PATH.stat().st_size
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi đồng bộ từ Render: {str(e)}")
+

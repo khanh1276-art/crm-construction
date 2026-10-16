@@ -11,8 +11,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 object ApiClient {
-    // Official Render live deployment URL
-    var baseUrl: String = "https://crm-construction-6lrg.onrender.com"
+    // Official iNET live deployment URL
+    var baseUrl: String = "https://crm.khanhtran.io.vn"
         set(value) {
             field = value.trim().removeSuffix("/")
         }

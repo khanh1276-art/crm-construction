@@ -39,9 +39,9 @@ fun LoginScreen(
     val prefs = remember { context.getSharedPreferences("crm_prefs", Context.MODE_PRIVATE) }
     val coroutineScope = rememberCoroutineScope()
 
-    val defaultRenderUrl = "https://crm-construction-6lrg.onrender.com"
+    val defaultServerUrl = "https://crm.khanhtran.io.vn"
     var serverUrl by remember {
-        mutableStateOf(prefs.getString("server_url", defaultRenderUrl) ?: defaultRenderUrl)
+        mutableStateOf(prefs.getString("server_url", defaultServerUrl) ?: defaultServerUrl)
     }
 
     LaunchedEffect(serverUrl) {
@@ -312,11 +312,11 @@ fun LoginScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     TextButton(onClick = {
-                                        serverUrl = defaultRenderUrl
-                                        ApiClient.baseUrl = defaultRenderUrl
-                                        prefs.edit().putString("server_url", defaultRenderUrl).apply()
+                                        serverUrl = defaultServerUrl
+                                        ApiClient.baseUrl = defaultServerUrl
+                                        prefs.edit().putString("server_url", defaultServerUrl).apply()
                                     }) {
-                                        Text("Đặt lại Render", fontSize = 10.sp, color = feconOrange)
+                                        Text("Đặt lại máy chủ", fontSize = 10.sp, color = feconOrange)
                                     }
 
                                     TextButton(onClick = {

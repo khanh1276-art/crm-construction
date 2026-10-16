@@ -15,8 +15,8 @@
 
   <!-- PWA Web Manifest & Theme Colors -->
   <link rel="manifest" href="/static/manifest.json">
-  <meta name="theme-color" content="#0A3583">
-  <meta name="msapplication-navbutton-color" content="#0A3583">
+  <meta name="theme-color" content="#EA5713">
+  <meta name="msapplication-navbutton-color" content="#EA5713">
   <meta name="mobile-web-app-capable" content="yes">
 
   <!-- Tailwind CSS -->
@@ -170,100 +170,105 @@
   <!-- ==================== MAIN APPLICATION ROOT (Hidden until authenticated) ==================== -->
   <div id="app-root" class="hidden flex-1 flex flex-col">
 
-  <!-- ==================== TOP EXECUTIVE HEADER ==================== -->
-  <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-lg border-b border-slate-800 safe-top">
+  <!-- ==================== TOP EXECUTIVE HEADER (FECON ORANGE THEME) ==================== -->
+  <header class="bg-[#EA5713] text-white sticky top-0 z-40 shadow-md border-b border-[#D44709] safe-top">
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-14 sm:h-16">
+      <div class="flex items-center justify-between h-14 sm:h-16 gap-2">
         
-        <!-- Logo & Corporate Branding -->
-        <div class="flex items-center space-x-2 sm:space-x-3">
-          <div class="bg-white rounded-xl p-1 shadow-md flex items-center justify-center h-10 w-10 sm:h-11 sm:w-auto border border-slate-700 shrink-0">
+        <!-- Logo & Corporate Branding (Left) -->
+        <div class="flex items-center space-x-2 sm:space-x-3 shrink-0">
+          <div class="bg-white rounded-xl p-1 shadow-md flex items-center justify-center h-10 w-10 sm:h-11 sm:w-auto border border-white/30 shrink-0">
             <img src="/static/img/fecon_crm_logo.png" alt="FECON CRM" class="h-8 sm:h-9 object-contain">
           </div>
-          <div class="min-w-0">
-            <div class="font-black text-sm sm:text-lg tracking-tight flex items-center gap-1.5">
+          <div class="min-w-0 hidden md:block">
+            <div class="font-black text-sm sm:text-base tracking-tight flex items-center gap-1.5 text-white">
               <span>FECON CRM</span> 
-              <span class="bg-amber-400 text-slate-950 text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded font-black tracking-wider uppercase">Executive</span>
+              <span class="bg-white/20 text-white text-[9px] px-1.5 py-0.5 rounded font-bold tracking-wider uppercase border border-white/30">Executive</span>
             </div>
-            <p class="text-[10px] text-slate-400 hidden sm:block truncate">Hệ Thống Quản Trị & Chăm Sóc Khách Hàng Chiến Lược 5 SBU</p>
+            <p class="text-[10px] text-orange-100 truncate font-medium">Hệ Thống Quản Trị & Chăm Sóc Khách Hàng 5 SBU</p>
           </div>
+        </div>
+
+        <!-- Center Title (Mobile view matching Native Android App screenshot) -->
+        <div class="text-center flex-1 px-1 min-w-0 md:hidden">
+          <div class="font-black text-sm text-white tracking-wide leading-tight">FECON</div>
+          <div class="text-[9px] text-orange-100 truncate leading-tight font-medium">Quản lý và chăm sóc khách hàng</div>
         </div>
 
         <!-- SBU Filter Pills (Desktop & Tablet) -->
-        <div id="sbu-pills-bar" class="hidden md:flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700 text-xs font-bold">
-          <button onclick="changeSBUFilter('ALL')" id="pill-ALL" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg transition bg-amber-400 text-slate-950 font-bold">
+        <div id="sbu-pills-bar" class="hidden md:flex items-center bg-[#C8450A] p-1 rounded-xl border border-orange-400/40 text-xs font-bold shadow-inner">
+          <button onclick="changeSBUFilter('ALL')" id="pill-ALL" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg transition bg-white text-[#EA5713] font-black shadow-sm">
             Toàn Tập Đoàn
           </button>
-          <button onclick="changeSBUFilter('SBU1')" id="pill-SBU1" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition" title="Nền móng và Hầm">
-            <i class="fa-solid fa-layer-group text-blue-400 mr-1"></i> SBU 1
+          <button onclick="changeSBUFilter('SBU1')" id="pill-SBU1" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-white/85 hover:text-white hover:bg-white/10 transition" title="Nền móng và Hầm">
+            <i class="fa-solid fa-layer-group text-amber-200 mr-1"></i> SBU 1
           </button>
-          <button onclick="changeSBUFilter('SBU2')" id="pill-SBU2" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition" title="Xây dựng Năng lượng và công nghiệp">
-            <i class="fa-solid fa-bolt text-amber-400 mr-1"></i> SBU 2
+          <button onclick="changeSBUFilter('SBU2')" id="pill-SBU2" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-white/85 hover:text-white hover:bg-white/10 transition" title="Xây dựng Năng lượng và công nghiệp">
+            <i class="fa-solid fa-bolt text-yellow-200 mr-1"></i> SBU 2
           </button>
-          <button onclick="changeSBUFilter('SBU3')" id="pill-SBU3" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition" title="Metro và ngầm đô thị">
-            <i class="fa-solid fa-train-subway text-purple-400 mr-1"></i> SBU 3
+          <button onclick="changeSBUFilter('SBU3')" id="pill-SBU3" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-white/85 hover:text-white hover:bg-white/10 transition" title="Metro và ngầm đô thị">
+            <i class="fa-solid fa-train-subway text-pink-200 mr-1"></i> SBU 3
           </button>
-          <button onclick="changeSBUFilter('SBU4')" id="pill-SBU4" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition" title="Hạ tầng tập trung và đường sắt cao tốc">
-            <i class="fa-solid fa-road text-emerald-400 mr-1"></i> SBU 4
+          <button onclick="changeSBUFilter('SBU4')" id="pill-SBU4" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-white/85 hover:text-white hover:bg-white/10 transition" title="Hạ tầng tập trung và đường sắt cao tốc">
+            <i class="fa-solid fa-road text-emerald-200 mr-1"></i> SBU 4
           </button>
-          <button onclick="changeSBUFilter('SBU5')" id="pill-SBU5" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition" title="Cảng biển và biến đổi khí hậu">
-            <i class="fa-solid fa-anchor text-cyan-400 mr-1"></i> SBU 5
+          <button onclick="changeSBUFilter('SBU5')" id="pill-SBU5" class="sbu-filter-pill px-2.5 py-1.5 rounded-lg text-white/85 hover:text-white hover:bg-white/10 transition" title="Cảng biển và biến đổi khí hậu">
+            <i class="fa-solid fa-anchor text-cyan-200 mr-1"></i> SBU 5
           </button>
         </div>
 
-        <!-- Account Profile & Logout Widget -->
-        <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+        <!-- Account Profile & Logout Widget (Right - matches Android card) -->
+        <div class="flex items-center space-x-1 sm:space-x-2 shrink-0">
           <!-- Mobile App Download Button (Android APK & iOS WebApp) -->
-          <button onclick="openAppInstallModal()" class="px-2 sm:px-3 py-1.5 sm:py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white rounded-xl text-xs font-bold transition shadow-sm border border-emerald-500/40 flex items-center gap-1.5 cursor-pointer" title="Cài đặt Ứng dụng FECON CRM cho Android và iPhone (iOS)">
-            <i class="fa-solid fa-mobile-screen-button text-amber-300 text-sm"></i>
-            <span class="hidden md:inline">Tải App</span>
-            <span class="inline-flex items-center gap-1 text-[10px] bg-black/25 px-1 py-0.5 rounded font-mono">
+          <button onclick="openAppInstallModal()" class="px-2 sm:px-2.5 py-1.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm border border-white/25 flex items-center gap-1 cursor-pointer" title="Cài đặt Ứng dụng FECON CRM cho Android và iPhone (iOS)">
+            <i class="fa-solid fa-mobile-screen text-yellow-200 text-xs"></i>
+            <span class="hidden lg:inline text-[11px]">Tải App</span>
+            <span class="inline-flex items-center gap-1 text-[9px] bg-black/20 px-1 py-0.5 rounded font-mono">
               <i class="fa-brands fa-android text-emerald-300"></i>
               <i class="fa-brands fa-apple text-white"></i>
             </span>
           </button>
 
-          <!-- Active Account Card -->
-          <div class="flex items-center gap-1.5 sm:gap-2 bg-slate-800/90 border border-slate-700 rounded-xl px-2 py-1 sm:px-3 sm:py-1.5 shadow-sm">
-            <div id="user-avatar-icon" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-400/20 text-amber-400 flex items-center justify-center text-xs sm:text-sm">
-              <i class="fa-solid fa-user-shield"></i>
+          <!-- Active Account Card (Matching Android App badge) -->
+          <div class="flex items-center gap-1.5 bg-black/15 hover:bg-black/20 border border-white/25 rounded-xl px-2 py-1 sm:px-2.5 sm:py-1.5 shadow-sm transition">
+            <div id="user-avatar-icon" class="w-6 h-6 rounded-lg bg-white/20 text-white flex items-center justify-center text-xs shrink-0">
+              <i class="fa-solid fa-user-tie"></i>
             </div>
-            <div class="text-left max-w-[85px] sm:max-w-[190px]">
+            <div class="text-left max-w-[85px] sm:max-w-[160px] min-w-0">
               <div class="flex items-center gap-1">
-                <span id="user-header-name" class="font-extrabold text-white text-[11px] sm:text-xs truncate">Ban Lãnh Đạo</span>
-                <span id="user-header-role-badge" class="hidden sm:inline px-1.5 py-0.5 bg-amber-400/20 text-amber-300 text-[9px] font-black rounded uppercase">ADMIN</span>
+                <span id="user-header-name" class="font-bold text-white text-[11px] sm:text-xs truncate">Ban Lãnh Đạo</span>
+                <span id="user-header-role-badge" class="hidden xl:inline px-1 py-0.2 bg-white/20 text-white text-[8px] font-black rounded uppercase border border-white/30">ADMIN</span>
               </div>
-              <div id="user-header-title" class="text-[9px] sm:text-[10px] text-slate-400 truncate hidden sm:block">Chủ Tịch & Tổng Giám Đốc</div>
+              <div id="user-header-title" class="text-[9px] text-orange-100 truncate hidden md:block font-medium">Chủ Tịch & Tổng Giám Đốc</div>
             </div>
+            <!-- Divider & Direct Logout Icon -->
+            <div class="h-4 w-px bg-white/30 mx-0.5"></div>
+            <button onclick="handleLogout()" class="p-1 text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition text-xs shrink-0 cursor-pointer" title="Đăng xuất khỏi hệ thống">
+              <i class="fa-solid fa-right-from-bracket text-xs"></i>
+            </button>
           </div>
-
-          <!-- Mandatory Logout Button -->
-          <button onclick="handleLogout()" class="p-2 sm:px-3 sm:py-2 bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition border border-slate-700 shadow-sm flex items-center gap-1.5 cursor-pointer" title="Đăng xuất khỏi hệ thống">
-            <i class="fa-solid fa-right-from-bracket text-rose-400 text-sm"></i>
-            <span class="hidden sm:inline">Đăng Xuất</span>
-          </button>
         </div>
 
       </div>
 
       <!-- Mobile SBU Horizontal Scroll Bar (Exclusive on Mobile) -->
-      <div id="mobile-sbu-bar" class="md:hidden flex items-center gap-1.5 overflow-x-auto hide-scrollbar py-2 border-t border-slate-800 text-[11px] font-bold">
-        <button onclick="changeSBUFilter('ALL')" id="mob-pill-ALL" class="mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 transition bg-amber-400 text-slate-950 font-bold shadow-sm">
+      <div id="mobile-sbu-bar" class="md:hidden flex items-center gap-1.5 overflow-x-auto hide-scrollbar py-2 border-t border-orange-400/30 text-[11px] font-bold">
+        <button onclick="changeSBUFilter('ALL')" id="mob-pill-ALL" class="mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 transition bg-white text-[#EA5713] font-bold shadow-sm">
           Toàn Tập Đoàn
         </button>
-        <button onclick="changeSBUFilter('SBU1')" id="mob-pill-SBU1" class="mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 text-slate-300 bg-slate-800 border border-slate-700">
+        <button onclick="changeSBUFilter('SBU1')" id="mob-pill-SBU1" class="mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 text-white/90 bg-[#C8450A] border border-orange-300/30">
           SBU 1 (Móng/Hầm)
         </button>
-        <button onclick="changeSBUFilter('SBU2')" id="mob-pill-SBU2" class="mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 text-slate-300 bg-slate-800 border border-slate-700">
+        <button onclick="changeSBUFilter('SBU2')" id="mob-pill-SBU2" class="mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 text-white/90 bg-[#C8450A] border border-orange-300/30">
           SBU 2 (Năng lượng)
         </button>
-        <button onclick="changeSBUFilter('SBU3')" id="mob-pill-SBU3" class="mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 text-slate-300 bg-slate-800 border border-slate-700">
+        <button onclick="changeSBUFilter('SBU3')" id="mob-pill-SBU3" class="mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 text-white/90 bg-[#C8450A] border border-orange-300/30">
           SBU 3 (Metro)
         </button>
-        <button onclick="changeSBUFilter('SBU4')" id="mob-pill-SBU4" class="mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 text-slate-300 bg-slate-800 border border-slate-700">
+        <button onclick="changeSBUFilter('SBU4')" id="mob-pill-SBU4" class="mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 text-white/90 bg-[#C8450A] border border-orange-300/30">
           SBU 4 (Hạ tầng)
         </button>
-        <button onclick="changeSBUFilter('SBU5')" id="mob-pill-SBU5" class="mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 text-slate-300 bg-slate-800 border border-slate-700">
+        <button onclick="changeSBUFilter('SBU5')" id="mob-pill-SBU5" class="mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 text-white/90 bg-[#C8450A] border border-orange-300/30">
           SBU 5 (Cảng biển)
         </button>
       </div>
@@ -329,20 +334,20 @@
         </div>
 
         <!-- Mobile App Download Banner Card in Sidebar -->
-        <div class="mt-3 p-3 bg-gradient-to-br from-slate-900 to-blue-950 text-white rounded-xl shadow-sm border border-blue-900/60 space-y-2">
+        <div class="mt-3 p-3 bg-gradient-to-br from-[#EA5713] to-[#B93E08] text-white rounded-xl shadow-sm border border-orange-500/40 space-y-2">
           <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center text-xs font-black shadow">
+            <div class="w-7 h-7 rounded-lg bg-white text-[#EA5713] flex items-center justify-center text-xs font-black shadow">
               <i class="fa-solid fa-mobile-screen"></i>
             </div>
             <div>
               <div class="font-extrabold text-[11px] text-white">Ứng Dụng FECON CRM</div>
-              <div class="text-[9px] text-slate-300">Android APK & iOS WebApp</div>
+              <div class="text-[9px] text-orange-100">Android APK & iOS WebApp</div>
             </div>
           </div>
-          <p class="text-[10px] text-slate-300 leading-snug">
+          <p class="text-[10px] text-orange-100 leading-snug">
             Cài đặt trực tiếp trên Android hoặc iPhone để quản trị phễu thầu tiện lợi.
           </p>
-          <button type="button" onclick="openAppInstallModal()" class="w-full py-1.5 px-2 bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 rounded-lg font-bold text-[11px] shadow transition flex items-center justify-center gap-1.5 cursor-pointer">
+          <button type="button" onclick="openAppInstallModal()" class="w-full py-1.5 px-2 bg-white hover:bg-orange-50 active:scale-95 text-[#EA5713] rounded-lg font-bold text-[11px] shadow transition flex items-center justify-center gap-1.5 cursor-pointer">
             <i class="fa-solid fa-download"></i> Cài Đặt App Mobile
           </button>
         </div>
@@ -357,20 +362,20 @@
       <section id="tab-dashboard" class="space-y-6">
 
         <!-- Executive Banner -->
-        <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-950 rounded-2xl p-6 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="bg-gradient-to-r from-[#0A3583] via-[#082E74] to-[#EA5713] rounded-2xl p-6 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-blue-900/30">
           <div>
-            <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-xs font-semibold mb-2">
-              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-white/20 text-orange-100 text-xs font-semibold mb-2 border border-white/20">
+              <span class="w-2 h-2 rounded-full bg-[#EA5713]"></span>
               <span id="banner-role-badge">Cổng Điều Hành Ban Lãnh Đạo</span>
             </div>
             <h1 class="text-2xl font-black tracking-tight" id="dashboard-title">Báo Cáo Điều Hành Khách Hàng & Kinh Doanh</h1>
-            <p class="text-slate-300 text-xs mt-1" id="dashboard-subtitle">Theo dõi chiến lược quan hệ đối tác, dòng tiền hợp đồng và cơ hội đấu thầu 5 SBU.</p>
+            <p class="text-blue-100 text-xs mt-1" id="dashboard-subtitle">Theo dõi chiến lược quan hệ đối tác, dòng tiền hợp đồng và cơ hội đấu thầu 5 SBU.</p>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="triggerAutomatedScan()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow flex items-center gap-1.5">
+            <button onclick="triggerAutomatedScan()" class="px-3.5 py-2 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition shadow border border-white/20 flex items-center gap-1.5 cursor-pointer">
               <i class="fa-solid fa-bolt text-yellow-300"></i> Quét Ngoại Giao Tự Động
             </button>
-            <button onclick="openNewCustomerModal()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-bold transition shadow">
+            <button onclick="openNewCustomerModal()" class="px-3.5 py-2 bg-[#EA5713] hover:bg-[#D44709] text-white rounded-xl text-xs font-bold transition shadow border border-orange-400/30 flex items-center gap-1.5 cursor-pointer">
               <i class="fa-solid fa-plus"></i> Khách Hàng Mới
             </button>
           </div>
@@ -960,28 +965,28 @@
     <div id="mobile-bottom-nav-grid" class="grid grid-cols-5 h-16 items-center px-1 text-center">
       
       <button type="button" onclick="switchTab('dashboard')" id="mob-nav-dashboard" class="mobile-nav-btn flex flex-col items-center justify-center py-1 text-[#EA5713] font-black transition">
-        <i class="fa-solid fa-chart-pie text-lg mb-0.5"></i>
-        <span class="text-[10px] leading-tight">Tổng Quan</span>
+        <i class="fa-solid fa-chart-column text-lg mb-0.5"></i>
+        <span class="text-[10px] leading-tight font-bold">Tổng Quan</span>
       </button>
 
       <button type="button" onclick="switchTab('customers')" id="mob-nav-customers" class="mobile-nav-btn flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-600 font-medium transition">
-        <i class="fa-solid fa-handshake-simple text-lg mb-0.5"></i>
+        <i class="fa-regular fa-building text-lg mb-0.5"></i>
         <span class="text-[10px] leading-tight">Khách Hàng</span>
       </button>
 
       <button type="button" onclick="switchTab('pipeline')" id="mob-nav-pipeline" class="mobile-nav-btn flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-600 font-medium transition">
-        <i class="fa-solid fa-filter-circle-dollar text-lg mb-0.5"></i>
+        <i class="fa-solid fa-bullseye text-lg mb-0.5"></i>
         <span class="text-[10px] leading-tight">Phễu Thầu</span>
       </button>
 
       <button type="button" onclick="switchTab('care')" id="mob-nav-care" class="mobile-nav-btn flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-600 font-medium transition">
-        <i class="fa-solid fa-calendar-check text-lg mb-0.5"></i>
+        <i class="fa-regular fa-calendar-check text-lg mb-0.5"></i>
         <span class="text-[10px] leading-tight">Lịch CSKH</span>
       </button>
 
       <!-- Admin Tab (Visible for Admin) -->
       <button type="button" onclick="switchTab('users')" id="mob-nav-users" class="mobile-nav-btn hidden flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-600 font-medium transition">
-        <i class="fa-solid fa-users-gear text-lg mb-0.5"></i>
+        <i class="fa-solid fa-users text-lg mb-0.5"></i>
         <span class="text-[10px] leading-tight">Tài Khoản</span>
       </button>
 

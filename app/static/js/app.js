@@ -234,22 +234,17 @@ function applyUserRoleState() {
   if (headerTitle) headerTitle.innerText = currentUser.title;
 
   if (iconEl) {
-    let iconBg = 'bg-amber-400/20 text-amber-400';
-    if (currentUser.role === 'SBU_DIRECTOR') iconBg = 'bg-blue-500/20 text-blue-400';
-    if (currentUser.role === 'COLLABORATOR') iconBg = 'bg-emerald-500/20 text-emerald-400';
-    iconEl.className = `w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center text-sm group-hover:scale-105 transition`;
+    iconEl.className = 'w-6 h-6 rounded-lg bg-white/20 text-white flex items-center justify-center text-xs shrink-0';
     iconEl.innerHTML = `<i class="fa-solid ${currentUser.avatar_icon || 'fa-user-tie'}"></i>`;
   }
 
   if (headerBadge) {
+    headerBadge.className = 'hidden xl:inline px-1 py-0.2 bg-white/20 text-white text-[8px] font-black rounded uppercase border border-white/30';
     if (currentUser.role === 'ADMIN') {
-      headerBadge.className = 'px-1.5 py-0.5 bg-amber-400/20 text-amber-300 text-[9px] font-black rounded uppercase';
       headerBadge.innerText = 'ADMIN';
     } else if (currentUser.role === 'COLLABORATOR') {
-      headerBadge.className = 'px-1.5 py-0.5 bg-emerald-400/20 text-emerald-300 text-[9px] font-black rounded uppercase';
       headerBadge.innerText = 'CTV';
     } else {
-      headerBadge.className = 'px-1.5 py-0.5 bg-blue-400/20 text-blue-300 text-[9px] font-black rounded uppercase';
       headerBadge.innerText = currentUser.sbu;
     }
   }
@@ -339,17 +334,17 @@ function changeSBUFilter(sbu) {
 
 function updatePillStyles() {
   document.querySelectorAll('.sbu-filter-pill').forEach(btn => {
-    btn.className = 'sbu-filter-pill px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-white transition';
+    btn.className = 'sbu-filter-pill px-2.5 py-1.5 rounded-lg text-white/85 hover:text-white hover:bg-white/10 transition';
   });
   const activeBtn = document.getElementById(`pill-${currentSBU}`);
-  if (activeBtn) activeBtn.className = 'sbu-filter-pill px-2.5 py-1.5 rounded-lg transition bg-amber-400 text-slate-950 font-bold';
+  if (activeBtn) activeBtn.className = 'sbu-filter-pill px-2.5 py-1.5 rounded-lg transition bg-white text-[#EA5713] font-black shadow-sm';
 
   // Update mobile SBU scrollbar pills
   document.querySelectorAll('.mob-sbu-pill').forEach(btn => {
-    btn.className = 'mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 text-slate-300 bg-slate-800 border border-slate-700 transition';
+    btn.className = 'mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 text-white/90 bg-[#C8450A] border border-orange-300/30 transition';
   });
   const activeMobBtn = document.getElementById(`mob-pill-${currentSBU}`);
-  if (activeMobBtn) activeMobBtn.className = 'mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 transition bg-amber-400 text-slate-950 font-bold shadow-sm';
+  if (activeMobBtn) activeMobBtn.className = 'mob-sbu-pill px-2.5 py-1 rounded-lg shrink-0 transition bg-white text-[#EA5713] font-bold shadow-sm';
 }
 
 function refreshAllData() {
@@ -382,7 +377,7 @@ function switchTab(tabName) {
     if (el) el.classList.toggle('hidden', t !== tabName);
     if (nav) {
       if (t === tabName) {
-        nav.className = 'nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs text-amber-900 bg-amber-50 transition';
+        nav.className = 'nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs text-[#EA5713] bg-orange-50 border-l-4 border-[#EA5713] shadow-sm transition';
       } else {
         nav.className = 'nav-link w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-xs text-slate-600 hover:bg-slate-50 transition';
       }

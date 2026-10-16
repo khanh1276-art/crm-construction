@@ -1,6 +1,8 @@
 /* Custom styles for Construction CRM */
 :root {
-  --primary-navy: #0f172a;
+  --fecon-orange: #EA5713;
+  --fecon-orange-dark: #D44709;
+  --primary-navy: #0A3583;
   --accent-amber: #f59e0b;
   --accent-blue: #2563eb;
   --accent-emerald: #10b981;

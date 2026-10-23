@@ -40,9 +40,16 @@ fun LoginScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val defaultServerUrl = "https://crm.khanhtran.io.vn"
-    var serverUrl by remember {
-        mutableStateOf(prefs.getString("server_url", defaultServerUrl) ?: defaultServerUrl)
+    val initialServerUrl = remember {
+        val stored = prefs.getString("server_url", defaultServerUrl) ?: defaultServerUrl
+        if (stored.contains("onrender.com") || stored.isBlank() || !stored.startsWith("http")) {
+            prefs.edit().putString("server_url", defaultServerUrl).apply()
+            defaultServerUrl
+        } else {
+            stored.trim().removeSuffix("/")
+        }
     }
+    var serverUrl by remember { mutableStateOf(initialServerUrl) }
 
     LaunchedEffect(serverUrl) {
         ApiClient.baseUrl = serverUrl
@@ -281,9 +288,9 @@ fun LoginScreen(
                             onClick = { showServerSettings = !showServerSettings }
                         ) {
                             Text(
-                                text = "⚙️ Cài đặt kết nối máy chủ",
+                                text = "⚙️ Máy chủ: ${serverUrl.removePrefix("https://").removePrefix("http://")}",
                                 color = Color(0xFF64748B),
-                                fontSize = 10.sp
+                                fontSize = 11.sp
                             )
                         }
 
